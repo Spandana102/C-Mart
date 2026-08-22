@@ -1,0 +1,206 @@
+* {
+  box-sizing: border-box;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  font-family: Arial, sans-serif;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 600px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: white;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 25px 70px rgba(37, 99, 235, 0.15);
+}
+
+.login-welcome {
+  position: relative;
+  padding: 50px;
+  color: white;
+  background: linear-gradient(145deg, #2563eb, #4f46e5);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: #2563eb;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.welcome-content h1 {
+  font-size: 54px;
+  line-height: 1.05;
+  margin: 0 0 25px;
+}
+
+.welcome-content h1 span {
+  color: #bfdbfe;
+}
+
+.welcome-content p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: #dbeafe;
+}
+
+.campus-info {
+  font-size: 14px;
+  color: #dbeafe;
+}
+
+.login-form-section {
+  padding: 60px 55px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form-header {
+  margin-bottom: 35px;
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 34px;
+  color: #111827;
+}
+
+.form-header p {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+.input-group {
+  margin-bottom: 22px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0 14px;
+}
+
+.input-wrapper:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.input-wrapper input {
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 15px 5px;
+  font-size: 15px;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0 25px;
+  font-size: 13px;
+}
+
+.forgot {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.login-button {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 28px 0;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  height: 1px;
+  background: #e5e7eb;
+  flex: 1;
+}
+
+.signup-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.signup-text span {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+@media (max-width: 750px) {
+  .login-container {
+    grid-template-columns: 1fr;
+  }
+
+  .login-welcome {
+    min-height: 280px;
+  }
+
+  .welcome-content h1 {
+    font-size: 40px;
+  }
+
+  .login-form-section {
+    padding: 40px 30px;
+  }
+}

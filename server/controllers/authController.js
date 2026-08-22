@@ -134,7 +134,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
 
-        const { Test User2,9876543211, 12344567 } = req.body;
+        const { fullName, phoneNumber, collegeId } = req.body;
 
         const user = await User.findByIdAndUpdate(
             req.user.id,
