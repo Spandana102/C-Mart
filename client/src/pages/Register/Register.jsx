@@ -1,20 +1,23 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../../services/api";
 import "./Register.css";
 
 function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     collegeId: "",
-    phoneNumber: ""
+    phoneNumber: "",
   });
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -22,10 +25,19 @@ function Register() {
     e.preventDefault();
 
     try {
-      const response = await API.post("/auth/register", formData);
-      alert(response.data.message);
+      const response = await API.post(
+        "/auth/register",
+        formData
+      );
+
+      alert(response.data.message || "Registration successful!");
+
+      navigate("/login");
     } catch (error) {
-      alert(error.response?.data?.message || "Registration failed");
+      alert(
+        error.response?.data?.message ||
+          "Registration failed"
+      );
     }
   };
 
@@ -34,14 +46,20 @@ function Register() {
       <div className="register-card">
 
         <div className="register-header">
-          <h1>Campus Bazaar</h1>
-          <p>Create your account</p>
+          <div className="brand-icon">🛍️</div>
+
+          <h1>C-Mart</h1>
+
+          <h2>Create Account</h2>
+
+          <p>Join your campus marketplace</p>
         </div>
 
         <form onSubmit={handleSubmit}>
 
           <div className="form-group">
             <label>Full Name</label>
+
             <input
               type="text"
               name="fullName"
@@ -53,7 +71,8 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label>Email</label>
+            <label>Email Address</label>
+
             <input
               type="email"
               name="email"
@@ -66,6 +85,7 @@ function Register() {
 
           <div className="form-group">
             <label>Password</label>
+
             <input
               type="password"
               name="password"
@@ -78,6 +98,7 @@ function Register() {
 
           <div className="form-group">
             <label>College ID</label>
+
             <input
               type="text"
               name="collegeId"
@@ -90,6 +111,7 @@ function Register() {
 
           <div className="form-group">
             <label>Phone Number</label>
+
             <input
               type="tel"
               name="phoneNumber"
@@ -100,16 +122,19 @@ function Register() {
             />
           </div>
 
-          <button type="submit" className="register-button">
+          <button type="submit">
             Create Account
           </button>
 
         </form>
 
-        <p className="login-text">
-          Already have an account?
-          <span> Login</span>
-        </p>
+        <div className="login-link">
+          <p>Already have an account?</p>
+
+          <Link to="/login">
+            Login
+          </Link>
+        </div>
 
       </div>
     </div>

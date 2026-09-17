@@ -1,0 +1,113 @@
+.profile-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f7fb;
+  padding: 30px;
+}
+
+.profile-card {
+  width: 450px;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.profile-icon {
+  text-align: center;
+  font-size: 55px;
+}
+
+.profile-card h1 {
+  text-align: center;
+  color: #6c4ce4;
+  margin-bottom: 30px;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.profile-row strong {
+  color: #333;
+}
+
+.profile-row span {
+  color: #666;
+  text-align: right;
+}
+
+.edit-button,
+.update-button,
+.cancel-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.edit-button,
+.update-button {
+  background: #6c4ce4;
+  color: white;
+}
+
+.edit-button:hover,
+.update-button:hover {
+  background: #5638c7;
+}
+
+.cancel-button {
+  background: #ddd;
+  color: #333;
+  margin-top: 10px;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-form label {
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.profile-form input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+.logout-button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #e53935;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #c62828;
+}

@@ -1,31 +1,29 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import API from "../../services/api";
 import "./Login.css";
 
 function Login() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await API.post("/auth/login", formData);
-
-      alert(response.data.message);
+      const response = await API.post("/auth/login", {
+        email,
+        password,
+      });
 
       localStorage.setItem("token", response.data.token);
+
+      alert("Login successful!");
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      alert(
+        error.response?.data?.message ||
+          "Invalid email or password"
+      );
     }
   };
 
@@ -34,46 +32,54 @@ function Login() {
       <div className="login-card">
 
         <div className="login-header">
-          <h1>Campus Bazaar</h1>
-          <p>Welcome back!</p>
+          <div className="brand-icon">🛍️</div>
+
+          <h1>C-Mart</h1>
+
+          <h2>Welcome Back!</h2>
+
+          <p>Login to your C-Mart account</p>
         </div>
 
         <form onSubmit={handleSubmit}>
 
           <div className="form-group">
-            <label>Email</label>
+            <label>Email Address</label>
+
             <input
               type="email"
-              name="email"
               placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
 
           <div className="form-group">
             <label>Password</label>
+
             <input
               type="password"
-              name="password"
               placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
 
-          <button type="submit" className="login-button">
+          <button type="submit">
             Login
           </button>
 
         </form>
 
-        <p className="register-text">
-          Don't have an account?
-          <span> Register</span>
-        </p>
+        <div className="register-link">
+          <p>Don't have an account?</p>
+
+          <Link to="/register">
+            Create an Account
+          </Link>
+        </div>
 
       </div>
     </div>
