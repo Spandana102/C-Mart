@@ -4,6 +4,7 @@ import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Profile from "./pages/Profile/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Admin from "./pages/Admin/Admin";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin" element={<Admin />} />
 
       </Routes>
     </BrowserRouter>
