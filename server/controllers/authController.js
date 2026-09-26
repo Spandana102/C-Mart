@@ -9,20 +9,17 @@ const registerUser = async (req, res) => {
 
         const { fullName, email, password, collegeId, phoneNumber } = req.body;
 
-
         // Check existing user
         const existingUser = await User.findOne({ email });
 
-        if(existingUser){
+        if (existingUser) {
             return res.status(400).json({
-                message:"User already exists"
+                message: "User already exists"
             });
         }
 
-
         // Password encryption
-        const hashedPassword = await bcrypt.hash(password,10);
-
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
             fullName,
@@ -32,83 +29,78 @@ const registerUser = async (req, res) => {
             phoneNumber
         });
 
-
         res.status(201).json({
-            message:"User registered successfully",
+            message: "User registered successfully",
             user
         });
 
-
-    } catch(error){
+    } catch (error) {
 
         res.status(500).json({
-            message:error.message
+            message: error.message
         });
 
     }
 };
 
 
-
 // Login User
-const loginUser = async(req,res)=>{
+const loginUser = async (req, res) => {
 
-    try{
+    try {
 
-        const {email,password}=req.body;
+        const { email, password } = req.body;
 
+        const user = await User.findOne({ email });
 
-        const user = await User.findOne({email});
+        // TEMPORARY DEBUG LOGS
+        console.log("LOGIN EMAIL:", email);
+        console.log("USER FOUND:", user);
 
-
-        if(!user){
+        if (!user) {
             return res.status(404).json({
-                message:"User not found"
+                message: "User not found"
             });
         }
-
 
         const isMatch = await bcrypt.compare(
             password,
             user.password
         );
 
-
-        if(!isMatch){
+        if (!isMatch) {
             return res.status(400).json({
-                message:"Invalid password"
+                message: "Invalid password"
             });
         }
 
-
         const token = jwt.sign(
-  {
-    id: user._id,
-    role: user.role
-  },
-  process.env.JWT_SECRET,
-  {
-    expiresIn: "1d"
-  }
-);
+            {
+                id: user._id,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1d"
+            }
+        );
 
         res.json({
-            message:"Login successful",
+            message: "Login successful",
             token,
             user
         });
 
-
-
-    }catch(error){
+    } catch (error) {
 
         res.status(500).json({
-            message:error.message
+            message: error.message
         });
 
     }
 
 };
+
 
 // Get User Profile
 const getProfile = async (req, res) => {
@@ -122,7 +114,7 @@ const getProfile = async (req, res) => {
             user
         });
 
-    } catch(error) {
+    } catch (error) {
 
         res.status(500).json({
             message: error.message
@@ -130,6 +122,8 @@ const getProfile = async (req, res) => {
 
     }
 };
+
+
 // Update User Profile
 const updateProfile = async (req, res) => {
     try {
@@ -148,14 +142,12 @@ const updateProfile = async (req, res) => {
             }
         ).select("-password");
 
-
         res.json({
             message: "Profile updated successfully",
             user
         });
 
-
-    } catch(error) {
+    } catch (error) {
 
         res.status(500).json({
             message: error.message
@@ -163,6 +155,8 @@ const updateProfile = async (req, res) => {
 
     }
 };
+
+
 // Forgot Password
 const forgotPassword = async (req, res) => {
     try {
@@ -187,7 +181,7 @@ const forgotPassword = async (req, res) => {
             message: "Password reset successfully"
         });
 
-    } catch(error) {
+    } catch (error) {
 
         res.status(500).json({
             message: error.message
@@ -195,6 +189,8 @@ const forgotPassword = async (req, res) => {
 
     }
 };
+
+
 module.exports = {
     registerUser,
     loginUser,
