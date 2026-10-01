@@ -4,6 +4,7 @@ import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Profile from "./pages/Profile/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 import Admin from "./pages/Admin/Admin";
 import Swap from "./pages/Swap/Swap";
@@ -33,6 +34,7 @@ function App() {
   }
 />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/swap" element={<Swap />} />
         <Route path="/rent" element={<Rent />} />
         <Route path="/meetpoint" element={<MeetPoint />} />
