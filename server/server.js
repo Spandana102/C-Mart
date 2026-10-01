@@ -1,4 +1,7 @@
+const dns = require("dns");
 
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+dns.setDefaultResultOrder("ipv4first");
 
 const express = require("express");
 const cors = require("cors");
@@ -6,12 +9,8 @@ require("dotenv").config();
 
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
-<<<<<<< HEAD
 const adminRoutes = require("./routes/adminRoutes");
-=======
 const reviewRoutes = require("./routes/reviewRoutes");
-
->>>>>>> 91e9292 (update project files)
 
 const app = express();
 
@@ -24,6 +23,7 @@ connectDB();
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/reviews", reviewRoutes);
 
 // Test Route
