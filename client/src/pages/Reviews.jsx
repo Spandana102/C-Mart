@@ -1,11 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 function Reviews() {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  // Get reviews from backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/reviews")
+      .then((response) => response.json())
+      .then((data) => {
+        setReviews(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching reviews:", error);
+      });
+  }, []);
+
+  // Submit review
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (rating === 0) {
@@ -18,16 +32,43 @@ function Reviews() {
       return;
     }
 
+    setLoading(true);
+
     const newReview = {
-      name: "You",
       rating: rating,
-      review: review,
+      comment: review,
+      user: "You",
+      product: "CampusBazaar",
     };
 
-    setReviews([...reviews, newReview]);
+    try {
+      const response = await fetch("http://localhost:5000/api/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newReview),
+      });
 
-    setRating(0);
-    setReview("");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to save review");
+      }
+
+      // Add saved review to the page
+      setReviews([data, ...reviews]);
+
+      setRating(0);
+      setReview("");
+
+      alert("Review saved successfully!");
+    } catch (error) {
+      console.error("Error saving review:", error);
+      alert("Failed to save review");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,8 +103,8 @@ function Reviews() {
 
         <br />
 
-        <button type="submit">
-          Submit Review
+        <button type="submit" disabled={loading}>
+          {loading ? "Saving..." : "Submit Review"}
         </button>
       </form>
 
@@ -75,15 +116,15 @@ function Reviews() {
         <p>No reviews yet.</p>
       ) : (
         reviews.map((item, index) => (
-          <div key={index}>
-            <h3>{item.name}</h3>
+          <div key={item._id || index}>
+            <h3>{item.user}</h3>
 
             <p>
               {"★".repeat(item.rating)}
               {"☆".repeat(5 - item.rating)}
             </p>
 
-            <p>{item.review}</p>
+            <p>{item.comment}</p>
 
             <hr />
           </div>
