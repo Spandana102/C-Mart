@@ -1,0 +1,138 @@
+/* ============================= */
+/* MEET POINT PAGE */
+/* ============================= */
+
+.meet-point-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+.meet-point-container h1 {
+  text-align: center;
+}
+
+.meet-point-container > p {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+
+/* ============================= */
+/* MEET POINT FORM */
+/* ============================= */
+
+.meet-point-form {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 25px;
+  box-sizing: border-box;
+
+  border: 1px solid #555;
+  border-radius: 10px;
+}
+
+.meet-point-form h2 {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+
+/* ============================= */
+/* LABELS */
+/* ============================= */
+
+.meet-point-form label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+
+
+/* ============================= */
+/* INPUTS */
+/* ============================= */
+
+.meet-point-form select,
+.meet-point-form input {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+
+  border: 1px solid #777;
+  border-radius: 5px;
+}
+
+
+/* ============================= */
+/* CONFIRM BUTTON */
+/* ============================= */
+
+.meet-point-form button {
+  width: 100%;
+  margin-top: 25px;
+  padding: 11px;
+
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+}
+
+
+/* ============================= */
+/* CONFIRMATION CARD */
+/* ============================= */
+
+.meet-point-confirmation {
+  width: 100%;
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 25px;
+  box-sizing: border-box;
+
+  border: 1px solid #555;
+  border-radius: 10px;
+
+  text-align: center;
+}
+
+.meet-point-confirmation h2 {
+  margin-bottom: 25px;
+}
+
+
+/* ============================= */
+/* CONFIRMATION DETAILS */
+/* ============================= */
+
+.confirmation-detail {
+  display: flex;
+  justify-content: space-between;
+
+  padding: 12px 0;
+
+  border-bottom: 1px solid #444;
+}
+
+.confirmation-detail span {
+  margin-left: 15px;
+}
+
+
+/* ============================= */
+/* CHANGE BUTTON */
+/* ============================= */
+
+.meet-point-confirmation button {
+  margin-top: 25px;
+  padding: 10px 18px;
+
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+}

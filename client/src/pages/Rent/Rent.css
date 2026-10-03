@@ -1,0 +1,193 @@
+/* ============================= */
+/* RENT PAGE */
+/* ============================= */
+
+.rent-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+.rent-container h1 {
+  text-align: center;
+}
+
+.rent-container > p {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* ============================= */
+/* RENT PRODUCT LIST */
+/* ============================= */
+
+.rent-product-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  margin-top: 25px;
+}
+
+
+/* ============================= */
+/* RENT PRODUCT CARD */
+/* ============================= */
+
+.rent-product-card {
+  width: 250px;
+  padding: 15px;
+  box-sizing: border-box;
+
+  border: 1px solid #ccc;
+  border-radius: 10px;
+
+  text-align: center;
+}
+
+
+/* ============================= */
+/* RENT PRODUCT IMAGE */
+/* ============================= */
+
+.rent-product-card img {
+  width: 100%;
+  height: 170px;
+
+  object-fit: cover;
+
+  display: block;
+  margin: 0 auto 15px;
+
+  border-radius: 8px;
+}
+
+
+/* ============================= */
+/* RENT NO IMAGE */
+/* ============================= */
+
+.rent-no-image {
+  width: 100%;
+  height: 170px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 15px;
+
+  border-radius: 8px;
+  background: #2a2a2f;
+}
+
+
+/* ============================= */
+/* RENT BUTTON */
+/* ============================= */
+
+.rent-product-card button {
+  margin: 5px;
+  padding: 9px 15px;
+
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+}
+
+ /* ============================= */
+/* ADD RENT PRODUCT FORM */
+/* ============================= */
+
+.add-rent-form {
+  width: 100%;
+  max-width: 650px;
+
+  margin: 25px auto 35px;
+
+  padding: 20px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #555;
+  border-radius: 10px;
+
+  background: #1e1e23;
+}
+
+.add-rent-form h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.add-rent-form input {
+  padding: 10px;
+  margin: 5px;
+
+  box-sizing: border-box;
+
+  border-radius: 5px;
+  border: 1px solid #777;
+}
+
+.add-rent-form input[type="text"],
+.add-rent-form input[type="number"] {
+  width: 180px;
+}
+
+.add-rent-form button {
+  padding: 10px 18px;
+
+  margin: 5px;
+
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+}
+
+/* ============================= */
+/* EDIT RENT PRODUCT FORM */
+/* ============================= */
+
+.edit-rent-form {
+  width: 100%;
+  max-width: 650px;
+  margin: 25px auto 35px;
+  padding: 20px;
+  box-sizing: border-box;
+
+  border: 1px solid #555;
+  border-radius: 10px;
+
+  background: #1e1e23;
+}
+
+.edit-rent-form h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.edit-rent-form input {
+  padding: 10px;
+  margin: 5px;
+  box-sizing: border-box;
+
+  border-radius: 5px;
+  border: 1px solid #777;
+}
+
+.edit-rent-form button {
+  padding: 10px 18px;
+  margin: 5px;
+
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+}

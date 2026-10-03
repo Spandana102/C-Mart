@@ -1,0 +1,209 @@
+/* ============================= */
+/* SWAP PAGE */
+/* ============================= */
+
+.swap-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+
+/* ============================= */
+/* ADD PRODUCT FORM */
+/* ============================= */
+
+.add-swap-form {
+  width: 100%;
+  max-width: 650px;
+  margin: 25px auto 35px;
+  padding: 20px;
+  box-sizing: border-box;
+
+  border: 1px solid #555;
+  border-radius: 10px;
+  background: #1e1e23;
+}
+
+.add-swap-form h2 {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+.add-swap-form input {
+  padding: 10px;
+  margin: 5px;
+  box-sizing: border-box;
+  border-radius: 5px;
+  border: 1px solid #777;
+}
+
+.add-swap-form input[type="text"] {
+  width: 180px;
+}
+
+.add-swap-form input[type="file"] {
+  width: auto;
+}
+
+.add-swap-form button {
+  padding: 10px 18px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+
+/* ============================= */
+/* SEARCH & FILTER */
+/* ============================= */
+
+.search-filter {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 25px;
+}
+
+.search-filter label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.search-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-filter input {
+  padding: 10px;
+  width: 280px;
+  box-sizing: border-box;
+}
+
+.search-filter select {
+  padding: 10px;
+  min-width: 150px;
+  box-sizing: border-box;
+}
+
+
+/* ============================= */
+/* PRODUCT LIST */
+/* ============================= */
+
+.product-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  margin-top: 20px;
+}
+
+
+/* ============================= */
+/* PRODUCT CARD */
+/* ============================= */
+
+.product-card {
+  width: 250px;
+  padding: 15px;
+  box-sizing: border-box;
+
+  border: 1px solid #ccc;
+  border-radius: 10px;
+
+  text-align: center;
+}
+
+
+/* ============================= */
+/* PRODUCT IMAGE */
+/* ============================= */
+
+.product-card img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+
+  display: block;
+  margin: 0 auto 15px;
+
+  border-radius: 8px;
+}
+
+
+/* ============================= */
+/* NO IMAGE */
+/* ============================= */
+
+.no-image {
+  width: 100%;
+  height: 170px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 15px;
+
+  border-radius: 8px;
+  background: #2a2a2f;
+}
+
+
+/* ============================= */
+/* PRODUCT BUTTONS */
+/* ============================= */
+
+.product-card button {
+  margin: 4px;
+  padding: 8px 12px;
+
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
+}
+
+
+/* ============================= */
+/* EDIT IMAGE PREVIEW */
+/* ============================= */
+
+.edit-image-preview {
+  width: 180px;
+  height: 150px;
+
+  object-fit: cover;
+  display: block;
+
+  margin: 10px auto;
+
+  border-radius: 8px;
+}
+
+
+/* ============================= */
+/* PRODUCT COUNT */
+/* ============================= */
+
+.product-count {
+  text-align: center;
+  margin-top: -10px;
+}
+
+/* ============================= */
+/* SWAP REQUEST COUNT */
+/* ============================= */
+
+.request-count {
+  text-align: center;
+  margin-top: -5px;
+  margin-bottom: 20px;
+}
