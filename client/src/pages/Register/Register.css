@@ -1,3 +1,4 @@
+```css
 .register-page {
   min-height: 100vh;
   display: flex;
@@ -5,11 +6,14 @@
   align-items: center;
   background: #f5f7fb;
   padding: 30px;
+  box-sizing: border-box;
 }
 
 .register-card {
   width: 400px;
+  max-width: 100%;
   padding: 40px;
+  box-sizing: border-box;
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -56,6 +60,13 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #6c4ce4;
+  box-shadow: 0 0 0 3px rgba(108, 76, 228, 0.1);
 }
 
 .register-card button {
@@ -66,11 +77,18 @@
   background: #6c4ce4;
   color: white;
   font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .register-card button:hover {
   background: #5638c7;
+}
+
+.register-card button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
 }
 
 .login-link {
@@ -88,3 +106,20 @@
   font-weight: 600;
   text-decoration: none;
 }
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .register-page {
+    padding: 20px;
+  }
+
+  .register-card {
+    padding: 25px;
+  }
+}
+```
+
+Replace your existing **`Register.css`** with this.
