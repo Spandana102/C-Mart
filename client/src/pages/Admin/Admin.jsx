@@ -1,21 +1,34 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../services/api";
 import "./Admin.css";
 
 function AdminDashboard() {
   const navigate = useNavigate();
-
-  // =========================================================
-  // STATES
-  // =========================================================
+  const fileInputRef = useRef(null);
 
   const [activeMenu, setActiveMenu] = useState("Dashboard");
 
+  // =========================
+  // USERS
+  // =========================
+
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
-
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // ADD USER
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [addingUser, setAddingUser] = useState(false);
+  const [addUserError, setAddUserError] = useState("");
+
+  const [newUser, setNewUser] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    collegeId: "",
+    phoneNumber: "",
+  });
 
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingDashboard, setLoadingDashboard] = useState(false);
@@ -26,6 +39,10 @@ function AdminDashboard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
+  // =========================
+  // DASHBOARD STATS
+  // =========================
+
   const [dashboardStats, setDashboardStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -35,9 +52,44 @@ function AdminDashboard() {
     complaints: 0,
   });
 
-  // =========================================================
-  // AUTH HEADER
-  // =========================================================
+  // =========================
+  // REPORTS
+  // =========================
+
+  const [reports, setReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [reportError, setReportError] = useState("");
+
+  // =========================
+  // COMPLAINTS
+  // =========================
+
+  const [complaints, setComplaints] = useState([]);
+  const [loadingComplaints, setLoadingComplaints] = useState(false);
+  const [complaintError, setComplaintError] = useState("");
+
+  // =========================
+  // PRODUCTS
+  // =========================
+
+  const [products, setProducts] = useState([]);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [productError, setProductError] = useState("");
+
+  const [productForm, setProductForm] = useState({
+    name: "",
+    price: "",
+    category: "",
+    description: "",
+    images: [],
+    stock: "1",
+  });
+
+  // =========================
+  // AUTH CONFIG
+  // =========================
 
   const getAuthConfig = () => {
     const token = localStorage.getItem("token");
@@ -49,9 +101,9 @@ function AdminDashboard() {
     };
   };
 
-  // =========================================================
-  // FETCH DASHBOARD STATISTICS
-  // =========================================================
+  // =========================
+  // DASHBOARD
+  // =========================
 
   const fetchDashboardStats = async () => {
     try {
@@ -69,6 +121,10 @@ function AdminDashboard() {
           totalUsers: response.data.stats?.totalUsers ?? 0,
           activeUsers: response.data.stats?.activeUsers ?? 0,
           blockedUsers: response.data.stats?.blockedUsers ?? 0,
+          products: response.data.stats?.products ?? current.products,
+          reports: response.data.stats?.reports ?? current.reports,
+          complaints:
+            response.data.stats?.complaints ?? current.complaints,
         }));
       }
     } catch (error) {
@@ -83,9 +139,9 @@ function AdminDashboard() {
     }
   };
 
-  // =========================================================
+  // =========================
   // FETCH USERS
-  // =========================================================
+  // =========================
 
   const fetchUsers = async () => {
     try {
@@ -98,8 +154,6 @@ function AdminDashboard() {
       );
 
       if (response.data.success) {
-        // Existing users in MongoDB may not have status.
-        // Treat missing status as Active.
         const normalizedUsers = (response.data.users || []).map(
           (user) => ({
             ...user,
@@ -109,9 +163,6 @@ function AdminDashboard() {
 
         setUsers(normalizedUsers);
 
-        // Calculate from actual users as a fallback.
-        // This also handles old MongoDB users created before
-        // the status field was added.
         const totalUsers = normalizedUsers.length;
 
         const activeUsers = normalizedUsers.filter(
@@ -141,12 +192,556 @@ function AdminDashboard() {
     }
   };
 
-  // =========================================================
-  // LOAD DATA WHEN ADMIN PANEL OPENS
-  // =========================================================
+  // =========================
+  // FETCH REPORTS
+  // =========================
+
+  const fetchReports = async () => {
+    try {
+      setLoadingReports(true);
+      setReportError("");
+
+      const response = await API.get(
+        "/reports",
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        const reportList = response.data.reports || [];
+
+        setReports(reportList);
+
+        setDashboardStats((current) => ({
+          ...current,
+          reports: reportList.length,
+        }));
+      }
+    } catch (error) {
+      console.error("Fetch Reports Error:", error);
+
+      setReportError(
+        error.response?.data?.message ||
+          "Failed to load reports."
+      );
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  // =========================
+  // FETCH COMPLAINTS
+  // =========================
+
+  const fetchComplaints = async () => {
+    try {
+      setLoadingComplaints(true);
+      setComplaintError("");
+
+      const response = await API.get(
+        "/complaints",
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        const complaintList = response.data.complaints || [];
+
+        setComplaints(complaintList);
+
+        setDashboardStats((current) => ({
+          ...current,
+          complaints: complaintList.length,
+        }));
+      }
+    } catch (error) {
+      console.error("Fetch Complaints Error:", error);
+
+      setComplaintError(
+        error.response?.data?.message ||
+          "Failed to load complaints."
+      );
+    } finally {
+      setLoadingComplaints(false);
+    }
+  };
+
+  // =========================
+  // UPDATE REPORT STATUS
+  // =========================
+
+  const updateReportStatus = async (reportId, status) => {
+    try {
+      const response = await API.put(
+        `/reports/${reportId}/status`,
+        { status },
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        setReports((current) =>
+          current.map((report) =>
+            report._id === reportId
+              ? {
+                  ...report,
+                  status,
+                }
+              : report
+          )
+        );
+      }
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to update report status."
+      );
+    }
+  };
+
+  // =========================
+  // UPDATE COMPLAINT STATUS
+  // =========================
+
+  const updateComplaintStatus = async (
+    complaintId,
+    status
+  ) => {
+    try {
+      const response = await API.put(
+        `/complaints/${complaintId}/status`,
+        { status },
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        setComplaints((current) =>
+          current.map((complaint) =>
+            complaint._id === complaintId
+              ? {
+                  ...complaint,
+                  status,
+                }
+              : complaint
+          )
+        );
+      }
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to update complaint status."
+      );
+    }
+  };
+
+  // =========================
+  // DELETE REPORT
+  // =========================
+
+  const deleteReport = async (reportId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this report?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const response = await API.delete(
+        `/reports/${reportId}`,
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        setReports((current) =>
+          current.filter(
+            (report) => report._id !== reportId
+          )
+        );
+
+        setDashboardStats((current) => ({
+          ...current,
+          reports: Math.max(
+            0,
+            current.reports - 1
+          ),
+        }));
+      }
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete report."
+      );
+    }
+  };
+
+  // =========================
+  // DELETE COMPLAINT
+  // =========================
+
+  const deleteComplaint = async (complaintId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this complaint?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const response = await API.delete(
+        `/complaints/${complaintId}`,
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        setComplaints((current) =>
+          current.filter(
+            (complaint) =>
+              complaint._id !== complaintId
+          )
+        );
+
+        setDashboardStats((current) => ({
+          ...current,
+          complaints: Math.max(
+            0,
+            current.complaints - 1
+          ),
+        }));
+      }
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete complaint."
+      );
+    }
+  };
+
+  // =========================
+  // ADD USER
+  // =========================
+
+  const handleNewUserChange = (e) => {
+    const { name, value } = e.target;
+
+    setNewUser((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const addUser = async (e) => {
+    e.preventDefault();
+
+    if (
+      !newUser.fullName.trim() ||
+      !newUser.email.trim() ||
+      !newUser.password.trim() ||
+      !newUser.collegeId.trim() ||
+      !newUser.phoneNumber.trim()
+    ) {
+      setAddUserError("All fields are required.");
+      return;
+    }
+
+    try {
+      setAddingUser(true);
+      setAddUserError("");
+
+      const response = await API.post(
+        "/admin/users",
+        {
+          fullName: newUser.fullName.trim(),
+          email: newUser.email.trim(),
+          password: newUser.password,
+          collegeId: newUser.collegeId.trim(),
+          phoneNumber: newUser.phoneNumber.trim(),
+          role: "user",
+        },
+        getAuthConfig()
+      );
+
+      if (response.data.success) {
+        setNewUser({
+          fullName: "",
+          email: "",
+          password: "",
+          collegeId: "",
+          phoneNumber: "",
+        });
+
+        setShowAddUserForm(false);
+
+        await fetchUsers();
+        await fetchDashboardStats();
+
+        alert("User added successfully!");
+      }
+    } catch (error) {
+      console.error("Add User Error:", error);
+
+      setAddUserError(
+        error.response?.data?.message ||
+          "Failed to add user."
+      );
+    } finally {
+      setAddingUser(false);
+    }
+  };
+
+  // =========================
+  // PRODUCTS
+  // =========================
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      setProductError("");
+
+      const response = await API.get("/products");
+
+      const productList = response.data || [];
+
+      setProducts(productList);
+
+      setDashboardStats((current) => ({
+        ...current,
+        products: productList.length,
+      }));
+    } catch (error) {
+      console.error("Fetch Products Error:", error);
+
+      setProductError(
+        error.response?.data?.message ||
+          "Failed to load products."
+      );
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleProductInputChange = (e) => {
+    const { name, value } = e.target;
+
+    setProductForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  // =========================
+  // IMAGE UPLOAD
+  // =========================
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setProductError(
+        "Please select a valid image file."
+      );
+
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setProductError(
+        "Image size must be less than 5 MB."
+      );
+
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setProductError("");
+
+      const formData = new FormData();
+
+      formData.append("image", file);
+
+      const response = await API.post(
+        "/upload/image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (
+        response.data?.success &&
+        response.data?.imageUrl
+      ) {
+        setProductForm((current) => ({
+          ...current,
+          images: [response.data.imageUrl],
+        }));
+      } else {
+        setProductError(
+          response.data?.message ||
+            "Image upload failed."
+        );
+      }
+    } catch (error) {
+      console.error(
+        "IMAGE UPLOAD ERROR:",
+        error
+      );
+
+      setProductError(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Image upload failed."
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // =========================
+  // ADD PRODUCT
+  // =========================
+
+  const addProduct = async (e) => {
+    e.preventDefault();
+
+    if (
+      !productForm.name.trim() ||
+      !productForm.price ||
+      !productForm.category.trim()
+    ) {
+      setProductError(
+        "Name, price and category are required."
+      );
+      return;
+    }
+
+    if (uploadingImage) {
+      setProductError(
+        "Please wait until image upload is completed."
+      );
+      return;
+    }
+
+    if (
+      !productForm.images ||
+      productForm.images.length === 0
+    ) {
+      setProductError(
+        "Please upload a product image."
+      );
+      return;
+    }
+
+    try {
+      setLoadingProducts(true);
+      setProductError("");
+
+      const productData = {
+        name: productForm.name.trim(),
+        price: Number(productForm.price),
+        category: productForm.category.trim(),
+        description:
+          productForm.description.trim(),
+        images: [...productForm.images],
+        stock: Number(productForm.stock || 0),
+      };
+
+      const response = await API.post(
+        "/products",
+        productData
+      );
+
+      const newProduct =
+        response.data?.product ||
+        response.data;
+
+      setProducts((current) => [
+        newProduct,
+        ...current,
+      ]);
+
+      setDashboardStats((current) => ({
+        ...current,
+        products: current.products + 1,
+      }));
+
+      setProductForm({
+        name: "",
+        price: "",
+        category: "",
+        description: "",
+        images: [],
+        stock: "1",
+      });
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      setShowProductForm(false);
+    } catch (error) {
+      console.error(
+        "Add Product Error:",
+        error
+      );
+
+      setProductError(
+        error.response?.data?.message ||
+          "Failed to add product."
+      );
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  // =========================
+  // DELETE PRODUCT
+  // =========================
+
+  const deleteProduct = async (productId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await API.delete(
+        `/products/${productId}`
+      );
+
+      setProducts((current) =>
+        current.filter(
+          (product) =>
+            product._id !== productId
+        )
+      );
+
+      setDashboardStats((current) => ({
+        ...current,
+        products: Math.max(
+          0,
+          current.products - 1
+        ),
+      }));
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Failed to delete product."
+      );
+    }
+  };
+
+  // =========================
+  // INITIAL LOAD
+  // =========================
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token");
 
     if (!token) {
       navigate("/login");
@@ -155,18 +750,20 @@ function AdminDashboard() {
 
     fetchUsers();
     fetchDashboardStats();
+    fetchProducts();
+    fetchReports();
+    fetchComplaints();
   }, []);
 
-  // =========================================================
-  // SEARCH USERS
-  // =========================================================
+  // =========================
+  // SEARCH
+  // =========================
 
   const filteredUsers = useMemo(() => {
-    const searchText = search.toLowerCase().trim();
+    const searchText =
+      search.toLowerCase().trim();
 
-    if (!searchText) {
-      return users;
-    }
+    if (!searchText) return users;
 
     return users.filter((user) =>
       `${user.fullName || ""} ${
@@ -177,9 +774,9 @@ function AdminDashboard() {
     );
   }, [users, search]);
 
-  // =========================================================
-  // BLOCK / UNBLOCK USER
-  // =========================================================
+  // =========================
+  // USER STATUS
+  // =========================
 
   const toggleUserStatus = async (user) => {
     try {
@@ -193,16 +790,13 @@ function AdminDashboard() {
         await fetchUsers();
         await fetchDashboardStats();
 
-        if (selectedUser?._id === user._id) {
+        if (
+          selectedUser?._id === user._id
+        ) {
           setSelectedUser(null);
         }
       }
     } catch (error) {
-      console.error(
-        "Update User Status Error:",
-        error
-      );
-
       alert(
         error.response?.data?.message ||
           "Failed to update user status."
@@ -210,18 +804,14 @@ function AdminDashboard() {
     }
   };
 
-  // =========================================================
-  // OPEN DELETE MODAL
-  // =========================================================
+  // =========================
+  // DELETE USER
+  // =========================
 
   const openDeleteModal = (user) => {
     setUserToDelete(user);
     setShowDeleteModal(true);
   };
-
-  // =========================================================
-  // DELETE USER
-  // =========================================================
 
   const deleteUser = async () => {
     if (!userToDelete) return;
@@ -241,11 +831,6 @@ function AdminDashboard() {
         await fetchDashboardStats();
       }
     } catch (error) {
-      console.error(
-        "Delete User Error:",
-        error
-      );
-
       alert(
         error.response?.data?.message ||
           "Failed to delete user."
@@ -253,9 +838,9 @@ function AdminDashboard() {
     }
   };
 
-  // =========================================================
+  // =========================
   // MENU
-  // =========================================================
+  // =========================
 
   const handleMenuClick = (menu) => {
     setActiveMenu(menu);
@@ -263,26 +848,44 @@ function AdminDashboard() {
     setSelectedUser(null);
     setUserError("");
     setDashboardError("");
+    setProductError("");
+    setReportError("");
+    setComplaintError("");
 
-    // Refresh actual data whenever Dashboard / Users is opened.
     if (menu === "Dashboard") {
       fetchDashboardStats();
       fetchUsers();
+      fetchProducts();
+      fetchReports();
+      fetchComplaints();
     }
 
     if (menu === "Users") {
       fetchUsers();
     }
+
+    if (menu === "Products") {
+      fetchProducts();
+    }
+
+    if (menu === "Reports") {
+      fetchReports();
+    }
+
+    if (menu === "Complaints") {
+      fetchComplaints();
+    }
   };
 
-  // =========================================================
+  // =========================
   // LOGOUT
-  // =========================================================
+  // =========================
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm(
-      "Are you sure you want to logout?"
-    );
+    const confirmLogout =
+      window.confirm(
+        "Are you sure you want to logout?"
+      );
 
     if (confirmLogout) {
       localStorage.removeItem("token");
@@ -290,38 +893,33 @@ function AdminDashboard() {
     }
   };
 
-  // =========================================================
+  // =========================
   // RENDER
-  // =========================================================
+  // =========================
 
   return (
     <div className="admin-dashboard">
 
-      {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
+      {/* SIDEBAR */}
 
       <aside className="admin-sidebar">
 
         <div>
 
-          {/* BRAND */}
-
           <div className="admin-brand">
-
             <div className="brand-icon">
               C
             </div>
 
             <div>
               <h2>C-Mart</h2>
-              <span>Admin Panel</span>
+              <span>Admin Dashboard</span>
             </div>
-
           </div>
 
-
-          {/* NAVIGATION */}
+          <div className="sidebar-section-title">
+            MAIN MENU
+          </div>
 
           <nav className="admin-nav">
 
@@ -335,10 +933,9 @@ function AdminDashboard() {
                 handleMenuClick("Dashboard")
               }
             >
-              <span>📊</span>
+              <span>⌂</span>
               Dashboard
             </button>
-
 
             <button
               className={
@@ -354,7 +951,6 @@ function AdminDashboard() {
               Users
             </button>
 
-
             <button
               className={
                 activeMenu === "Products"
@@ -368,7 +964,6 @@ function AdminDashboard() {
               <span>📦</span>
               Products
             </button>
-
 
             <button
               className={
@@ -384,7 +979,6 @@ function AdminDashboard() {
               Reports
             </button>
 
-
             <button
               className={
                 activeMenu === "Complaints"
@@ -392,10 +986,12 @@ function AdminDashboard() {
                   : ""
               }
               onClick={() =>
-                handleMenuClick("Complaints")
+                handleMenuClick(
+                  "Complaints"
+                )
               }
             >
-              <span>⚠️</span>
+              <span>⚠</span>
               Complaints
             </button>
 
@@ -403,23 +999,39 @@ function AdminDashboard() {
 
         </div>
 
+        <div className="sidebar-bottom">
 
-        {/* LOGOUT */}
+          <div className="admin-sidebar-profile">
 
-        <button
-          className="logout-btn"
-          onClick={handleLogout}
-        >
-          <span>↪</span>
-          Logout
-        </button>
+            <div className="sidebar-avatar">
+              A
+            </div>
+
+            <div>
+              <strong>
+                Administrator
+              </strong>
+
+              <span>
+                Admin Account
+              </span>
+            </div>
+
+          </div>
+
+          <button
+            className="logout-btn"
+            onClick={handleLogout}
+          >
+            <span>↪</span>
+            Logout
+          </button>
+
+        </div>
 
       </aside>
 
-
-      {/* =====================================================
-          MAIN
-      ====================================================== */}
+      {/* MAIN */}
 
       <main className="admin-main">
 
@@ -428,6 +1040,10 @@ function AdminDashboard() {
         <header className="admin-header">
 
           <div>
+
+            <div className="breadcrumb">
+              C-Mart / {activeMenu}
+            </div>
 
             <h1>
               {activeMenu === "Dashboard"
@@ -438,13 +1054,10 @@ function AdminDashboard() {
             <p>
               {activeMenu === "Dashboard"
                 ? "Monitor and manage your C-Mart marketplace."
-                : `Manage ${activeMenu.toLowerCase()} from here.`}
+                : `Manage ${activeMenu.toLowerCase()} from your admin panel.`}
             </p>
 
           </div>
-
-
-          {/* ADMIN PROFILE */}
 
           <div className="admin-user">
 
@@ -453,7 +1066,10 @@ function AdminDashboard() {
             </div>
 
             <div>
-              <strong>Administrator</strong>
+              <strong>
+                Administrator
+              </strong>
+
               <span>Admin</span>
             </div>
 
@@ -461,275 +1077,381 @@ function AdminDashboard() {
 
         </header>
 
-
-        {/* =====================================================
+        {/* =========================
             DASHBOARD
-        ====================================================== */}
+        ========================= */}
 
         {activeMenu === "Dashboard" && (
-
           <>
 
-            {/* STAT CARDS */}
+            <section className="welcome-banner">
+
+              <div>
+
+                <span className="welcome-label">
+                  ADMINISTRATION
+                </span>
+
+                <h2>
+                  Welcome back, Administrator 👋
+                </h2>
+
+                <p>
+                  Here's what's happening
+                  with your C-Mart marketplace
+                  today.
+                </p>
+
+              </div>
+
+              <div className="welcome-icon">
+                📊
+              </div>
+
+            </section>
 
             <section className="stats-grid">
 
-              {/* TOTAL USERS */}
-
               <button
-                className="stat-card"
+                className="stat-card users-card"
                 onClick={() =>
                   handleMenuClick("Users")
                 }
               >
 
-                <div className="stat-icon">
-                  👥
-                </div>
+                <div className="stat-top">
 
-                <div>
+                  <div className="stat-icon">
+                    👥
+                  </div>
 
-                  <span>Total Users</span>
-
-                  <strong>
-                    {loadingDashboard
-                      ? "..."
-                      : dashboardStats.totalUsers}
-                  </strong>
-
-                  <small>
-                    {dashboardStats.activeUsers} active users
-                  </small>
+                  <span className="stat-link">
+                    View →
+                  </span>
 
                 </div>
+
+                <span className="stat-title">
+                  Total Users
+                </span>
+
+                <strong>
+                  {loadingDashboard
+                    ? "..."
+                    : dashboardStats.totalUsers}
+                </strong>
+
+                <small>
+                  🟢{" "}
+                  {dashboardStats.activeUsers}{" "}
+                  active users
+                </small>
 
               </button>
 
-
-              {/* PRODUCTS */}
-
               <button
-                className="stat-card"
+                className="stat-card products-card"
                 onClick={() =>
                   handleMenuClick("Products")
                 }
               >
 
-                <div className="stat-icon">
-                  📦
-                </div>
+                <div className="stat-top">
 
-                <div>
+                  <div className="stat-icon">
+                    📦
+                  </div>
 
-                  <span>Total Products</span>
-
-                  <strong>
-                    {dashboardStats.products}
-                  </strong>
-
-                  <small>
-                    Product management
-                  </small>
+                  <span className="stat-link">
+                    View →
+                  </span>
 
                 </div>
+
+                <span className="stat-title">
+                  Total Products
+                </span>
+
+                <strong>
+                  {dashboardStats.products}
+                </strong>
+
+                <small>
+                  Manage marketplace products
+                </small>
 
               </button>
 
-
-              {/* REPORTS */}
-
               <button
-                className="stat-card"
+                className="stat-card reports-card"
                 onClick={() =>
                   handleMenuClick("Reports")
                 }
               >
 
-                <div className="stat-icon">
-                  🚩
-                </div>
+                <div className="stat-top">
 
-                <div>
+                  <div className="stat-icon">
+                    🚩
+                  </div>
 
-                  <span>Reports</span>
-
-                  <strong>
-                    {dashboardStats.reports}
-                  </strong>
-
-                  <small>
-                    Review reports
-                  </small>
+                  <span className="stat-link">
+                    Review →
+                  </span>
 
                 </div>
+
+                <span className="stat-title">
+                  Reports
+                </span>
+
+                <strong>
+                  {dashboardStats.reports}
+                </strong>
+
+                <small>
+                  Review reported content
+                </small>
 
               </button>
 
-
-              {/* COMPLAINTS */}
-
               <button
-                className="stat-card"
+                className="stat-card complaints-card"
                 onClick={() =>
-                  handleMenuClick("Complaints")
+                  handleMenuClick(
+                    "Complaints"
+                  )
                 }
               >
 
-                <div className="stat-icon">
-                  ⚠️
-                </div>
+                <div className="stat-top">
 
-                <div>
+                  <div className="stat-icon">
+                    ⚠
+                  </div>
 
-                  <span>Complaints</span>
-
-                  <strong>
-                    {dashboardStats.complaints}
-                  </strong>
-
-                  <small>
-                    Review complaints
-                  </small>
+                  <span className="stat-link">
+                    Review →
+                  </span>
 
                 </div>
+
+                <span className="stat-title">
+                  Complaints
+                </span>
+
+                <strong>
+                  {dashboardStats.complaints}
+                </strong>
+
+                <small>
+                  Review user complaints
+                </small>
 
               </button>
 
             </section>
 
-
-            {/* DASHBOARD ERROR */}
-
             {dashboardError && (
-              <div className="no-data">
-                {dashboardError}
+              <div className="alert-box">
+                ⚠ {dashboardError}
               </div>
             )}
 
+            <section className="dashboard-grid">
 
-            {/* QUICK ACTIONS */}
+              <div className="dashboard-panel">
 
-            <section className="dashboard-panel">
+                <div className="panel-header">
 
-              <div className="panel-header">
+                  <div>
 
-                <div>
+                    <h2>
+                      Quick Actions
+                    </h2>
 
-                  <h2>
-                    Quick Actions
-                  </h2>
+                    <p>
+                      Quickly access common
+                      administration tasks.
+                    </p>
 
-                  <p>
-                    Frequently used admin actions
-                  </p>
+                  </div>
+
+                </div>
+
+                <div className="quick-action-grid">
+
+                  <button
+                    onClick={() =>
+                      handleMenuClick("Users")
+                    }
+                  >
+                    <span>👥</span>
+
+                    <div>
+                      <strong>
+                        Manage Users
+                      </strong>
+
+                      <small>
+                        View and control users
+                      </small>
+                    </div>
+
+                    <b>→</b>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleMenuClick(
+                        "Products"
+                      )
+                    }
+                  >
+                    <span>📦</span>
+
+                    <div>
+                      <strong>
+                        Manage Products
+                      </strong>
+
+                      <small>
+                        Add or remove products
+                      </small>
+                    </div>
+
+                    <b>→</b>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleMenuClick(
+                        "Reports"
+                      )
+                    }
+                  >
+                    <span>🚩</span>
+
+                    <div>
+                      <strong>
+                        Review Reports
+                      </strong>
+
+                      <small>
+                        Check reported content
+                      </small>
+                    </div>
+
+                    <b>→</b>
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleMenuClick(
+                        "Complaints"
+                      )
+                    }
+                  >
+                    <span>⚠</span>
+
+                    <div>
+                      <strong>
+                        View Complaints
+                      </strong>
+
+                      <small>
+                        Handle user complaints
+                      </small>
+                    </div>
+
+                    <b>→</b>
+                  </button>
 
                 </div>
 
               </div>
 
+              <div className="dashboard-panel">
 
-              <div className="quick-actions">
+                <div className="panel-header">
 
-                <button
-                  onClick={() =>
-                    handleMenuClick("Users")
-                  }
-                >
-                  👥 Manage Users
-                </button>
+                  <div>
 
+                    <h2>
+                      User Overview
+                    </h2>
 
-                <button
-                  onClick={() =>
-                    handleMenuClick("Products")
-                  }
-                >
-                  📦 Manage Products
-                </button>
+                    <p>
+                      Current account status
+                    </p>
 
-
-                <button
-                  onClick={() =>
-                    handleMenuClick("Reports")
-                  }
-                >
-                  🚩 Review Reports
-                </button>
-
-
-                <button
-                  onClick={() =>
-                    handleMenuClick("Complaints")
-                  }
-                >
-                  ⚠️ View Complaints
-                </button>
-
-              </div>
-
-            </section>
-
-
-            {/* USER OVERVIEW */}
-
-            <section className="dashboard-panel">
-
-              <div className="panel-header">
-
-                <div>
-
-                  <h2>
-                    User Overview
-                  </h2>
-
-                  <p>
-                    Current user account status
-                  </p>
+                  </div>
 
                 </div>
 
-              </div>
+                <div className="user-overview">
 
+                  <div className="overview-item">
 
-              <div className="quick-actions">
+                    <span className="overview-icon">
+                      👥
+                    </span>
 
-                <button
-                  onClick={() =>
-                    handleMenuClick("Users")
-                  }
-                >
-                  👥 Total Users
-                  <br />
-                  <strong>
-                    {dashboardStats.totalUsers}
-                  </strong>
-                </button>
+                    <div>
 
+                      <small>
+                        Total Users
+                      </small>
 
-                <button
-                  onClick={() =>
-                    handleMenuClick("Users")
-                  }
-                >
-                  🟢 Active Users
-                  <br />
-                  <strong>
-                    {dashboardStats.activeUsers}
-                  </strong>
-                </button>
+                      <strong>
+                        {dashboardStats.totalUsers}
+                      </strong>
 
+                    </div>
 
-                <button
-                  onClick={() =>
-                    handleMenuClick("Users")
-                  }
-                >
-                  🔴 Blocked Users
-                  <br />
-                  <strong>
-                    {dashboardStats.blockedUsers}
-                  </strong>
-                </button>
+                  </div>
+
+                  <div className="overview-item">
+
+                    <span className="overview-icon">
+                      🟢
+                    </span>
+
+                    <div>
+
+                      <small>
+                        Active Users
+                      </small>
+
+                      <strong>
+                        {dashboardStats.activeUsers}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                  <div className="overview-item">
+
+                    <span className="overview-icon">
+                      🔴
+                    </span>
+
+                    <div>
+
+                      <small>
+                        Blocked Users
+                      </small>
+
+                      <strong>
+                        {dashboardStats.blockedUsers}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                </div>
 
               </div>
 
@@ -738,13 +1460,11 @@ function AdminDashboard() {
           </>
         )}
 
-
-        {/* =====================================================
+        {/* =========================
             USERS
-        ====================================================== */}
+        ========================= */}
 
         {activeMenu === "Users" && (
-
           <section className="management-panel">
 
             <div className="panel-header">
@@ -752,26 +1472,192 @@ function AdminDashboard() {
               <div>
 
                 <h2>
-                  Manage Users
+                  User Management
                 </h2>
 
                 <p>
-                  View and manage registered C-Mart users.
+                  View, block or remove
+                  registered C-Mart users.
                 </p>
 
               </div>
 
+              <div className="panel-actions">
 
-              <span className="record-count">
-                {filteredUsers.length} Users
-              </span>
+                <span className="record-count">
+                  {filteredUsers.length} Users
+                </span>
+
+                <button
+                  className="primary-btn"
+                  type="button"
+                  onClick={() => {
+                    setShowAddUserForm(
+                      (current) => !current
+                    );
+
+                    setAddUserError("");
+                  }}
+                >
+                  {showAddUserForm
+                    ? "Close Form"
+                    : "+ Add User"}
+                </button>
+
+              </div>
 
             </div>
 
+            {/* ADD USER FORM */}
+
+            {showAddUserForm && (
+              <form
+                onSubmit={addUser}
+                className="product-form"
+              >
+
+                <div className="form-heading">
+
+                  <div>
+
+                    <h3>
+                      Add New User
+                    </h3>
+
+                    <p>
+                      Create a new C-Mart
+                      user account.
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <div className="form-grid">
+
+                  <div className="form-group">
+
+                    <label>
+                      Full Name
+                    </label>
+
+                    <input
+                      type="text"
+                      name="fullName"
+                      placeholder="Enter full name"
+                      value={newUser.fullName}
+                      onChange={
+                        handleNewUserChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      Email
+                    </label>
+
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Enter email address"
+                      value={newUser.email}
+                      onChange={
+                        handleNewUserChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      Password
+                    </label>
+
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Create password"
+                      value={newUser.password}
+                      onChange={
+                        handleNewUserChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      College ID
+                    </label>
+
+                    <input
+                      type="text"
+                      name="collegeId"
+                      placeholder="Enter college ID"
+                      value={newUser.collegeId}
+                      onChange={
+                        handleNewUserChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      Phone Number
+                    </label>
+
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      placeholder="Enter phone number"
+                      value={
+                        newUser.phoneNumber
+                      }
+                      onChange={
+                        handleNewUserChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                </div>
+
+                {addUserError && (
+                  <div className="form-error">
+                    ⚠ {addUserError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={addingUser}
+                >
+                  {addingUser
+                    ? "Adding User..."
+                    : "Add User"}
+                </button>
+
+              </form>
+            )}
 
             {/* SEARCH */}
 
             <div className="search-box">
+
+              <span>⌕</span>
 
               <input
                 type="text"
@@ -784,46 +1670,33 @@ function AdminDashboard() {
 
             </div>
 
-
-            {/* LOADING */}
-
             {loadingUsers && (
-
               <div className="no-data">
 
                 <strong>
                   Loading users...
                 </strong>
 
-                Please wait while user data is loaded.
+                Please wait.
 
               </div>
-
             )}
 
+            {userError &&
+              !loadingUsers && (
+                <div className="no-data">
 
-            {/* ERROR */}
+                  <strong>
+                    Unable to load users
+                  </strong>
 
-            {userError && !loadingUsers && (
+                  {userError}
 
-              <div className="no-data">
-
-                <strong>
-                  Unable to load users
-                </strong>
-
-                {userError}
-
-              </div>
-
-            )}
-
-
-            {/* USER TABLE */}
+                </div>
+              )}
 
             {!loadingUsers &&
               !userError && (
-
                 <div className="table-container">
 
                   <table>
@@ -831,53 +1704,33 @@ function AdminDashboard() {
                     <thead>
 
                       <tr>
-
-                        <th>
-                          User
-                        </th>
-
-                        <th>
-                          College ID
-                        </th>
-
-                        <th>
-                          Role
-                        </th>
-
-                        <th>
-                          Status
-                        </th>
-
-                        <th>
-                          Actions
-                        </th>
-
+                        <th>User</th>
+                        <th>College ID</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
                       </tr>
 
                     </thead>
-
 
                     <tbody>
 
                       {filteredUsers.map(
                         (user) => (
-
-                          <tr key={user._id}>
-
-                            {/* USER */}
+                          <tr
+                            key={user._id}
+                          >
 
                             <td>
 
                               <div className="user-cell">
 
                                 <div className="user-avatar">
-
                                   {user.fullName
                                     ?.charAt(0)
-                                    ?.toUpperCase() || "U"}
-
+                                    ?.toUpperCase() ||
+                                    "U"}
                                 </div>
-
 
                                 <div>
 
@@ -897,30 +1750,19 @@ function AdminDashboard() {
 
                             </td>
 
-
-                            {/* COLLEGE ID */}
-
                             <td>
                               {user.collegeId ||
                                 "Not available"}
                             </td>
 
-
-                            {/* ROLE */}
-
                             <td>
 
                               <span className="role-badge">
-
                                 {user.role ||
                                   "user"}
-
                               </span>
 
                             </td>
-
-
-                            {/* STATUS */}
 
                             <td>
 
@@ -932,16 +1774,11 @@ function AdminDashboard() {
                                     : "status active-status"
                                 }
                               >
-
                                 {user.status ||
                                   "Active"}
-
                               </span>
 
                             </td>
-
-
-                            {/* ACTIONS */}
 
                             <td>
 
@@ -958,7 +1795,6 @@ function AdminDashboard() {
                                   View
                                 </button>
 
-
                                 <button
                                   className="block-btn"
                                   onClick={() =>
@@ -967,14 +1803,11 @@ function AdminDashboard() {
                                     )
                                   }
                                 >
-
                                   {user.status ===
                                   "Blocked"
                                     ? "Unblock"
                                     : "Block"}
-
                                 </button>
-
 
                                 <button
                                   className="delete-btn"
@@ -992,7 +1825,6 @@ function AdminDashboard() {
                             </td>
 
                           </tr>
-
                         )
                       )}
 
@@ -1000,82 +1832,416 @@ function AdminDashboard() {
 
                   </table>
 
-
-                  {/* NO SEARCH RESULT */}
-
                   {filteredUsers.length ===
                     0 && (
-
                     <div className="no-data">
 
                       <strong>
                         No users found
                       </strong>
 
-                      Try searching with another
-                      name, email or college ID.
+                      Try another search.
 
                     </div>
+                  )}
 
+                </div>
+              )}
+
+          </section>
+        )}
+
+        {/* =========================
+            PRODUCTS
+        ========================= */}
+
+        {activeMenu === "Products" && (
+          <section className="management-panel">
+
+            <div className="panel-header">
+
+              <div>
+
+                <h2>
+                  Product Management
+                </h2>
+
+                <p>
+                  Add and manage products
+                  available in C-Mart.
+                </p>
+
+              </div>
+
+              <div className="panel-actions">
+
+                <span className="record-count">
+                  {products.length} Products
+                </span>
+
+                <button
+                  className="primary-btn"
+                  type="button"
+                  onClick={() => {
+                    setShowProductForm(
+                      (current) => !current
+                    );
+
+                    setProductError("");
+                  }}
+                >
+                  {showProductForm
+                    ? "Close Form"
+                    : "+ Add Product"}
+                </button>
+
+              </div>
+
+            </div>
+
+            {showProductForm && (
+              <form
+                onSubmit={addProduct}
+                className="product-form"
+              >
+
+                <div className="form-heading">
+
+                  <div>
+
+                    <h3>
+                      Add New Product
+                    </h3>
+
+                    <p>
+                      Enter product details
+                      below.
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <div className="form-grid">
+
+                  <div className="form-group">
+
+                    <label>
+                      Product Name
+                    </label>
+
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Enter product name"
+                      value={
+                        productForm.name
+                      }
+                      onChange={
+                        handleProductInputChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      Price
+                    </label>
+
+                    <input
+                      type="number"
+                      name="price"
+                      placeholder="Enter price"
+                      min="0"
+                      value={
+                        productForm.price
+                      }
+                      onChange={
+                        handleProductInputChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      Category
+                    </label>
+
+                    <input
+                      type="text"
+                      name="category"
+                      placeholder="Books, Gadgets, Cycles..."
+                      value={
+                        productForm.category
+                      }
+                      onChange={
+                        handleProductInputChange
+                      }
+                      required
+                    />
+
+                  </div>
+
+                  <div className="form-group">
+
+                    <label>
+                      Stock
+                    </label>
+
+                    <input
+                      type="number"
+                      name="stock"
+                      placeholder="Stock quantity"
+                      min="0"
+                      value={
+                        productForm.stock
+                      }
+                      onChange={
+                        handleProductInputChange
+                      }
+                    />
+
+                  </div>
+
+                </div>
+
+                <div className="form-group">
+
+                  <label>
+                    Description
+                  </label>
+
+                  <textarea
+                    name="description"
+                    placeholder="Enter product description"
+                    value={
+                      productForm.description
+                    }
+                    onChange={
+                      handleProductInputChange
+                    }
+                    rows="4"
+                  />
+
+                </div>
+
+                <div className="upload-section">
+
+                  <label>
+                    Product Image
+                  </label>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    name="image"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={
+                      handleImageUpload
+                    }
+                    disabled={
+                      uploadingImage
+                    }
+                  />
+
+                  {uploadingImage && (
+                    <p className="uploading-text">
+                      Uploading image...
+                    </p>
+                  )}
+
+                  {productForm.images?.length >
+                    0 && (
+                    <div className="image-preview">
+
+                      <img
+                        src={
+                          productForm.images[0]
+                        }
+                        alt="Product preview"
+                      />
+
+                      <div>
+
+                        <strong>
+                          Image uploaded
+                        </strong>
+
+                        <span>
+                          Product image is ready
+                          to be added.
+                        </span>
+
+                      </div>
+
+                    </div>
                   )}
 
                 </div>
 
+                {productError && (
+                  <div className="form-error">
+                    ⚠ {productError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={
+                    loadingProducts ||
+                    uploadingImage
+                  }
+                >
+                  {uploadingImage
+                    ? "Uploading..."
+                    : loadingProducts
+                    ? "Adding..."
+                    : "Add Product"}
+                </button>
+
+              </form>
+            )}
+
+            {!showProductForm &&
+              productError && (
+                <div className="form-error">
+                  ⚠ {productError}
+                </div>
               )}
 
-          </section>
+            {loadingProducts &&
+              products.length === 0 && (
+                <div className="no-data">
 
-        )}
+                  <strong>
+                    Loading products...
+                  </strong>
 
+                </div>
+              )}
 
-        {/* =====================================================
-            PRODUCTS
-        ====================================================== */}
+            {!loadingProducts &&
+              products.length === 0 &&
+              !productError && (
+                <div className="empty-products">
 
-        {activeMenu === "Products" && (
+                  <div>📦</div>
 
-          <section className="management-panel">
+                  <h3>
+                    No Products Yet
+                  </h3>
 
-            <div className="panel-header">
+                  <p>
+                    Start adding products to
+                    your C-Mart marketplace.
+                  </p>
 
-              <div>
+                  <button
+                    className="primary-btn"
+                    onClick={() =>
+                      setShowProductForm(true)
+                    }
+                  >
+                    + Add First Product
+                  </button>
 
-                <h2>
-                  Manage Products
-                </h2>
+                </div>
+              )}
 
-                <p>
-                  Product management will be connected
-                  to the Product module API.
-                </p>
+            {products.length > 0 && (
+              <div className="product-grid">
+
+                {products.map((product) => (
+                  <div
+                    className="product-card"
+                    key={product._id}
+                  >
+
+                    <div className="product-image">
+
+                      {product.images?.length >
+                      0 ? (
+                        <img
+                          src={
+                            product.images[0]
+                          }
+                          alt={
+                            product.name
+                          }
+                        />
+                      ) : (
+                        <span>📦</span>
+                      )}
+
+                    </div>
+
+                    <div className="product-info">
+
+                      <span className="product-category">
+                        {product.category}
+                      </span>
+
+                      <h3>
+                        {product.name}
+                      </h3>
+
+                      <p>
+                        {product.description ||
+                          "No description"}
+                      </p>
+
+                      <div className="product-bottom">
+
+                        <strong>
+                          ₹
+                          {Number(
+                            product.price || 0
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+                        </strong>
+
+                        <span>
+                          Stock:{" "}
+                          {product.stock}
+                        </span>
+
+                      </div>
+
+                      <button
+                        className="delete-btn product-delete"
+                        onClick={() =>
+                          deleteProduct(
+                            product._id
+                          )
+                        }
+                      >
+                        Delete Product
+                      </button>
+
+                    </div>
+
+                  </div>
+                ))}
 
               </div>
-
-            </div>
-
-
-            <div className="no-data">
-
-              <strong>
-                Product Management
-              </strong>
-
-              Product API integration will be connected
-              after the Product module is ready.
-
-            </div>
+            )}
 
           </section>
-
         )}
 
-
-        {/* =====================================================
+        {/* =========================
             REPORTS
-        ====================================================== */}
+        ========================= */}
 
         {activeMenu === "Reports" && (
-
           <section className="management-panel">
 
             <div className="panel-header">
@@ -1083,40 +2249,185 @@ function AdminDashboard() {
               <div>
 
                 <h2>
-                  Reports
+                  Reports Management
                 </h2>
 
                 <p>
-                  Review reports submitted in C-Mart.
+                  Review reports submitted
+                  by C-Mart users.
                 </p>
+
+              </div>
+
+              <div className="panel-actions">
+
+                <span className="record-count">
+                  {reports.length} Reports
+                </span>
+
+                <button
+                  className="primary-btn"
+                  onClick={fetchReports}
+                  disabled={loadingReports}
+                >
+                  {loadingReports
+                    ? "Refreshing..."
+                    : "↻ Refresh"}
+                </button>
 
               </div>
 
             </div>
 
+            {reportError && (
+              <div className="form-error">
+                ⚠ {reportError}
+              </div>
+            )}
 
-            <div className="no-data">
+            {loadingReports ? (
+              <div className="no-data">
+                <strong>
+                  Loading reports...
+                </strong>
 
-              <strong>
-                Reports Management
-              </strong>
+                Please wait.
+              </div>
+            ) : reports.length === 0 ? (
+              <div className="no-data">
 
-              Reports API integration will be connected
-              after the Report module is ready.
+                <div style={{ fontSize: "40px" }}>
+                  🚩
+                </div>
 
-            </div>
+                <strong>
+                  No Reports Found
+                </strong>
+
+                <span>
+                  There are no reports submitted
+                  by users yet.
+                </span>
+
+              </div>
+            ) : (
+              <div className="table-container">
+
+                <table>
+
+                  <thead>
+
+                    <tr>
+                      <th>Reporter</th>
+                      <th>Email</th>
+                      <th>Reason</th>
+                      <th>Reported User</th>
+                      <th>Product</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {reports.map((report) => (
+                      <tr
+                        key={report._id}
+                      >
+
+                        <td>
+                          <strong>
+                            {report.reporterName ||
+                              "Unknown"}
+                          </strong>
+                        </td>
+
+                        <td>
+                          {report.reporterEmail ||
+                            "N/A"}
+                        </td>
+
+                        <td>
+                          {report.reason ||
+                            "N/A"}
+                        </td>
+
+                        <td>
+                          {report.reportedUser ||
+                            "N/A"}
+                        </td>
+
+                        <td>
+                          {report.reportedProduct ||
+                            "N/A"}
+                        </td>
+
+                        <td>
+
+                          <select
+                            className="status-select"
+                            value={
+                              report.status ||
+                              "Pending"
+                            }
+                            onChange={(e) =>
+                              updateReportStatus(
+                                report._id,
+                                e.target.value
+                              )
+                            }
+                          >
+
+                            <option value="Pending">
+                              Pending
+                            </option>
+
+                            <option value="Reviewed">
+                              Reviewed
+                            </option>
+
+                            <option value="Resolved">
+                              Resolved
+                            </option>
+
+                          </select>
+
+                        </td>
+
+                        <td>
+
+                          <button
+                            className="delete-btn"
+                            onClick={() =>
+                              deleteReport(
+                                report._id
+                              )
+                            }
+                          >
+                            Delete
+                          </button>
+
+                        </td>
+
+                      </tr>
+                    ))}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+            )}
 
           </section>
-
         )}
 
-
-        {/* =====================================================
+        {/* =========================
             COMPLAINTS
-        ====================================================== */}
+        ========================= */}
 
         {activeMenu === "Complaints" && (
-
           <section className="management-panel">
 
             <div className="panel-header">
@@ -1124,42 +2435,189 @@ function AdminDashboard() {
               <div>
 
                 <h2>
-                  Complaints
+                  Complaints Management
                 </h2>
 
                 <p>
-                  Review complaints submitted by users.
+                  Review complaints submitted
+                  by C-Mart users.
                 </p>
+
+              </div>
+
+              <div className="panel-actions">
+
+                <span className="record-count">
+                  {complaints.length} Complaints
+                </span>
+
+                <button
+                  className="primary-btn"
+                  onClick={fetchComplaints}
+                  disabled={
+                    loadingComplaints
+                  }
+                >
+                  {loadingComplaints
+                    ? "Refreshing..."
+                    : "↻ Refresh"}
+                </button>
 
               </div>
 
             </div>
 
+            {complaintError && (
+              <div className="form-error">
+                ⚠ {complaintError}
+              </div>
+            )}
 
-            <div className="no-data">
+            {loadingComplaints ? (
+              <div className="no-data">
 
-              <strong>
-                Complaints Management
-              </strong>
+                <strong>
+                  Loading complaints...
+                </strong>
 
-              Complaints API integration will be connected
-              after the Complaint module is ready.
+                Please wait.
 
-            </div>
+              </div>
+            ) : complaints.length === 0 ? (
+              <div className="no-data">
+
+                <div style={{ fontSize: "40px" }}>
+                  ⚠
+                </div>
+
+                <strong>
+                  No Complaints Found
+                </strong>
+
+                <span>
+                  There are no complaints
+                  submitted by users yet.
+                </span>
+
+              </div>
+            ) : (
+              <div className="table-container">
+
+                <table>
+
+                  <thead>
+
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Subject</th>
+                      <th>Description</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {complaints.map(
+                      (complaint) => (
+                        <tr
+                          key={
+                            complaint._id
+                          }
+                        >
+
+                          <td>
+                            <strong>
+                              {complaint.userName ||
+                                "Unknown"}
+                            </strong>
+                          </td>
+
+                          <td>
+                            {complaint.userEmail ||
+                              "N/A"}
+                          </td>
+
+                          <td>
+                            {complaint.subject ||
+                              "N/A"}
+                          </td>
+
+                          <td>
+                            {complaint.description ||
+                              "N/A"}
+                          </td>
+
+                          <td>
+
+                            <select
+                              className="status-select"
+                              value={
+                                complaint.status ||
+                                "Pending"
+                              }
+                              onChange={(e) =>
+                                updateComplaintStatus(
+                                  complaint._id,
+                                  e.target.value
+                                )
+                              }
+                            >
+
+                              <option value="Pending">
+                                Pending
+                              </option>
+
+                              <option value="In Progress">
+                                In Progress
+                              </option>
+
+                              <option value="Resolved">
+                                Resolved
+                              </option>
+
+                            </select>
+
+                          </td>
+
+                          <td>
+
+                            <button
+                              className="delete-btn"
+                              onClick={() =>
+                                deleteComplaint(
+                                  complaint._id
+                                )
+                              }
+                            >
+                              Delete
+                            </button>
+
+                          </td>
+
+                        </tr>
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+            )}
 
           </section>
-
         )}
 
       </main>
 
-
-      {/* =====================================================
+      {/* =========================
           VIEW USER MODAL
-      ====================================================== */}
+      ========================= */}
 
       {selectedUser && (
-
         <div
           className="modal-overlay"
           onClick={() =>
@@ -1183,7 +2641,6 @@ function AdminDashboard() {
               ×
             </button>
 
-
             <div className="modal-avatar">
 
               {selectedUser.fullName
@@ -1192,16 +2649,13 @@ function AdminDashboard() {
 
             </div>
 
-
             <h2>
               {selectedUser.fullName}
             </h2>
 
-
             <p className="modal-email">
               {selectedUser.email}
             </p>
-
 
             <div className="user-details">
 
@@ -1218,7 +2672,6 @@ function AdminDashboard() {
 
               </div>
 
-
               <div>
 
                 <label>
@@ -1232,7 +2685,6 @@ function AdminDashboard() {
 
               </div>
 
-
               <div>
 
                 <label>
@@ -1245,7 +2697,6 @@ function AdminDashboard() {
                 </span>
 
               </div>
-
 
               <div>
 
@@ -1262,7 +2713,6 @@ function AdminDashboard() {
 
             </div>
 
-
             <button
               className="modal-close-btn"
               onClick={() =>
@@ -1275,17 +2725,14 @@ function AdminDashboard() {
           </div>
 
         </div>
-
       )}
 
-
-      {/* =====================================================
-          DELETE MODAL
-      ====================================================== */}
+      {/* =========================
+          DELETE USER MODAL
+      ========================= */}
 
       {showDeleteModal &&
         userToDelete && (
-
           <div
             className="modal-overlay"
             onClick={() => {
@@ -1302,44 +2749,37 @@ function AdminDashboard() {
             >
 
               <div className="warning-icon">
-                ⚠️
+                ⚠
               </div>
-
 
               <h2>
                 Delete User?
               </h2>
 
-
               <p>
-
-                Are you sure you want to delete{" "}
-
+                Are you sure you want to
+                delete{" "}
                 <strong>
                   {userToDelete.fullName}
                 </strong>
-
                 ?
-
                 <br />
-
                 This action cannot be undone.
-
               </p>
-
 
               <div className="modal-actions">
 
                 <button
                   className="cancel-btn"
                   onClick={() => {
-                    setShowDeleteModal(false);
+                    setShowDeleteModal(
+                      false
+                    );
                     setUserToDelete(null);
                   }}
                 >
                   Cancel
                 </button>
-
 
                 <button
                   className="confirm-delete-btn"
@@ -1353,7 +2793,6 @@ function AdminDashboard() {
             </div>
 
           </div>
-
         )}
 
     </div>

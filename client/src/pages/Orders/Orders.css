@@ -1,0 +1,1003 @@
+/* =========================================================
+   C-MART — PREMIUM MY ORDERS PAGE
+========================================================= */
+
+.orders-page {
+  min-height: 100vh;
+  padding: 42px 6%;
+  background:
+    radial-gradient(circle at 5% 0%, rgba(99, 102, 241, 0.12), transparent 28%),
+    radial-gradient(circle at 95% 25%, rgba(124, 58, 237, 0.09), transparent 30%),
+    linear-gradient(135deg, #f8f9ff 0%, #f5f7fb 50%, #fafaff 100%);
+  color: #172033;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+
+/* =========================================================
+   TOP HEADER
+========================================================= */
+
+.orders-topbar {
+  max-width: 1180px;
+  margin: 0 auto 55px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+}
+
+.brand-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.orders-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 29px;
+  font-weight: 850;
+  letter-spacing: -1px;
+}
+
+.orders-brand span:last-child {
+  background: linear-gradient(135deg, #4338ca, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-icon {
+  width: 43px;
+  height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 8px 22px rgba(79, 70, 229, 0.25);
+  font-size: 22px;
+}
+
+.orders-subtitle {
+  margin: 8px 0 0 53px;
+  color: #7b8293;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.continue-shopping {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+  border: 1px solid #e1e4ef;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.continue-shopping:hover {
+  transform: translateY(-2px);
+  border-color: #c8c9ff;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(45, 50, 100, 0.1);
+}
+
+.continue-shopping .arrow {
+  font-size: 18px;
+  transition: transform 0.25s ease;
+}
+
+.continue-shopping:hover .arrow {
+  transform: translateX(4px);
+}
+
+
+/* =========================================================
+   PAGE INTRO
+========================================================= */
+
+.orders-intro {
+  max-width: 1180px;
+  margin: 0 auto 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+}
+
+.intro-content {
+  max-width: 720px;
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6366f1;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 1.8px;
+}
+
+.label-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6366f1;
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.1);
+}
+
+.orders-intro h1 {
+  margin: 12px 0 10px;
+  color: #171c2d;
+  font-size: clamp(38px, 5vw, 55px);
+  line-height: 1;
+  letter-spacing: -2.4px;
+  font-weight: 850;
+}
+
+.orders-intro h1 span {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.orders-intro p {
+  max-width: 670px;
+  margin: 0;
+  color: #737b8d;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+
+/* =========================================================
+   ORDER COUNT
+========================================================= */
+
+.orders-count {
+  min-width: 160px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #e5e7f0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(25, 30, 60, 0.06);
+}
+
+.count-icon {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: #f0f1ff;
+  font-size: 22px;
+}
+
+.count-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.count-details strong {
+  color: #262b3d;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.count-details span {
+  margin-top: 5px;
+  color: #858b9b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   ORDERS CONTAINER
+========================================================= */
+
+.orders-container {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* =========================================================
+   PREMIUM ORDER CARD
+========================================================= */
+
+.order-card {
+  position: relative;
+  overflow: hidden;
+  padding: 25px 27px 22px;
+  border: 1px solid #e5e7ef;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 8px 30px rgba(30, 35, 65, 0.055),
+    0 1px 2px rgba(30, 35, 65, 0.03);
+  transition: all 0.3s ease;
+}
+
+.order-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed, #8b5cf6);
+  opacity: 0;
+  transition: 0.3s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  border-color: #d9dafc;
+  box-shadow:
+    0 18px 45px rgba(30, 35, 65, 0.1),
+    0 3px 8px rgba(79, 70, 229, 0.05);
+}
+
+.order-card:hover::before {
+  opacity: 1;
+}
+
+
+/* =========================================================
+   CARD TOP
+========================================================= */
+
+.order-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.order-number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-number span {
+  color: #9a9faf;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.2px;
+}
+
+.order-number strong {
+  color: #444b5d;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.order-divider {
+  height: 1px;
+  margin: 18px 0 22px;
+  background: #edf0f5;
+}
+
+
+/* =========================================================
+   PRODUCT
+========================================================= */
+
+.order-main {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  min-width: 0;
+}
+
+.product-image-wrapper {
+  padding: 4px;
+  border-radius: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.12),
+    rgba(124, 58, 237, 0.08)
+  );
+}
+
+.product-image {
+  width: 82px;
+  height: 82px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 17px;
+  background: linear-gradient(135deg, #f0f2ff, #f8f4ff);
+  font-size: 39px;
+  box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.05);
+}
+
+.product-info {
+  min-width: 0;
+}
+
+.product-category {
+  display: inline-block;
+  margin-bottom: 7px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #f0f1ff;
+  color: #5b5fe8;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.product-info h2 {
+  margin: 0 0 9px;
+  color: #202638;
+  font-size: 19px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.order-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  color: #8a91a1;
+  font-size: 11px;
+}
+
+.meta-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c7cbd5;
+}
+
+
+/* =========================================================
+   STATUS BADGE
+========================================================= */
+
+.order-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.order-status.delivered {
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.order-status.processing {
+  color: #d97706;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+}
+
+
+/* =========================================================
+   ORDER SUMMARY
+========================================================= */
+
+.order-summary {
+  margin-top: 25px;
+  padding: 17px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  border: 1px solid #eef0f5;
+  border-radius: 15px;
+  background: #fafbfe;
+}
+
+.price-section,
+.status-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-section span,
+.status-label {
+  margin-bottom: 5px;
+  color: #9298a7;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.price-section strong {
+  color: #202638;
+  font-size: 21px;
+  font-weight: 850;
+}
+
+.price-section small {
+  margin-top: 3px;
+  color: #16a34a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status-large.delivered {
+  color: #059669;
+}
+
+.status-large.processing {
+  color: #d97706;
+}
+
+
+/* =========================================================
+   ORDER PROGRESS
+========================================================= */
+
+.order-progress {
+  margin: 25px 5px 4px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.progress-step {
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.progress-step span {
+  width: 27px;
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eef0f5;
+  color: #949aa8;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.progress-step small {
+  color: #969baa;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.progress-step.active span {
+  background: #eeeefe;
+  color: #4f46e5;
+  box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.07);
+}
+
+.progress-step.completed span {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.08);
+}
+
+.progress-step.completed small {
+  color: #059669;
+}
+
+.progress-line {
+  height: 2px;
+  flex: 1;
+  margin-bottom: 23px;
+  background: #e5e7ed;
+}
+
+.progress-line.active {
+  background: linear-gradient(90deg, #10b981, #6366f1);
+}
+
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.order-actions {
+  margin-top: 22px;
+  padding-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #edf0f4;
+}
+
+.view-order-btn,
+.review-button,
+.track-button {
+  min-height: 42px;
+  padding: 10px 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 11px;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.view-order-btn {
+  border: 1px solid #dfe2ea;
+  background: #ffffff;
+  color: #4a5060;
+}
+
+.view-order-btn:hover {
+  transform: translateY(-2px);
+  border-color: #c9cdd8;
+  background: #f9fafc;
+}
+
+.review-button {
+  border: none;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 7px 20px rgba(79, 70, 229, 0.2);
+}
+
+.review-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 11px 27px rgba(79, 70, 229, 0.3);
+}
+
+.review-arrow {
+  margin-left: 2px;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.review-button:hover .review-arrow {
+  transform: translateX(3px);
+}
+
+.track-button {
+  border: 1px solid #dbe4f3;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.track-button:hover {
+  transform: translateY(-2px);
+  background: #e0efff;
+  border-color: #bfdbfe;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-orders {
+  padding: 85px 25px;
+  text-align: center;
+  border: 1px solid #e5e7ef;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 12px 35px rgba(25, 30, 50, 0.06);
+}
+
+.empty-icon {
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #eef0ff, #f7f2ff);
+  font-size: 37px;
+}
+
+.empty-orders h2 {
+  margin: 0 0 8px;
+  color: #202638;
+  font-size: 24px;
+}
+
+.empty-orders p {
+  margin: 0 0 24px;
+  color: #858b9a;
+  font-size: 13px;
+}
+
+.empty-orders button {
+  padding: 12px 21px;
+  border: none;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 7px 18px rgba(79, 70, 229, 0.2);
+  transition: 0.25s ease;
+}
+
+.empty-orders button:hover {
+  transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   REVIEW BANNER
+========================================================= */
+
+.review-info-banner {
+  max-width: 1180px;
+  margin: 28px auto 0;
+  padding: 21px 23px;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  border: 1px solid #e0e2ff;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(239, 240, 255, 0.95),
+      rgba(248, 244, 255, 0.95)
+    );
+}
+
+.review-info-icon {
+  width: 49px;
+  height: 49px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #ffffff;
+  font-size: 22px;
+  box-shadow: 0 7px 18px rgba(50, 50, 100, 0.08);
+}
+
+.review-info-content {
+  flex: 1;
+}
+
+.review-info-banner h3 {
+  margin: 0 0 5px;
+  color: #292d40;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.review-info-banner p {
+  margin: 0;
+  color: #73798a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.banner-arrow {
+  width: 37px;
+  height: 37px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  color: #6366f1;
+  font-size: 19px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.orders-footer {
+  max-width: 1180px;
+  margin: 32px auto 0;
+  padding-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #e5e7ef;
+  color: #9a9fad;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.orders-footer span:first-child {
+  color: #6366f1;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .orders-page {
+    padding: 32px 5%;
+  }
+
+  .orders-intro {
+    align-items: flex-start;
+  }
+
+  .orders-count {
+    min-width: 140px;
+  }
+
+  .order-progress {
+    max-width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .orders-page {
+    padding: 25px 17px;
+  }
+
+  .orders-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 40px;
+  }
+
+  .continue-shopping {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .orders-intro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .orders-intro h1 {
+    font-size: 40px;
+  }
+
+  .orders-count {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .order-card {
+    padding: 20px;
+    border-radius: 19px;
+  }
+
+  .order-card-top {
+    align-items: flex-start;
+  }
+
+  .order-main {
+    align-items: flex-start;
+  }
+
+  .product-image {
+    width: 70px;
+    height: 70px;
+    font-size: 32px;
+  }
+
+  .product-info h2 {
+    font-size: 16px;
+  }
+
+  .order-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .meta-divider {
+    display: none;
+  }
+
+  .order-summary {
+    align-items: flex-start;
+    padding: 15px;
+  }
+
+  .order-progress {
+    margin-left: 0;
+  }
+
+  .progress-step {
+    min-width: 55px;
+  }
+
+  .progress-step small {
+    font-size: 8px;
+  }
+
+  .order-actions {
+    flex-direction: column;
+  }
+
+  .view-order-btn,
+  .review-button,
+  .track-button {
+    width: 100%;
+  }
+
+  .review-info-banner {
+    align-items: flex-start;
+  }
+
+  .banner-arrow {
+    display: none;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+
+  .orders-page {
+    padding: 22px 13px;
+  }
+
+  .orders-brand {
+    font-size: 24px;
+  }
+
+  .brand-icon {
+    width: 39px;
+    height: 39px;
+    font-size: 19px;
+  }
+
+  .orders-subtitle {
+    margin-left: 49px;
+    font-size: 11px;
+  }
+
+  .orders-intro h1 {
+    font-size: 35px;
+  }
+
+  .orders-intro p {
+    font-size: 12px;
+  }
+
+  .order-card {
+    padding: 17px;
+  }
+
+  .order-number {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .order-status {
+    font-size: 10px;
+    padding: 6px 9px;
+  }
+
+  .product-image {
+    width: 62px;
+    height: 62px;
+    font-size: 28px;
+  }
+
+  .product-info h2 {
+    font-size: 15px;
+  }
+
+  .product-category {
+    font-size: 8px;
+  }
+
+  .order-summary {
+    gap: 12px;
+  }
+
+  .price-section strong {
+    font-size: 18px;
+  }
+
+  .status-large {
+    font-size: 11px;
+  }
+
+  .progress-step {
+    min-width: 45px;
+  }
+
+  .progress-step span {
+    width: 24px;
+    height: 24px;
+  }
+
+  .progress-line {
+    margin-bottom: 22px;
+  }
+
+  .review-info-banner {
+    padding: 17px;
+  }
+
+  .review-info-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+
+  .review-info-banner h3 {
+    font-size: 13px;
+  }
+
+  .review-info-banner p {
+    font-size: 10px;
+  }
+
+  .orders-footer {
+    font-size: 9px;
+  }
+
+}

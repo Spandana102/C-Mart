@@ -1,193 +1,466 @@
-/* ============================= */
-/* RENT PAGE */
-/* ============================= */
+/* =========================================
+   C-MART — RENT PAGE
+   Modern Student Rental Marketplace
+   ========================================= */
 
 .rent-container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 30px 20px;
+  padding: 45px 24px 70px;
   box-sizing: border-box;
 }
 
+
+/* =========================================
+   PAGE HEADER
+   ========================================= */
+
 .rent-container h1 {
   text-align: center;
+
+  margin: 0 0 10px;
+
+  color: #111827;
+
+  font-size: 38px;
+  font-weight: 800;
+
+  letter-spacing: -1px;
 }
 
 .rent-container > p {
   text-align: center;
-  margin-bottom: 30px;
+
+  margin: 0 auto 35px;
+
+  max-width: 650px;
+
+  color: #6b7280;
+
+  font-size: 16px;
+
+  line-height: 1.6;
 }
 
-/* ============================= */
-/* RENT PRODUCT LIST */
-/* ============================= */
+
+/* =========================================
+   RENT PRODUCT LIST
+   ========================================= */
 
 .rent-product-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(250px, 1fr));
+
   gap: 25px;
-  margin-top: 25px;
+
+  margin-top: 30px;
 }
 
 
-/* ============================= */
-/* RENT PRODUCT CARD */
-/* ============================= */
+/* =========================================
+   RENT PRODUCT CARD
+   ========================================= */
 
 .rent-product-card {
-  width: 250px;
+  width: 100%;
+
   padding: 15px;
+
   box-sizing: border-box;
 
-  border: 1px solid #ccc;
-  border-radius: 10px;
+  background: #ffffff;
 
-  text-align: center;
+  border: 1px solid #e5e7eb;
+
+  border-radius: 18px;
+
+  text-align: left;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 5px 18px rgba(0, 0, 0, 0.07);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.rent-product-card:hover {
+  transform: translateY(-7px);
+
+  border-color: #c7d2fe;
+
+  box-shadow:
+    0 18px 38px rgba(79, 70, 229, 0.16);
 }
 
 
-/* ============================= */
-/* RENT PRODUCT IMAGE */
-/* ============================= */
+/* =========================================
+   RENT PRODUCT IMAGE
+   ========================================= */
 
 .rent-product-card img {
   width: 100%;
-  height: 170px;
+
+  height: 190px;
 
   object-fit: cover;
 
   display: block;
-  margin: 0 auto 15px;
 
-  border-radius: 8px;
+  margin: 0 0 16px;
+
+  border-radius: 13px;
+
+  background: #f3f4f6;
+
+  transition:
+    transform 0.35s ease;
+}
+
+.rent-product-card:hover img {
+  transform: scale(1.025);
 }
 
 
-/* ============================= */
-/* RENT NO IMAGE */
-/* ============================= */
+/* =========================================
+   RENT NO IMAGE
+   ========================================= */
 
 .rent-no-image {
   width: 100%;
-  height: 170px;
+
+  height: 190px;
 
   display: flex;
+
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 
-  border-radius: 8px;
-  background: #2a2a2f;
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f3f4f6,
+      #e5e7eb
+    );
+
+  color: #6b7280;
+
+  font-size: 14px;
 }
 
 
-/* ============================= */
-/* RENT BUTTON */
-/* ============================= */
+/* =========================================
+   RENT PRODUCT TEXT
+   ========================================= */
+
+.rent-product-card h2,
+.rent-product-card h3 {
+  margin: 8px 0;
+
+  color: #111827;
+
+  font-weight: 700;
+}
+
+.rent-product-card p {
+  margin: 6px 0;
+
+  color: #6b7280;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================
+   RENT PRICE
+   ========================================= */
+
+.rent-product-card .price {
+  margin-top: 10px;
+
+  color: #4f46e5;
+
+  font-size: 20px;
+
+  font-weight: 800;
+}
+
+
+/* =========================================
+   RENT BUTTONS
+   ========================================= */
 
 .rent-product-card button {
-  margin: 5px;
-  padding: 9px 15px;
+  margin: 9px 5px 0 0;
+
+  padding: 10px 16px;
 
   border: none;
-  border-radius: 5px;
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #6366f1
+    );
+
+  color: white;
+
+  font-size: 13px;
+
+  font-weight: 700;
 
   cursor: pointer;
+
+  box-shadow:
+    0 6px 14px rgba(79, 70, 229, 0.2);
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
- /* ============================= */
-/* ADD RENT PRODUCT FORM */
-/* ============================= */
+.rent-product-card button:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 9px 20px rgba(79, 70, 229, 0.3);
+}
+
+
+/* =========================================
+   ADD RENT FORM
+   ========================================= */
 
 .add-rent-form {
-  width: 100%;
-  max-width: 650px;
+  margin: 0 auto 40px;
 
-  margin: 25px auto 35px;
+  max-width: 800px;
 
-  padding: 20px;
+  padding: 30px;
 
-  box-sizing: border-box;
+  background:
+    linear-gradient(
+      135deg,
+      #111827,
+      #312e81
+    );
 
-  border: 1px solid #555;
-  border-radius: 10px;
+  border-radius: 20px;
 
-  background: #1e1e23;
+  color: white;
+
+  box-shadow:
+    0 18px 40px rgba(17, 24, 39, 0.18);
 }
 
 .add-rent-form h2 {
-  margin-top: 0;
-  margin-bottom: 18px;
+  margin: 0 0 22px;
+
+  font-size: 25px;
+
+  font-weight: 800;
 }
 
-.add-rent-form input {
-  padding: 10px;
-  margin: 5px;
+.add-rent-form input,
+.add-rent-form textarea,
+.add-rent-form select {
+  width: 100%;
 
-  box-sizing: border-box;
+  padding: 13px 14px;
 
-  border-radius: 5px;
-  border: 1px solid #777;
+  margin-bottom: 13px;
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  color: white;
+
+  font-size: 14px;
 }
 
-.add-rent-form input[type="text"],
-.add-rent-form input[type="number"] {
-  width: 180px;
+.add-rent-form input::placeholder,
+.add-rent-form textarea::placeholder {
+  color: #c7c9d4;
+}
+
+.add-rent-form input:focus,
+.add-rent-form textarea:focus,
+.add-rent-form select:focus {
+  border-color: #a5b4fc;
+
+  box-shadow:
+    0 0 0 3px rgba(165, 180, 252, 0.15);
 }
 
 .add-rent-form button {
-  padding: 10px 18px;
+  margin-top: 5px;
 
-  margin: 5px;
+  padding: 12px 22px;
 
   border: none;
-  border-radius: 5px;
 
-  cursor: pointer;
-}
-
-/* ============================= */
-/* EDIT RENT PRODUCT FORM */
-/* ============================= */
-
-.edit-rent-form {
-  width: 100%;
-  max-width: 650px;
-  margin: 25px auto 35px;
-  padding: 20px;
-  box-sizing: border-box;
-
-  border: 1px solid #555;
   border-radius: 10px;
 
-  background: #1e1e23;
+  background: white;
+
+  color: #4f46e5;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.add-rent-form button:hover {
+  transform: translateY(-2px);
+
+  background: #eef2ff;
+}
+
+
+/* =========================================
+   EDIT RENT FORM
+   ========================================= */
+
+.edit-rent-form {
+  max-width: 800px;
+
+  margin: 25px auto;
+
+  padding: 28px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 .edit-rent-form h2 {
   margin-top: 0;
-  margin-bottom: 18px;
+
+  color: #111827;
 }
 
-.edit-rent-form input {
-  padding: 10px;
-  margin: 5px;
-  box-sizing: border-box;
+.edit-rent-form input,
+.edit-rent-form textarea,
+.edit-rent-form select {
+  width: 100%;
 
-  border-radius: 5px;
-  border: 1px solid #777;
+  padding: 12px 14px;
+
+  margin-bottom: 13px;
+
+  border: 1px solid #d1d5db;
+
+  border-radius: 9px;
+
+  outline: none;
+
+  font-size: 14px;
+}
+
+.edit-rent-form input:focus,
+.edit-rent-form textarea:focus,
+.edit-rent-form select:focus {
+  border-color: #4f46e5;
+
+  box-shadow:
+    0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .edit-rent-form button {
-  padding: 10px 18px;
-  margin: 5px;
+  margin-right: 8px;
+
+  padding: 11px 20px;
 
   border: none;
-  border-radius: 5px;
+
+  border-radius: 9px;
+
+  background: #4f46e5;
+
+  color: white;
+
+  font-weight: 700;
 
   cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.edit-rent-form button:hover {
+  background: #4338ca;
+
+  transform: translateY(-2px);
+}
+
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 900px) {
+  .rent-product-list {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+}
+
+
+@media (max-width: 600px) {
+  .rent-container {
+    padding: 35px 18px 55px;
+  }
+
+  .rent-container h1 {
+    font-size: 30px;
+  }
+
+  .rent-container > p {
+    font-size: 14px;
+  }
+
+  .rent-product-list {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+  }
+
+  .rent-product-card img,
+  .rent-no-image {
+    height: 210px;
+  }
+
+  .add-rent-form,
+  .edit-rent-form {
+    padding: 22px;
+  }
 }

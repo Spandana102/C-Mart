@@ -1,209 +1,551 @@
-/* ============================= */
-/* SWAP PAGE */
-/* ============================= */
+/* =========================================
+   C-MART — SWAP PAGE
+   Modern Student Marketplace UI
+   ========================================= */
 
 .swap-container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1200px;
+  min-height: 100vh;
   margin: 0 auto;
-  padding: 30px 20px;
+  padding: 45px 24px 60px;
   box-sizing: border-box;
+
+  background: linear-gradient(135deg, #f5f7ff, #eef2ff);
 }
 
+/* =========================================
+   PAGE HEADING
+   ========================================= */
 
-/* ============================= */
-/* ADD PRODUCT FORM */
-/* ============================= */
+.swap-container h1 {
+  margin: 0 0 10px;
+
+  text-align: center;
+
+  color: #111827;
+
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.swap-container > p {
+  margin: 0 auto 30px;
+
+  max-width: 650px;
+
+  text-align: center;
+
+  color: #6b7280;
+
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* =========================================
+   ADD PRODUCT FORM
+   ========================================= */
 
 .add-swap-form {
   width: 100%;
-  max-width: 650px;
-  margin: 25px auto 35px;
-  padding: 20px;
+  max-width: 720px;
+
+  margin: 25px auto 40px;
+  padding: 30px;
+
   box-sizing: border-box;
 
-  border: 1px solid #555;
-  border-radius: 10px;
-  background: #1e1e23;
+  background: linear-gradient(135deg, #1e1b4b, #312e81, #4f46e5);
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+
+  box-shadow: 0 18px 40px rgba(79, 70, 229, 0.25);
 }
 
 .add-swap-form h2 {
-  margin-top: 0;
-  margin-bottom: 18px;
+  margin: 0 0 24px;
+
+  text-align: center;
+
+  color: #ffffff;
+
+  font-size: 26px;
+  font-weight: 800;
 }
 
 .add-swap-form input {
-  padding: 10px;
-  margin: 5px;
+  width: calc(100% - 10px);
+
+  padding: 14px 15px;
+  margin: 6px 5px;
+
   box-sizing: border-box;
-  border-radius: 5px;
-  border: 1px solid #777;
+
+  background: rgba(15, 23, 42, 0.75);
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 11px;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition: all 0.25s ease;
+}
+
+.add-swap-form input::placeholder {
+  color: #c4b5fd;
+}
+
+.add-swap-form input:focus {
+  border-color: #a5b4fc;
+
+  box-shadow: 0 0 0 4px rgba(165, 180, 252, 0.12);
+
+  background: rgba(15, 23, 42, 0.9);
 }
 
 .add-swap-form input[type="text"] {
-  width: 180px;
+  width: calc(100% - 10px);
 }
 
 .add-swap-form input[type="file"] {
-  width: auto;
-}
+  width: calc(100% - 10px);
 
-.add-swap-form button {
-  padding: 10px 18px;
-  margin: 5px;
-  border: none;
-  border-radius: 5px;
   cursor: pointer;
 }
 
+/* =========================================
+   ADD BUTTON
+   ========================================= */
 
-/* ============================= */
-/* SEARCH & FILTER */
-/* ============================= */
+.add-swap-form button {
+  padding: 13px 24px;
+
+  margin: 12px 5px 0;
+
+  border: none;
+  border-radius: 11px;
+
+  background: linear-gradient(135deg, #818cf8, #a78bfa);
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.2);
+
+  transition: all 0.25s ease;
+}
+
+.add-swap-form button:hover {
+  transform: translateY(-3px);
+
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.28);
+}
+
+.add-swap-form button:active {
+  transform: scale(0.97);
+}
+
+/* =========================================
+   SEARCH & FILTER
+   ========================================= */
 
 .search-filter {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto 25px;
+  max-width: 1000px;
+
+  margin: 0 auto 30px;
+  padding: 22px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
 }
 
 .search-filter label {
   display: block;
-  margin-bottom: 10px;
+
+  margin-bottom: 13px;
+
+  color: #1e293b;
+
   font-size: 18px;
+  font-weight: 800;
 }
 
 .search-controls {
   display: flex;
-  gap: 10px;
+
+  gap: 12px;
+
   flex-wrap: wrap;
 }
 
 .search-filter input {
-  padding: 10px;
-  width: 280px;
+  flex: 1;
+
+  min-width: 240px;
+
+  padding: 13px 16px;
+
   box-sizing: border-box;
+
+  background: #f8fafc;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 11px;
+
+  outline: none;
+
+  color: #1e293b;
+
+  font-size: 14px;
+
+  transition: all 0.25s ease;
+}
+
+.search-filter input:focus {
+  background: #ffffff;
+
+  border-color: #6366f1;
+
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 .search-filter select {
-  padding: 10px;
-  min-width: 150px;
-  box-sizing: border-box;
+  min-width: 170px;
+
+  padding: 13px 16px;
+
+  background: #ffffff;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 11px;
+
+  color: #374151;
+
+  outline: none;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
 }
 
+.search-filter select:focus {
+  border-color: #6366f1;
 
-/* ============================= */
-/* PRODUCT LIST */
-/* ============================= */
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* =========================================
+   PRODUCT COUNT
+   ========================================= */
+
+.product-count {
+  margin: 10px 0 8px;
+
+  text-align: center;
+
+  color: #64748b;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =========================================
+   SWAP REQUEST COUNT
+   ========================================= */
+
+.request-count {
+  margin: 0 0 30px;
+
+  text-align: center;
+
+  color: #6366f1;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* =========================================
+   PRODUCT LIST
+   ========================================= */
 
 .product-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+
   gap: 25px;
+
   margin-top: 20px;
 }
 
-
-/* ============================= */
-/* PRODUCT CARD */
-/* ============================= */
+/* =========================================
+   PRODUCT CARD
+   ========================================= */
 
 .product-card {
-  width: 250px;
+  width: 100%;
+
   padding: 15px;
+
   box-sizing: border-box;
 
-  border: 1px solid #ccc;
-  border-radius: 10px;
+  background: #ffffff;
 
-  text-align: center;
+  border: 1px solid #e2e8f0;
+
+  border-radius: 19px;
+
+  text-align: left;
+
+  overflow: hidden;
+
+  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.07);
+
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
 }
 
+.product-card:hover {
+  transform: translateY(-7px);
 
-/* ============================= */
-/* PRODUCT IMAGE */
-/* ============================= */
+  border-color: #c7d2fe;
+
+  box-shadow: 0 18px 40px rgba(79, 70, 229, 0.16);
+}
+
+/* =========================================
+   PRODUCT IMAGE
+   ========================================= */
 
 .product-card img {
   width: 100%;
-  height: 170px;
-  object-fit: cover;
+  height: 190px;
 
   display: block;
-  margin: 0 auto 15px;
 
-  border-radius: 8px;
+  object-fit: cover;
+
+  margin: 0 0 15px;
+
+  border-radius: 14px;
+
+  background: #f1f5f9;
+
+  transition: transform 0.35s ease;
 }
 
+.product-card:hover img {
+  transform: scale(1.03);
+}
 
-/* ============================= */
-/* NO IMAGE */
-/* ============================= */
+/* =========================================
+   NO IMAGE
+   ========================================= */
 
 .no-image {
   width: 100%;
-  height: 170px;
+  height: 190px;
 
   display: flex;
+
   flex-direction: column;
+
   align-items: center;
   justify-content: center;
 
   margin-bottom: 15px;
 
-  border-radius: 8px;
-  background: #2a2a2f;
+  border-radius: 14px;
+
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+
+  color: #6366f1;
+
+  font-size: 14px;
+  font-weight: 600;
 }
 
+/* =========================================
+   PRODUCT CARD TEXT
+   ========================================= */
 
-/* ============================= */
-/* PRODUCT BUTTONS */
-/* ============================= */
+.product-card h2,
+.product-card h3 {
+  margin: 8px 0;
+
+  color: #1e293b;
+
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.product-card p {
+  margin: 7px 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+/* =========================================
+   PRODUCT BUTTONS
+   ========================================= */
 
 .product-card button {
-  margin: 4px;
-  padding: 8px 12px;
+  margin: 8px 3px 0;
+
+  padding: 10px 15px;
 
   border: none;
-  border-radius: 5px;
+  border-radius: 9px;
+
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
 
   cursor: pointer;
+
+  transition: all 0.25s ease;
 }
 
+.product-card button:hover {
+  transform: translateY(-2px);
 
-/* ============================= */
-/* EDIT IMAGE PREVIEW */
-/* ============================= */
+  box-shadow: 0 7px 15px rgba(79, 70, 229, 0.25);
+}
+
+.product-card button:active {
+  transform: scale(0.97);
+}
+
+/* =========================================
+   EDIT IMAGE PREVIEW
+   ========================================= */
 
 .edit-image-preview {
   width: 180px;
   height: 150px;
 
-  object-fit: cover;
   display: block;
 
-  margin: 10px auto;
+  object-fit: cover;
 
-  border-radius: 8px;
+  margin: 12px auto;
+
+  border-radius: 13px;
+
+  border: 2px solid #e2e8f0;
+
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.08);
 }
 
+/* =========================================
+   RESPONSIVE — TABLET
+   ========================================= */
 
-/* ============================= */
-/* PRODUCT COUNT */
-/* ============================= */
+@media (max-width: 768px) {
+  .swap-container {
+    padding: 30px 15px 45px;
+  }
 
-.product-count {
-  text-align: center;
-  margin-top: -10px;
+  .swap-container h1 {
+    font-size: 30px;
+  }
+
+  .add-swap-form {
+    padding: 23px 17px;
+
+    border-radius: 17px;
+  }
+
+  .add-swap-form h2 {
+    font-size: 22px;
+  }
+
+  .search-filter {
+    padding: 17px;
+
+    border-radius: 16px;
+  }
+
+  .search-controls {
+    flex-direction: column;
+  }
+
+  .search-filter input,
+  .search-filter select {
+    width: 100%;
+
+    min-width: 100%;
+  }
+
+  .product-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 15px;
+  }
+
+  .product-card {
+    padding: 10px;
+
+    border-radius: 14px;
+  }
+
+  .product-card img,
+  .no-image {
+    height: 150px;
+  }
 }
 
-/* ============================= */
-/* SWAP REQUEST COUNT */
-/* ============================= */
+/* =========================================
+   RESPONSIVE — MOBILE
+   ========================================= */
 
-.request-count {
-  text-align: center;
-  margin-top: -5px;
-  margin-bottom: 20px;
+@media (max-width: 480px) {
+  .swap-container {
+    padding: 25px 12px 40px;
+  }
+
+  .swap-container h1 {
+    font-size: 27px;
+  }
+
+  .product-list {
+    grid-template-columns: 1fr;
+  }
+
+  .product-card img,
+  .no-image {
+    height: 190px;
+  }
+
+  .add-swap-form button {
+    width: 100%;
+
+    margin-left: 0;
+    margin-right: 0;
+  }
 }

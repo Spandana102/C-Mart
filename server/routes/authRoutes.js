@@ -7,7 +7,8 @@ const {
     loginUser,
     getProfile,
     updateProfile,
-    forgotPassword
+    forgotPassword,
+    verifyOTP
 } = require("../controllers/authController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -24,7 +25,10 @@ router.get("/profile", authMiddleware, getProfile);
 // Update Profile
 router.put("/profile", authMiddleware, updateProfile);
 
-// Forgot Password
+// Forgot Password - Send OTP
 router.post("/forgot-password", forgotPassword);
+
+// Verify OTP
+router.post("/verify-otp", verifyOTP);
 
 module.exports = router;

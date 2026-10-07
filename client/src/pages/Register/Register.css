@@ -1,4 +1,4 @@
-```css
+
 .register-page {
   min-height: 100vh;
   display: flex;
@@ -120,6 +120,5 @@
     padding: 25px;
   }
 }
-```
 
-Replace your existing **`Register.css`** with this.
+

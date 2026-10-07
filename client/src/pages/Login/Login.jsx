@@ -8,26 +8,60 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!email.trim() || !password) {
+      alert("Please enter email and password.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const response = await API.post("/auth/login", {
-        email,
-        password,
+        email: email.trim(),
+        password: password,
       });
 
+      console.log("Login response:", response.data);
+
+      // Check token
+      if (!response.data?.token) {
+        throw new Error("Login successful but token was not received.");
+      }
+
+      // Save token
       localStorage.setItem("token", response.data.token);
+
+      // Get logged-in user details
+      const user = response.data?.user;
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
 
       alert("Login successful!");
 
-      navigate("/");
+      // Redirect based on user role
+      if (user?.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+
     } catch (error) {
+      console.error("Login error:", error);
+
       alert(
         error.response?.data?.message ||
+          error.message ||
           "Invalid email or password"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,8 +105,14 @@ function Login() {
             />
           </div>
 
-          <button type="submit">
-            Login
+          <div className="forgot-password">
+            <Link to="/forgot-password">
+              Forgot Password?
+            </Link>
+          </div>
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>

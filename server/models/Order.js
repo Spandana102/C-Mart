@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
-const reviewSchema = new mongoose.Schema(
+const orderSchema = new mongoose.Schema(
   {
-    user: {
+    buyer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -14,16 +14,20 @@ const reviewSchema = new mongoose.Schema(
       required: true,
     },
 
-    rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5,
-    },
-
-    comment: {
+    productName: {
       type: String,
       required: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["Processing", "Delivered", "Cancelled"],
+      default: "Processing",
     },
   },
   {
@@ -31,4 +35,4 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Review", reviewSchema);
+module.exports = mongoose.model("Order", orderSchema);

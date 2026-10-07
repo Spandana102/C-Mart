@@ -1,21 +1,24 @@
-```jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Authentication
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
+import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP/VerifyOTP";
+
 import Profile from "./pages/Profile/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Main Modules
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Admin from "./pages/Admin/Admin";
 import Swap from "./pages/Swap/Swap";
 import Rent from "./pages/Rent/Rent";
 import MeetPoint from "./pages/MeetPoint/MeetPoint";
-import Reviews from "./pages/Reviews";
+import Reviews from "./pages/Reviewes/Reviews";
+import Orders from "./pages/Orders/Orders";
+import Products from "./pages/Products/Products.jsx";
 
-// Bargaining / Offers
+import Complaint from "./pages/Complaints/Complaints.jsx";
+
 import BargainPage from "./pages/BargainPage";
 import SellerOffers from "./pages/SellerOffers";
 
@@ -27,8 +30,22 @@ function App() {
         {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
 
-        {/* Protected Profile */}
+        {/* Main Pages */}
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/swap" element={<Swap />} />
+        <Route path="/rent" element={<Rent />} />
+        <Route path="/meetpoint" element={<MeetPoint />} />
+        <Route path="/reviews" element={<Reviews />} />
+        <Route path="/orders" element={<Orders />} />
+
+        {/* Complaint */}
+        <Route path="/complaints" element={<Complaint />} />
+
+        {/* Profile */}
         <Route
           path="/profile"
           element={
@@ -38,29 +55,12 @@ function App() {
           }
         />
 
-        {/* Admin */}
-        <Route path="/admin" element={<Admin />} />
-
-        {/* Home */}
-        <Route path="/" element={<Dashboard />} />
-
-        {/* Swap */}
-        <Route path="/swap" element={<Swap />} />
-
-        {/* Rent */}
-        <Route path="/rent" element={<Rent />} />
-
-        {/* Meet Point */}
-        <Route path="/meetpoint" element={<MeetPoint />} />
-
-        {/* Reviews */}
-        <Route path="/reviews" element={<Reviews />} />
-
         {/* Bargaining */}
         <Route path="/bargain" element={<BargainPage />} />
-
-        {/* Seller Offers */}
         <Route path="/seller-offers" element={<SellerOffers />} />
+
+        {/* Admin */}
+        <Route path="/admin" element={<Admin />} />
 
       </Routes>
     </BrowserRouter>
@@ -68,4 +68,3 @@ function App() {
 }
 
 export default App;
-```
