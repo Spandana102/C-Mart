@@ -16,6 +16,7 @@ import MeetPoint from "./pages/MeetPoint/MeetPoint";
 import Reviews from "./pages/Reviewes/Reviews";
 import Orders from "./pages/Orders/Orders";
 import Products from "./pages/Products/Products.jsx";
+import Sell from "./pages/Sell/Sell";
 
 import Complaint from "./pages/Complaints/Complaints.jsx";
 
@@ -41,6 +42,7 @@ function App() {
         <Route path="/meetpoint" element={<MeetPoint />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/sell" element={<Sell />} />
 
         {/* Complaint */}
         <Route path="/complaints" element={<Complaint />} />

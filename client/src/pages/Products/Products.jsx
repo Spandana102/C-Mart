@@ -1,7 +1,11 @@
 ﻿import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "./Products.css";
 
 function Products() {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState(false);
@@ -29,11 +33,11 @@ function Products() {
   // BUY PRODUCT
   const handleBuyNow = async (product) => {
     try {
-      // Get logged-in user
       const storedUser = localStorage.getItem("user");
 
       if (!storedUser) {
         alert("Please login before buying a product.");
+        navigate("/login");
         return;
       }
 
@@ -41,12 +45,12 @@ function Products() {
 
       if (!user._id) {
         alert("User information is missing. Please login again.");
+        navigate("/login");
         return;
       }
 
       setBuying(true);
 
-      // Create order
       const response = await axios.post(
         "http://localhost:5000/api/orders",
         {
@@ -75,203 +79,424 @@ function Products() {
     }
   };
 
+  // ================= LOADING =================
+
   if (loading) {
     return (
-      <div style={{ padding: "30px" }}>
-        <h1>Buy Products</h1>
-        <p>Loading products...</p>
+      <div className="products-page">
+
+        <nav className="products-navbar">
+          <div
+            className="products-logo"
+            onClick={() => navigate("/")}
+          >
+            <span className="products-logo-icon">
+              🛍️
+            </span>
+            <span>C-Mart</span>
+          </div>
+
+          <div className="products-nav-links">
+            <button onClick={() => navigate("/")}>
+              Home
+            </button>
+
+            <button className="active-nav">
+              Marketplace
+            </button>
+
+            <button onClick={() => navigate("/orders")}>
+              Orders
+            </button>
+
+            <button onClick={() => navigate("/profile")}>
+              Profile
+            </button>
+          </div>
+        </nav>
+
+        <div className="products-loading">
+          <div className="loading-box">🛍️</div>
+          <h2>Loading Marketplace...</h2>
+          <p>Finding products available on C-Mart.</p>
+        </div>
+
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        padding: "30px",
-        background: "#f8fafc",
-        minHeight: "100vh",
-      }}
-    >
-      <h1>Buy Products</h1>
+    <div className="products-page">
 
-      <p>Browse products available on C-Mart.</p>
+      {/* ================= NAVBAR ================= */}
 
-      {error && (
-        <p style={{ color: "red" }}>
-          {error}
-        </p>
-      )}
+      <nav className="products-navbar">
 
-      {products.length === 0 ? (
-        <p>No products available yet.</p>
-      ) : (
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: "24px",
-            marginTop: "25px",
-          }}
+          className="products-logo"
+          onClick={() => navigate("/")}
         >
-          {products.map((product) => {
-            const imageUrl =
-              product.images &&
-              product.images.length > 0
-                ? product.images[0]
-                : "";
+          <span className="products-logo-icon">
+            🛍️
+          </span>
 
-            return (
-              <div
-                key={product._id}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "12px",
-                  padding: "15px",
-                  boxShadow:
-                    "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-              >
-                {/* PRODUCT IMAGE */}
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={product.name}
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                      objectFit: "cover",
-                      borderRadius: "10px",
-                      display: "block",
-                      marginBottom: "15px",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "200px",
-                      borderRadius: "10px",
-                      background: "#f1f5f9",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#64748b",
-                      marginBottom: "15px",
-                    }}
-                  >
-                    No Image
-                  </div>
-                )}
-
-                {/* PRODUCT NAME */}
-                <h2
-                  style={{
-                    fontSize: "20px",
-                    margin: "8px 0",
-                  }}
-                >
-                  {product.name}
-                </h2>
-
-                {/* PRICE */}
-                <p
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    margin: "8px 0",
-                  }}
-                >
-                  ₹{product.price}
-                </p>
-
-                {/* MRP */}
-                {product.mrp > 0 && (
-                  <p
-                    style={{
-                      color: "#64748b",
-                      margin: "5px 0",
-                    }}
-                  >
-                    MRP: ₹{product.mrp}
-                  </p>
-                )}
-
-                {/* CATEGORY */}
-                <p>
-                  <strong>Category:</strong>{" "}
-                  {product.category}
-                </p>
-
-                {/* CONDITION */}
-                {product.condition && (
-                  <p>
-                    <strong>Condition:</strong>{" "}
-                    {product.condition}
-                  </p>
-                )}
-
-                {/* DESCRIPTION */}
-                {product.description && (
-                  <p
-                    style={{
-                      color: "#555",
-                      fontSize: "14px",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    {product.description}
-                  </p>
-                )}
-
-                {/* STOCK */}
-                <p>
-                  <strong>Stock:</strong>{" "}
-                  {product.stock > 0
-                    ? product.stock
-                    : "Out of stock"}
-                </p>
-
-                {/* BUY BUTTON */}
-                <button
-                  disabled={
-                    product.stock <= 0 || buying
-                  }
-                  onClick={() => handleBuyNow(product)}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    marginTop: "10px",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor:
-                      product.stock > 0 && !buying
-                        ? "pointer"
-                        : "not-allowed",
-                    background:
-                      product.stock > 0
-                        ? "#2563eb"
-                        : "#9ca3af",
-                    color: "#fff",
-                    fontSize: "16px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {buying
-                    ? "Processing..."
-                    : product.stock > 0
-                    ? "Buy Now"
-                    : "Out of Stock"}
-                </button>
-              </div>
-            );
-          })}
+          <span>C-Mart</span>
         </div>
-      )}
+
+        <div className="products-nav-links">
+
+          <button onClick={() => navigate("/")}>
+            Home
+          </button>
+
+          <button className="active-nav">
+            Marketplace
+          </button>
+
+          <button onClick={() => navigate("/orders")}>
+            Orders
+          </button>
+
+          <button onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+
+          <button
+            className="products-logout"
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("user");
+              navigate("/login");
+            }}
+          >
+            Logout
+          </button>
+
+        </div>
+
+      </nav>
+
+      {/* ================= HERO ================= */}
+
+      <section className="products-hero">
+
+        <div className="products-hero-content">
+
+          <p className="products-label">
+            C-MART • CAMPUS MARKETPLACE
+          </p>
+
+          <h1>
+            Explore the <span>Marketplace</span>
+          </h1>
+
+          <p className="products-description">
+            Discover useful products from your campus
+            community. Browse, choose and buy products
+            easily through C-Mart.
+          </p>
+
+          <div className="products-hero-buttons">
+
+            <button
+              className="back-dashboard"
+              onClick={() => navigate("/")}
+            >
+              ← Dashboard
+            </button>
+
+            <button
+              className="orders-button"
+              onClick={() => navigate("/orders")}
+            >
+              📦 My Orders
+            </button>
+
+          </div>
+
+        </div>
+
+        <div className="marketplace-visual">
+          <div className="market-circle"></div>
+
+          <div className="market-main-icon">
+            🛍️
+          </div>
+
+          <div className="market-floating-card card-a">
+            📚
+            <span>Books</span>
+          </div>
+
+          <div className="market-floating-card card-b">
+            💻
+            <span>Electronics</span>
+          </div>
+
+          <div className="market-floating-card card-c">
+            🎒
+            <span>Campus Items</span>
+          </div>
+        </div>
+
+      </section>
+
+      {/* ================= PRODUCTS HEADER ================= */}
+
+      <section className="products-section">
+
+        <div className="products-section-heading">
+
+          <div>
+            <p>AVAILABLE PRODUCTS</p>
+
+            <h2>
+              Shop from Your Campus
+            </h2>
+
+            <span>
+              {products.length} product
+              {products.length !== 1 ? "s" : ""} available
+            </span>
+          </div>
+
+        </div>
+
+        {/* ERROR */}
+
+        {error && (
+          <div className="products-error">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* ================= NO PRODUCTS ================= */}
+
+        {products.length === 0 ? (
+
+          <div className="no-products">
+
+            <div className="no-products-icon">
+              🛒
+            </div>
+
+            <h2>
+              No products available
+            </h2>
+
+            <p>
+              There are no products listed on C-Mart yet.
+              Please check again later.
+            </p>
+
+            <button onClick={() => navigate("/")}>
+              ← Back to Dashboard
+            </button>
+
+          </div>
+
+        ) : (
+
+          /* ================= PRODUCT GRID ================= */
+
+          <div className="product-grid">
+
+            {products.map((product) => {
+
+              const imageUrl =
+                product.images &&
+                product.images.length > 0
+                  ? product.images[0]
+                  : "";
+
+              return (
+
+                <div
+                  className="product-card"
+                  key={product._id}
+                >
+
+                  {/* IMAGE */}
+
+                  <div className="product-image-wrapper">
+
+                    {imageUrl ? (
+
+                      <img
+                        src={imageUrl}
+                        alt={product.name}
+                        onError={(e) => {
+                          e.target.style.display =
+                            "none";
+
+                          e.target.parentElement
+                            .classList.add(
+                              "image-error"
+                            );
+                        }}
+                      />
+
+                    ) : (
+
+                      <div className="no-image">
+                        📦
+                        <span>No Image</span>
+                      </div>
+
+                    )}
+
+                  </div>
+
+                  {/* PRODUCT DETAILS */}
+
+                  <div className="product-details">
+
+                    <div className="product-category">
+                      {product.category ||
+                        "Campus Product"}
+                    </div>
+
+                    <h3>
+                      {product.name}
+                    </h3>
+
+                    <div className="product-price">
+                      ₹{product.price}
+                    </div>
+
+                    {product.mrp > 0 && (
+                      <div className="product-mrp">
+                        MRP: ₹{product.mrp}
+                      </div>
+                    )}
+
+                    <div className="product-info">
+
+                      <p>
+                        <strong>
+                          Category:
+                        </strong>{" "}
+                        {product.category}
+                      </p>
+
+                      {product.condition && (
+                        <p>
+                          <strong>
+                            Condition:
+                          </strong>{" "}
+                          {product.condition}
+                        </p>
+                      )}
+
+                    </div>
+
+                    {product.description && (
+                      <p className="product-description">
+                        {product.description}
+                      </p>
+                    )}
+
+                    <div className="product-bottom">
+
+                      <div className="stock-info">
+
+                        <span>
+                          Stock
+                        </span>
+
+                        <strong
+                          className={
+                            product.stock > 0
+                              ? "in-stock"
+                              : "out-stock"
+                          }
+                        >
+                          {product.stock > 0
+                            ? `${product.stock} available`
+                            : "Out of stock"}
+                        </strong>
+
+                      </div>
+
+                    </div>
+
+                    {/* BUY BUTTON */}
+
+                    <button
+                      className={
+                        product.stock > 0
+                          ? "buy-button"
+                          : "buy-button disabled"
+                      }
+                      disabled={
+                        product.stock <= 0 ||
+                        buying
+                      }
+                      onClick={() =>
+                        handleBuyNow(product)
+                      }
+                    >
+                      {buying
+                        ? "Processing..."
+                        : product.stock > 0
+                        ? "🛒 Buy Now"
+                        : "Out of Stock"}
+                    </button>
+
+                  </div>
+
+                </div>
+
+              );
+            })}
+
+          </div>
+
+        )}
+
+      </section>
+
+      {/* ================= BOTTOM BANNER ================= */}
+
+      <section className="marketplace-banner">
+
+        <div>
+          <p>
+            CAMPUS SHOPPING MADE EASY
+          </p>
+
+          <h2>
+            Find it. Buy it. Enjoy it.
+          </h2>
+
+          <span>
+            Everything you need from your campus
+            marketplace in one place.
+          </span>
+        </div>
+
+        <button
+          onClick={() => navigate("/orders")}
+        >
+          View My Orders →
+        </button>
+
+      </section>
+
+      {/* ================= FOOTER ================= */}
+
+      <footer className="products-footer">
+
+        <div className="products-footer-logo">
+          🛍️ C-Mart
+        </div>
+
+        <p>
+          Campus Marketplace • Buy • Sell • Swap • Rent
+        </p>
+
+      </footer>
+
     </div>
   );
 }
