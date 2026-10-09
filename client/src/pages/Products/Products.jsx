@@ -1,14 +1,76 @@
-﻿import React, { useEffect, useState } from "react";
+﻿
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./Products.css";
+
+const API_URL = "http://localhost:5000/api";
+const SERVER_URL = "http://localhost:5000";
+
+function getImageUrl(value) {
+  if (!value) return "";
+
+  // Support image objects from Cloudinary or MongoDB
+  if (typeof value === "object" && !Array.isArray(value)) {
+    value =
+      value.url ||
+      value.secure_url ||
+      value.imageUrl ||
+      value.path ||
+      value.src ||
+      value.filename ||
+      "";
+  }
+
+  if (typeof value !== "string") return "";
+
+  const url = value.trim();
+  if (!url) return "";
+
+  if (
+    url.startsWith("https://") ||
+    url.startsWith("http://") ||
+    url.startsWith("data:image/")
+  ) {
+    return url;
+  }
+
+  // Relative path, e.g. uploads/product.jpg
+  return `${SERVER_URL}/${url.replace(/^\/+/, "")}`;
+}
+
+function getProductImage(product) {
+  if (!product) return "";
+
+  const possibleFields = [
+    product.images,
+    product.image,
+    product.imageUrl,
+    product.photo,
+    product.thumbnail,
+    product.productImage,
+  ];
+
+  for (const field of possibleFields) {
+    if (Array.isArray(field)) {
+      for (const image of field) {
+        const url = getImageUrl(image);
+        if (url) return url;
+      }
+    } else {
+      const url = getImageUrl(field);
+      if (url) return url;
+    }
+  }
+
+  return "";
+}
 
 function Products() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [buying, setBuying] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -17,171 +79,93 @@ function Products() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/products"
+      setLoading(true);
+      setError("");
+
+      const response = await axios.get(`${API_URL}/products`);
+
+      const productData = Array.isArray(response.data)
+        ? response.data
+        : response.data?.products ||
+          response.data?.data ||
+          [];
+
+      console.log("Products API response:", response.data);
+      console.log(
+        "Product image fields:",
+        productData.map((p) => ({
+          name: p.name,
+          images: p.images,
+          image: p.image,
+          imageUrl: p.imageUrl,
+          photo: p.photo,
+          thumbnail: p.thumbnail,
+        }))
       );
 
-      setProducts(response.data);
+      setProducts(productData);
     } catch (err) {
       console.error("Fetch products error:", err);
-      setError("Failed to load products");
+      setError(
+        err.response?.data?.message ||
+          "Failed to load products. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // BUY PRODUCT
-  const handleBuyNow = async (product) => {
-    try {
-      const storedUser = localStorage.getItem("user");
-
-      if (!storedUser) {
-        alert("Please login before buying a product.");
-        navigate("/login");
-        return;
-      }
-
-      const user = JSON.parse(storedUser);
-
-      if (!user._id) {
-        alert("User information is missing. Please login again.");
-        navigate("/login");
-        return;
-      }
-
-      setBuying(true);
-
-      const response = await axios.post(
-        "http://localhost:5000/api/orders",
-        {
-          buyer: user._id,
-          product: product._id,
-          productName: product.name,
-          price: product.price,
-        }
-      );
-
-      console.log("Order created:", response.data);
-
-      alert(
-        `Order placed successfully for ${product.name}!`
-      );
-
-    } catch (err) {
-      console.error("Buy Now error:", err);
-
-      alert(
-        err.response?.data?.message ||
-          "Failed to place order. Please try again."
-      );
-    } finally {
-      setBuying(false);
+  const handleViewDetails = (product) => {
+    if (!product?._id) {
+      setError("Product details are unavailable.");
+      return;
     }
+
+    navigate(`/product/${product._id}`);
   };
 
-  // ================= LOADING =================
-
-  if (loading) {
-    return (
-      <div className="products-page">
-
-        <nav className="products-navbar">
-          <div
-            className="products-logo"
-            onClick={() => navigate("/")}
-          >
-            <span className="products-logo-icon">
-              🛍️
-            </span>
-            <span>C-Mart</span>
-          </div>
-
-          <div className="products-nav-links">
-            <button onClick={() => navigate("/")}>
-              Home
-            </button>
-
-            <button className="active-nav">
-              Marketplace
-            </button>
-
-            <button onClick={() => navigate("/orders")}>
-              Orders
-            </button>
-
-            <button onClick={() => navigate("/profile")}>
-              Profile
-            </button>
-          </div>
-        </nav>
-
-        <div className="products-loading">
-          <div className="loading-box">🛍️</div>
-          <h2>Loading Marketplace...</h2>
-          <p>Finding products available on C-Mart.</p>
-        </div>
-
-      </div>
-    );
-  }
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <div className="products-page">
-
-      {/* ================= NAVBAR ================= */}
-
+      {/* NAVBAR */}
       <nav className="products-navbar">
-
         <div
           className="products-logo"
           onClick={() => navigate("/")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              navigate("/");
+            }
+          }}
         >
-          <span className="products-logo-icon">
-            🛍️
-          </span>
-
+          <span className="products-logo-icon">🛍️</span>
           <span>C-Mart</span>
         </div>
 
         <div className="products-nav-links">
-
-          <button onClick={() => navigate("/")}>
-            Home
+          <button onClick={() => navigate("/")}>Home</button>
+          <button className="active-nav">Marketplace</button>
+          <button onClick={() => navigate("/orders")}>Orders</button>
+          <button onClick={() => navigate("/complaints")}>
+            Complaints
           </button>
-
-          <button className="active-nav">
-            Marketplace
-          </button>
-
-          <button onClick={() => navigate("/orders")}>
-            Orders
-          </button>
-
-          <button onClick={() => navigate("/profile")}>
-            Profile
-          </button>
-
-          <button
-            className="products-logout"
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("user");
-              navigate("/login");
-            }}
-          >
+          <button onClick={() => navigate("/profile")}>Profile</button>
+          <button className="products-logout" onClick={handleLogout}>
             Logout
           </button>
-
         </div>
-
       </nav>
 
-      {/* ================= HERO ================= */}
-
+      {/* HERO */}
       <section className="products-hero">
-
         <div className="products-hero-content">
-
           <p className="products-label">
             C-MART • CAMPUS MARKETPLACE
           </p>
@@ -191,13 +175,12 @@ function Products() {
           </h1>
 
           <p className="products-description">
-            Discover useful products from your campus
-            community. Browse, choose and buy products
-            easily through C-Mart.
+            Discover products from your campus community.
+            Open any product to explore its images, description,
+            seller information, reviews and ratings.
           </p>
 
           <div className="products-hero-buttons">
-
             <button
               className="back-dashboard"
               onClick={() => navigate("/")}
@@ -211,292 +194,149 @@ function Products() {
             >
               📦 My Orders
             </button>
-
           </div>
-
         </div>
 
         <div className="marketplace-visual">
           <div className="market-circle"></div>
-
-          <div className="market-main-icon">
-            🛍️
-          </div>
+          <div className="market-main-icon">🛍️</div>
 
           <div className="market-floating-card card-a">
-            📚
-            <span>Books</span>
+            📚 <span>Books</span>
           </div>
-
           <div className="market-floating-card card-b">
-            💻
-            <span>Electronics</span>
+            💻 <span>Electronics</span>
           </div>
-
           <div className="market-floating-card card-c">
-            🎒
-            <span>Campus Items</span>
+            🎒 <span>Campus Items</span>
           </div>
         </div>
-
       </section>
 
-      {/* ================= PRODUCTS HEADER ================= */}
-
+      {/* PRODUCTS */}
       <section className="products-section">
-
         <div className="products-section-heading">
-
           <div>
             <p>AVAILABLE PRODUCTS</p>
-
-            <h2>
-              Shop from Your Campus
-            </h2>
-
+            <h2>Shop from Your Campus</h2>
             <span>
               {products.length} product
               {products.length !== 1 ? "s" : ""} available
             </span>
           </div>
-
         </div>
 
-        {/* ERROR */}
-
-        {error && (
-          <div className="products-error">
-            ⚠️ {error}
+        {loading && (
+          <div className="products-loading">
+            <div className="loading-box">🛍️</div>
+            <h2>Loading Marketplace...</h2>
+            <p>Finding products available on C-Mart.</p>
           </div>
         )}
 
-        {/* ================= NO PRODUCTS ================= */}
+        {!loading && error && (
+          <div className="products-error">
+            <p>⚠️ {error}</p>
+            <button onClick={fetchProducts}>Try Again</button>
+          </div>
+        )}
 
-        {products.length === 0 ? (
-
+        {!loading && !error && products.length === 0 && (
           <div className="no-products">
-
-            <div className="no-products-icon">
-              🛒
-            </div>
-
-            <h2>
-              No products available
-            </h2>
-
+            <div className="no-products-icon">🛒</div>
+            <h2>No products available</h2>
             <p>
               There are no products listed on C-Mart yet.
               Please check again later.
             </p>
-
             <button onClick={() => navigate("/")}>
               ← Back to Dashboard
             </button>
-
           </div>
+        )}
 
-        ) : (
-
-          /* ================= PRODUCT GRID ================= */
-
+        {!loading && !error && products.length > 0 && (
           <div className="product-grid">
-
             {products.map((product) => {
-
-              const imageUrl =
-                product.images &&
-                product.images.length > 0
-                  ? product.images[0]
-                  : "";
+              const imageUrl = getProductImage(product);
 
               return (
-
-                <div
-                  className="product-card"
-                  key={product._id}
-                >
-
-                  {/* IMAGE */}
-
-                  <div className="product-image-wrapper">
-
+                <article className="product-card" key={product._id}>
+                  <button
+                    type="button"
+                    className="product-image-wrapper"
+                    onClick={() => handleViewDetails(product)}
+                    aria-label={`View ${product.name || "product"} details`}
+                  >
                     {imageUrl ? (
-
                       <img
                         src={imageUrl}
-                        alt={product.name}
+                        alt={product.name || "Product"}
                         onError={(e) => {
-                          e.target.style.display =
-                            "none";
-
-                          e.target.parentElement
-                            .classList.add(
-                              "image-error"
-                            );
+                          console.error(
+                            "Product image failed to load:",
+                            imageUrl
+                          );
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.parentElement.classList.add(
+                            "image-error"
+                          );
                         }}
                       />
-
                     ) : (
-
                       <div className="no-image">
                         📦
                         <span>No Image</span>
                       </div>
-
                     )}
-
-                  </div>
-
-                  {/* PRODUCT DETAILS */}
+                  </button>
 
                   <div className="product-details">
-
-                    <div className="product-category">
-                      {product.category ||
-                        "Campus Product"}
-                    </div>
-
-                    <h3>
-                      {product.name}
-                    </h3>
+                    <h3>{product.name || "Unnamed Product"}</h3>
 
                     <div className="product-price">
-                      ₹{product.price}
-                    </div>
-
-                    {product.mrp > 0 && (
-                      <div className="product-mrp">
-                        MRP: ₹{product.mrp}
-                      </div>
-                    )}
-
-                    <div className="product-info">
-
-                      <p>
-                        <strong>
-                          Category:
-                        </strong>{" "}
-                        {product.category}
-                      </p>
-
-                      {product.condition && (
-                        <p>
-                          <strong>
-                            Condition:
-                          </strong>{" "}
-                          {product.condition}
-                        </p>
+                      ₹
+                      {Number(product.price || 0).toLocaleString(
+                        "en-IN"
                       )}
-
                     </div>
-
-                    {product.description && (
-                      <p className="product-description">
-                        {product.description}
-                      </p>
-                    )}
-
-                    <div className="product-bottom">
-
-                      <div className="stock-info">
-
-                        <span>
-                          Stock
-                        </span>
-
-                        <strong
-                          className={
-                            product.stock > 0
-                              ? "in-stock"
-                              : "out-stock"
-                          }
-                        >
-                          {product.stock > 0
-                            ? `${product.stock} available`
-                            : "Out of stock"}
-                        </strong>
-
-                      </div>
-
-                    </div>
-
-                    {/* BUY BUTTON */}
 
                     <button
-                      className={
-                        product.stock > 0
-                          ? "buy-button"
-                          : "buy-button disabled"
-                      }
-                      disabled={
-                        product.stock <= 0 ||
-                        buying
-                      }
-                      onClick={() =>
-                        handleBuyNow(product)
-                      }
+                      type="button"
+                      className="buy-button"
+                      onClick={() => handleViewDetails(product)}
                     >
-                      {buying
-                        ? "Processing..."
-                        : product.stock > 0
-                        ? "🛒 Buy Now"
-                        : "Out of Stock"}
+                      View Details →
                     </button>
-
                   </div>
-
-                </div>
-
+                </article>
               );
             })}
-
           </div>
-
         )}
-
       </section>
 
-      {/* ================= BOTTOM BANNER ================= */}
-
+      {/* BOTTOM BANNER */}
       <section className="marketplace-banner">
-
         <div>
-          <p>
-            CAMPUS SHOPPING MADE EASY
-          </p>
-
-          <h2>
-            Find it. Buy it. Enjoy it.
-          </h2>
-
+          <p>CAMPUS SHOPPING MADE EASY</p>
+          <h2>Find it. Check it. Choose it.</h2>
           <span>
-            Everything you need from your campus
-            marketplace in one place.
+            View product details and reviews before making
+            your purchase.
           </span>
         </div>
 
-        <button
-          onClick={() => navigate("/orders")}
-        >
+        <button onClick={() => navigate("/orders")}>
           View My Orders →
         </button>
-
       </section>
 
-      {/* ================= FOOTER ================= */}
-
+      {/* FOOTER */}
       <footer className="products-footer">
-
-        <div className="products-footer-logo">
-          🛍️ C-Mart
-        </div>
-
-        <p>
-          Campus Marketplace • Buy • Sell • Swap • Rent
-        </p>
-
+        <div className="products-footer-logo">🛍️ C-Mart</div>
+        <p>Campus Marketplace • Buy • Sell • Swap • Rent</p>
       </footer>
-
     </div>
   );
 }

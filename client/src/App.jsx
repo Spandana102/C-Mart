@@ -17,6 +17,7 @@ import Reviews from "./pages/Reviewes/Reviews";
 import Orders from "./pages/Orders/Orders";
 import Products from "./pages/Products/Products.jsx";
 import Sell from "./pages/Sell/Sell";
+import ProductDetails from "./pages/ProductDetails/ProductDetails";
 
 import Complaint from "./pages/Complaints/Complaints.jsx";
 
@@ -43,6 +44,7 @@ function App() {
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/sell" element={<Sell />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
 
         {/* Complaint */}
         <Route path="/complaints" element={<Complaint />} />

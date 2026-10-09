@@ -1001,3 +1001,42 @@
     text-align: center;
   }
 }
+
+.pd-choice-title {
+  margin-top: 24px;
+}
+
+.pd-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pd-action-grid button {
+  min-height: 48px;
+  padding: 12px;
+  border: none;
+  border-radius: 9px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pd-swap {
+  background: #2563eb;
+}
+
+.pd-rent {
+  background: #0f766e;
+}
+
+.pd-action-grid button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .pd-action-grid {
+    grid-template-columns: 1fr;
+  }
+}
