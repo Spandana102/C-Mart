@@ -167,3 +167,24 @@
     flex-wrap: wrap;
   }
 }
+
+.pd-bargain-btn {
+  padding: 13px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.pd-bargain-btn:hover {
+  background: #d97706;
+}
+
+.pd-bargain-btn:focus-visible {
+  outline: 3px solid #fcd34d;
+  outline-offset: 3px;
+}

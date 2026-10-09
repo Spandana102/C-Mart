@@ -10,9 +10,9 @@ function getImageUrl(image) {
   if (!image) return "";
 
   if (typeof image === "string") {
-    return image.startsWith("http")
-      ? image
-      : `http://localhost:5000/${image.replace(/^\/+/, "")}`;
+    if (image.startsWith("http")) return image;
+
+    return `http://localhost:5000/${image.replace(/^\/+/, "")}`;
   }
 
   if (typeof image === "object") {
@@ -120,6 +120,14 @@ function ProductDetails() {
     });
   };
 
+  const handleBargain = () => {
+    if (!product) return;
+
+    navigate("/bargaining", {
+      state: { product },
+    });
+  };
+
   if (loading) {
     return (
       <div className="product-details-page">
@@ -134,6 +142,7 @@ function ProductDetails() {
     return (
       <div className="product-details-page">
         <button
+          type="button"
           className="pd-back-btn"
           onClick={() => navigate(-1)}
         >
@@ -151,6 +160,7 @@ function ProductDetails() {
     <div className="product-details-page">
       <header className="pd-header">
         <button
+          type="button"
           className="pd-back-btn"
           onClick={() => navigate(-1)}
         >
@@ -158,7 +168,10 @@ function ProductDetails() {
         </button>
 
         <h2>C-Mart</h2>
-        <span className="pd-header-label">Product Details</span>
+
+        <span className="pd-header-label">
+          Product Details
+        </span>
       </header>
 
       <main className="pd-container">
@@ -184,7 +197,9 @@ function ProductDetails() {
             {product.category || "General"}
           </span>
 
-          <h1>{product.name || product.title || "Untitled Product"}</h1>
+          <h1>
+            {product.name || product.title || "Untitled Product"}
+          </h1>
 
           <p className="pd-price">
             {price !== null && price !== undefined
@@ -199,6 +214,7 @@ function ProductDetails() {
           <div className="pd-divider" />
 
           <h3>Description</h3>
+
           <p className="pd-description">
             {product.description || "No description available."}
           </p>
@@ -206,6 +222,7 @@ function ProductDetails() {
           <div className="pd-divider" />
 
           <h3>Seller Information</h3>
+
           <p className="pd-seller">
             <strong>Seller:</strong> {seller}
           </p>
@@ -224,6 +241,7 @@ function ProductDetails() {
 
           <div className="pd-actions">
             <button
+              type="button"
               className="pd-buy-btn"
               onClick={handleBuyNow}
             >
@@ -231,6 +249,15 @@ function ProductDetails() {
             </button>
 
             <button
+              type="button"
+              className="pd-bargain-btn"
+              onClick={handleBargain}
+            >
+              Bargain
+            </button>
+
+            <button
+              type="button"
               className="pd-home-btn"
               onClick={() => navigate("/")}
             >
