@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -9,13 +8,19 @@ function getImageUrl(image) {
   if (!image) return "";
 
   if (typeof image === "string") {
-    return image.startsWith("http")
-      ? image
-      : `http://localhost:5000/${image.replace(/^\/+/, "")}`;
+    if (image.startsWith("http")) return image;
+
+    return `http://localhost:5000/${image.replace(/^\/+/, "")}`;
   }
 
   if (typeof image === "object") {
-    return image.url || image.secure_url || image.path || "";
+    return (
+      image.url ||
+      image.secure_url ||
+      image.path ||
+      image.imageUrl ||
+      ""
+    );
   }
 
   return "";
@@ -36,13 +41,13 @@ function BargainPage() {
     return (
       <div style={styles.page}>
         <div style={styles.container}>
-          <h2>Product not selected</h2>
-          <p>Please select a product before bargaining.</p>
+          <h2>Product Not Selected</h2>
+          <p>Please open a product and select Bargain.</p>
           <button
             style={styles.backButton}
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/products")}
           >
-            Back to Dashboard
+            Back to Marketplace
           </button>
         </div>
       </div>
@@ -81,12 +86,12 @@ function BargainPage() {
     const amount = Number(offerPrice);
 
     if (!productId) {
-      setError("Product ID is missing. Please reopen the product.");
+      setError("Product ID is missing. Reopen the product details.");
       return;
     }
 
     if (!Number.isFinite(originalPrice) || originalPrice <= 0) {
-      setError("Valid product price is not available.");
+      setError("The original product price is invalid.");
       return;
     }
 
@@ -96,7 +101,7 @@ function BargainPage() {
     }
 
     if (amount >= originalPrice) {
-      setError("Offer must be lower than the original price.");
+      setError("Your offer must be lower than the original price.");
       return;
     }
 
@@ -110,11 +115,10 @@ function BargainPage() {
     try {
       setSending(true);
 
-      // Change this endpoint if your backend uses a different route.
       const response = await axios.post(
         `${API_URL}/bargaining`,
         {
-          productId,
+          productId: String(productId),
           offerPrice: amount,
         },
         {
@@ -126,14 +130,27 @@ function BargainPage() {
 
       setMessage(
         response.data?.message ||
-          "Offer submitted successfully."
+          "Your offer was submitted successfully."
       );
+
       setOfferPrice("");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Offer could not be submitted. Check the bargaining API and try again."
+      console.error(
+        "Bargaining request failed:",
+        err.response?.status,
+        err.response?.data || err.message
       );
+
+      if (err.response) {
+        setError(
+          err.response.data?.message ||
+            `Offer failed. Server returned status ${err.response.status}.`
+        );
+      } else {
+        setError(
+          "Cannot connect to the server. Check whether your backend is running."
+        );
+      }
     } finally {
       setSending(false);
     }
@@ -163,9 +180,7 @@ function BargainPage() {
                 style={styles.image}
               />
             ) : (
-              <div style={styles.noImage}>
-                📦
-              </div>
+              <div style={styles.noImage}>📦</div>
             )}
 
             <p style={styles.category}>
@@ -179,7 +194,10 @@ function BargainPage() {
             </p>
 
             <p style={styles.price}>
-              ₹{originalPrice.toLocaleString("en-IN")}
+              ₹
+              {Number.isFinite(originalPrice)
+                ? originalPrice.toLocaleString("en-IN")
+                : "Price unavailable"}
             </p>
 
             <p style={styles.hint}>
@@ -191,8 +209,8 @@ function BargainPage() {
             <h2>🤝 Make an Offer</h2>
 
             <p style={styles.hint}>
-              Enter the price you are willing to pay.
-              The seller can respond to your offer.
+              Enter the amount you are willing to pay for this
+              product. The seller can review your offer.
             </p>
 
             <form onSubmit={handleOffer}>
@@ -203,8 +221,12 @@ function BargainPage() {
               <input
                 type="number"
                 min="1"
-                max={originalPrice - 1}
-                step="1"
+                max={
+                  Number.isFinite(originalPrice)
+                    ? originalPrice - 0.01
+                    : undefined
+                }
+                step="0.01"
                 required
                 value={offerPrice}
                 onChange={(event) => {
@@ -229,21 +251,26 @@ function BargainPage() {
             </form>
 
             {message && (
-              <p style={styles.success}>{message}</p>
+              <p style={styles.success} role="status">
+                {message}
+              </p>
             )}
 
             {error && (
-              <p style={styles.error}>{error}</p>
+              <p style={styles.error} role="alert">
+                {error}
+              </p>
             )}
 
             <div style={styles.infoBox}>
               <strong>How bargaining works</strong>
               <p>
-                1. Buyer sends an offer.
+                1. Buyer submits an offer for this product.
                 <br />
-                2. Seller accepts, rejects, or counters.
+                2. Seller reviews the offer.
                 <br />
-                3. Buyer can respond to the counter-offer.
+                3. Seller can accept, reject, or make a
+                counter-offer if the backend supports it.
               </p>
             </div>
           </section>

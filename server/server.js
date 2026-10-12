@@ -1,4 +1,3 @@
-
 const dns = require("dns");
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -32,6 +31,7 @@ const productRoutes = require("./routes/productRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const swapRoutes = require("./routes/swapRoutes");
+const bargainingRoutes = require("./routes/bargainingRoutes");
 
 // APP
 const app = express();
@@ -55,9 +55,12 @@ app.use("/api/orders", orderRoutes);
 // SWAP REQUEST ROUTES
 app.use("/api/swaps", swapRoutes);
 
+// BARGAINING ROUTES
+app.use("/api/bargaining", bargainingRoutes);
+
 // HOME
 app.get("/", (req, res) => {
-  res.send("Campus Bazaar Backend is Running");
+  res.send("C-Mart Backend is Running");
 });
 
 // SERVER

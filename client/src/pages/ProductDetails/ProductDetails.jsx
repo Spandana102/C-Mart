@@ -112,18 +112,24 @@ function ProductDetails() {
     product?.owner?.fullName ||
     "Seller information unavailable";
 
+  // Navigate to bargaining for THIS product only
+  const handleBargain = () => {
+    if (!product || !currentId) return;
+
+    navigate(`/bargaining/${currentId}`, {
+      state: {
+        product: {
+          ...product,
+          _id: product._id || currentId,
+        },
+      },
+    });
+  };
+
   const handleBuyNow = () => {
     if (!product) return;
 
     navigate("/buy", {
-      state: { product },
-    });
-  };
-
-  const handleBargain = () => {
-    if (!product) return;
-
-    navigate("/bargaining", {
       state: { product },
     });
   };

@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login/Login";
@@ -28,11 +29,13 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
         {/* Main Pages */}
@@ -44,10 +47,18 @@ function App() {
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/sell" element={<Sell />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
 
-        {/* Complaint */}
-        <Route path="/complaints" element={<Complaint />} />
+        {/* Product Details */}
+        <Route
+          path="/product/:id"
+          element={<ProductDetails />}
+        />
+
+        {/* Complaints */}
+        <Route
+          path="/complaints"
+          element={<Complaint />}
+        />
 
         {/* Profile */}
         <Route
@@ -59,13 +70,26 @@ function App() {
           }
         />
 
-        {/* Bargaining */}
-        <Route path="/bargain" element={<BargainPage />} />
-        <Route path="/seller-offers" element={<SellerOffers />} />
+        {/* Bargaining for a specific product */}
+        <Route
+          path="/bargaining/:productId"
+          element={<BargainPage />}
+        />
+
+        {/* Existing bargaining URL */}
+        <Route
+          path="/bargain"
+          element={<BargainPage />}
+        />
+
+        {/* Seller Offers */}
+        <Route
+          path="/seller-offers"
+          element={<SellerOffers />}
+        />
 
         {/* Admin */}
         <Route path="/admin" element={<Admin />} />
-
       </Routes>
     </BrowserRouter>
   );
