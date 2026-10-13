@@ -188,3 +188,135 @@
   outline: 3px solid #fcd34d;
   outline-offset: 3px;
 }
+
+.pd-reviews-section {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 28px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+.pd-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 14px 0;
+  color: #555;
+}
+
+.pd-average-rating {
+  color: #e89b00;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.pd-review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.pd-star-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.pd-star-button {
+  border: none;
+  background: transparent;
+  color: #c9c9c9;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pd-star-button.selected {
+  color: #f5a623;
+}
+
+.pd-review-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+.pd-submit-review-btn {
+  align-self: flex-start;
+  padding: 11px 20px;
+  background: #176b45;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pd-submit-review-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pd-review-success {
+  color: #176b45;
+  margin-top: 12px;
+}
+
+.pd-review-error {
+  color: #c62828;
+  margin-top: 12px;
+}
+
+.pd-review-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.pd-review-card {
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+}
+
+.pd-review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.pd-review-stars {
+  color: #f5a623;
+  white-space: nowrap;
+}
+
+.pd-empty-stars {
+  color: #d5d5d5;
+}
+
+.pd-review-card p {
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+
+.pd-review-card small {
+  color: #777;
+}
+
+@media (max-width: 600px) {
+  .pd-reviews-section {
+    margin: 16px 10px;
+    padding: 18px;
+  }
+
+  .pd-review-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

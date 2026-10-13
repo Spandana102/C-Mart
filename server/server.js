@@ -1,3 +1,4 @@
+
 const dns = require("dns");
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
@@ -22,6 +23,12 @@ console.log(
   !!process.env.CLOUDINARY_API_SECRET
 );
 
+// CHECK DATABASE NAME WITHOUT PRINTING PASSWORD
+const mongoUri = process.env.MONGO_URI || "";
+const databasePath = mongoUri.split(".net/")[1]?.split("?")[0];
+
+console.log("MongoDB URI database path:", databasePath || "(not specified)");
+
 // IMPORTS
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
@@ -44,18 +51,14 @@ app.use(express.urlencoded({ extended: true }));
 // DATABASE
 connectDB();
 
-// EXISTING ROUTES
+// ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/orders", orderRoutes);
-
-// SWAP REQUEST ROUTES
 app.use("/api/swaps", swapRoutes);
-
-// BARGAINING ROUTES
 app.use("/api/bargaining", bargainingRoutes);
 
 // HOME

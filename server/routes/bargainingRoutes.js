@@ -7,10 +7,20 @@ const Product = require("../models/Product");
 const Bargain = require("../models/Bargain");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Submit a bargaining offer
+const getUserId = (req) =>
+  req.user?._id || req.user?.id || req.user?.userId;
+
+// Submit a buyer offer
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { productId, offerPrice } = req.body;
+    const { productId, offerPrice, message = "" } = req.body;
+    const buyerId = getUserId(req);
+
+    if (!mongoose.isValidObjectId(buyerId)) {
+      return res.status(401).json({
+        message: "Unable to identify the logged-in user",
+      });
+    }
 
     if (!mongoose.isValidObjectId(productId)) {
       return res.status(400).json({
@@ -34,18 +44,10 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    const buyerId =
-      req.user?._id || req.user?.id || req.user?.userId;
-
-    if (!buyerId || !mongoose.isValidObjectId(buyerId)) {
-      return res.status(401).json({
-        message: "Unable to identify the logged-in user",
-      });
-    }
-
     if (!product.sellerId) {
       return res.status(400).json({
-        message: "This product does not have a seller assigned",
+        message:
+          "This product has no seller assigned. Update the product owner first.",
       });
     }
 
@@ -66,6 +68,7 @@ router.post("/", authMiddleware, async (req, res) => {
       buyerId,
       sellerId: product.sellerId,
       offerPrice: amount,
+      message: String(message).trim().slice(0, 300),
       status: "Pending",
     });
 
@@ -75,7 +78,7 @@ router.post("/", authMiddleware, async (req, res) => {
       bargain,
     });
   } catch (error) {
-    console.error("Submit bargaining offer:", error.message);
+    console.error("Submit bargaining offer:", error);
 
     return res.status(500).json({
       message: "Failed to submit bargaining offer",
@@ -86,17 +89,16 @@ router.post("/", authMiddleware, async (req, res) => {
 // Get offers received by the logged-in seller
 router.get("/seller", authMiddleware, async (req, res) => {
   try {
-    const sellerId =
-      req.user?._id || req.user?.id || req.user?.userId;
+    const sellerId = getUserId(req);
 
-    if (!sellerId || !mongoose.isValidObjectId(sellerId)) {
+    if (!mongoose.isValidObjectId(sellerId)) {
       return res.status(401).json({
         message: "Unable to identify the logged-in seller",
       });
     }
 
     const offers = await Bargain.find({ sellerId })
-      .populate("productId", "name price images")
+      .populate("productId", "name price images category")
       .populate("buyerId", "fullName email")
       .sort({ createdAt: -1 });
 
@@ -105,10 +107,176 @@ router.get("/seller", authMiddleware, async (req, res) => {
       offers,
     });
   } catch (error) {
-    console.error("Fetch seller offers:", error.message);
+    console.error("Fetch seller offers:", error);
 
     return res.status(500).json({
       message: "Failed to fetch seller offers",
+    });
+  }
+});
+
+// Accept offer
+router.patch("/:id/accept", authMiddleware, async (req, res) => {
+  try {
+    const sellerId = getUserId(req);
+
+    if (!mongoose.isValidObjectId(sellerId)) {
+      return res.status(401).json({
+        message: "Please log in again",
+      });
+    }
+
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid offer ID",
+      });
+    }
+
+    const offer = await Bargain.findOne({
+      _id: req.params.id,
+      sellerId,
+      status: "Pending",
+    });
+
+    if (!offer) {
+      return res.status(404).json({
+        message:
+          "Pending offer not found, or you are not its seller",
+      });
+    }
+
+    offer.status = "Accepted";
+    await offer.save();
+
+    return res.json({
+      success: true,
+      message: "Offer accepted successfully",
+      offer,
+    });
+  } catch (error) {
+    console.error("Accept offer:", error);
+
+    return res.status(500).json({
+      message: "Failed to accept offer",
+    });
+  }
+});
+
+// Reject offer
+router.patch("/:id/reject", authMiddleware, async (req, res) => {
+  try {
+    const sellerId = getUserId(req);
+
+    if (!mongoose.isValidObjectId(sellerId)) {
+      return res.status(401).json({
+        message: "Please log in again",
+      });
+    }
+
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid offer ID",
+      });
+    }
+
+    const offer = await Bargain.findOne({
+      _id: req.params.id,
+      sellerId,
+      status: "Pending",
+    });
+
+    if (!offer) {
+      return res.status(404).json({
+        message:
+          "Pending offer not found, or you are not its seller",
+      });
+    }
+
+    offer.status = "Rejected";
+    await offer.save();
+
+    return res.json({
+      success: true,
+      message: "Offer rejected",
+      offer,
+    });
+  } catch (error) {
+    console.error("Reject offer:", error);
+
+    return res.status(500).json({
+      message: "Failed to reject offer",
+    });
+  }
+});
+
+// Seller sends a counter offer
+router.patch("/:id/counter", authMiddleware, async (req, res) => {
+  try {
+    const sellerId = getUserId(req);
+
+    if (!mongoose.isValidObjectId(sellerId)) {
+      return res.status(401).json({
+        message: "Please log in again",
+      });
+    }
+
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        message: "Invalid offer ID",
+      });
+    }
+
+    const counterPrice = Number(req.body.counterPrice);
+
+    if (!Number.isFinite(counterPrice) || counterPrice <= 0) {
+      return res.status(400).json({
+        message: "Please enter a valid counter price",
+      });
+    }
+
+    const offer = await Bargain.findOne({
+      _id: req.params.id,
+      sellerId,
+      status: "Pending",
+    });
+
+    if (!offer) {
+      return res.status(404).json({
+        message:
+          "Pending offer not found, or you are not its seller",
+      });
+    }
+
+    const product = await Product.findById(offer.productId);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    if (counterPrice >= Number(product.price)) {
+      return res.status(400).json({
+        message:
+          "Counter price must be lower than the listed product price",
+      });
+    }
+
+    offer.counterPrice = counterPrice;
+    offer.status = "Countered";
+
+    await offer.save();
+
+    return res.json({
+      success: true,
+      message: "Counter offer submitted successfully",
+      offer,
+    });
+  } catch (error) {
+    console.error("Counter offer:", error);
+
+    return res.status(500).json({
+      message: "Failed to submit counter offer",
     });
   }
 });

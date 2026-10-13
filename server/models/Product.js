@@ -32,7 +32,7 @@ const productSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Store image URLs, not local browser file paths
+    // Product image URLs
     images: {
       type: [String],
       default: [],
@@ -61,16 +61,20 @@ const productSchema = new mongoose.Schema(
       default: {},
     },
 
-    // Product owner (optional for compatibility with existing products)
+    // Product owner - required for new products
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null,
+      required: true,
+      index: true,
     },
   },
   {
     timestamps: true,
   }
 );
+
+// Helpful indexes for marketplace queries
+productSchema.index({ category: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Product", productSchema);

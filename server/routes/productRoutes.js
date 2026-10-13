@@ -7,6 +7,7 @@ const Product = require("../models/Product");
 const authMiddleware = require("../middleware/authMiddleware");
 
 // GET ALL PRODUCTS
+// Public endpoint: every user can view products from all sellers.
 router.get("/", async (req, res) => {
   try {
     const products = await Product.find({})
@@ -15,7 +16,7 @@ router.get("/", async (req, res) => {
 
     return res.status(200).json(products);
   } catch (error) {
-    console.error("Fetch Products Error:", error.message);
+    console.error("Fetch Products Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -27,14 +28,16 @@ router.get("/", async (req, res) => {
 // GET ONE PRODUCT BY ID
 router.get("/:id", async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid product ID",
       });
     }
 
-    const product = await Product.findById(req.params.id).lean();
+    const product = await Product.findById(id).lean();
 
     if (!product) {
       return res.status(404).json({
@@ -48,7 +51,7 @@ router.get("/:id", async (req, res) => {
       product,
     });
   } catch (error) {
-    console.error("Fetch Product Error:", error.message);
+    console.error("Fetch Product Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -58,7 +61,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // ADD PRODUCT
-// Seller ID comes from the authenticated login token.
+// Only logged-in users can add products.
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const {
@@ -77,9 +80,14 @@ router.post("/", authMiddleware, async (req, res) => {
     } = req.body;
 
     const sellerId =
-      req.user?._id || req.user?.id || req.user?.userId;
+      req.user?._id ||
+      req.user?.id ||
+      req.user?.userId;
 
-    if (!sellerId || !mongoose.isValidObjectId(sellerId)) {
+    if (
+      !sellerId ||
+      !mongoose.isValidObjectId(sellerId)
+    ) {
       return res.status(401).json({
         success: false,
         message: "Please log in again to add a product",
@@ -102,8 +110,10 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     const sellingPrice = Number(price);
-    const mrpPrice = mrp === undefined || mrp === "" ? 0 : Number(mrp);
-    const productStock = stock === undefined || stock === "" ? 1 : Number(stock);
+    const mrpPrice =
+      mrp === undefined || mrp === "" ? 0 : Number(mrp);
+    const productStock =
+      stock === undefined || stock === "" ? 1 : Number(stock);
 
     if (!Number.isFinite(sellingPrice) || sellingPrice <= 0) {
       return res.status(400).json({
@@ -119,25 +129,37 @@ router.post("/", authMiddleware, async (req, res) => {
       });
     }
 
-    if (!Number.isInteger(productStock) || productStock < 0) {
+    if (
+      !Number.isInteger(productStock) ||
+      productStock < 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "Please provide valid stock",
       });
     }
 
+    // Normalize supported image formats into an array of URLs.
     let productImages = [];
 
     if (Array.isArray(images)) {
       productImages = images.filter(
-        (item) => typeof item === "string" && item.trim()
+        (item) =>
+          typeof item === "string" &&
+          item.trim().length > 0
       );
-    } else if (typeof images === "string" && images.trim()) {
+    } else if (
+      typeof images === "string" &&
+      images.trim()
+    ) {
       productImages = [images.trim()];
     } else {
       const selectedImage = image || imageUrl;
 
-      if (typeof selectedImage === "string" && selectedImage.trim()) {
+      if (
+        typeof selectedImage === "string" &&
+        selectedImage.trim()
+      ) {
         productImages = [selectedImage.trim()];
       }
     }
@@ -147,14 +169,22 @@ router.post("/", authMiddleware, async (req, res) => {
       price: sellingPrice,
       mrp: mrpPrice,
       category: category.trim(),
-      description: description || "",
+      description:
+        typeof description === "string"
+          ? description.trim()
+          : "",
       images: productImages,
       stock: productStock,
       condition: ["New", "Used"].includes(condition)
         ? condition
         : "Used",
-      brand: brand || "",
-      specifications: specifications || {},
+      brand: typeof brand === "string" ? brand : "",
+      specifications:
+        specifications &&
+        typeof specifications === "object" &&
+        !Array.isArray(specifications)
+          ? specifications
+          : {},
       sellerId: new mongoose.Types.ObjectId(sellerId),
     };
 
@@ -171,23 +201,28 @@ router.post("/", authMiddleware, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to add product",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : undefined,
     });
   }
 });
 
 // DELETE PRODUCT
-// A seller can delete their own product.
-// An authenticated admin can delete any product.
+// Seller can delete their own product; admin can delete any product.
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid product ID",
       });
     }
 
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(id);
 
     if (!product) {
       return res.status(404).json({
@@ -197,13 +232,17 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
 
     const currentUserId =
-      req.user?._id || req.user?.id || req.user?.userId;
+      req.user?._id ||
+      req.user?.id ||
+      req.user?.userId;
 
     const isAdmin = req.user?.role === "admin";
+
     const isOwner =
       product.sellerId &&
       currentUserId &&
-      product.sellerId.toString() === currentUserId.toString();
+      product.sellerId.toString() ===
+        currentUserId.toString();
 
     if (!isAdmin && !isOwner) {
       return res.status(403).json({

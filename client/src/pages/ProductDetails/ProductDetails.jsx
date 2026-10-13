@@ -12,7 +12,7 @@ function getImageUrl(image) {
   if (typeof image === "string") {
     if (image.startsWith("http")) return image;
 
-    return `http://localhost:5000/${image.replace(/^\/+/, "")}`;
+    return "http://localhost:5000/" + image.replace(/^\/+/, "");
   }
 
   if (typeof image === "object") {
@@ -31,13 +31,24 @@ function getImageUrl(image) {
 function ProductDetails() {
   const { id, productId } = useParams();
   const navigate = useNavigate();
+  const currentId = productId || id;
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const currentId = productId || id;
+  // Reviews state
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewError, setReviewError] = useState("");
 
+  const token = localStorage.getItem("token");
+
+  // Load product details
   useEffect(() => {
     let active = true;
 
@@ -52,25 +63,14 @@ function ProductDetails() {
         setLoading(true);
         setError("");
 
-        const token = localStorage.getItem("token");
-
         const response = await axios.get(
-          `${API_URL}/products/${currentId}`,
-          token
-            ? {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            : {}
+          API_URL + "/products/" + currentId
         );
 
         const data = response.data;
         const item = data.product || data.data || data;
 
-        if (active) {
-          setProduct(item);
-        }
+        if (active) setProduct(item);
       } catch (err) {
         if (active) {
           setError(
@@ -79,13 +79,48 @@ function ProductDetails() {
           );
         }
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
     fetchProduct();
+
+    return () => {
+      active = false;
+    };
+  }, [currentId]);
+
+  // Load reviews for this product
+  useEffect(() => {
+    let active = true;
+
+    async function fetchReviews() {
+      if (!currentId) return;
+
+      try {
+        setReviewsLoading(true);
+
+        const response = await axios.get(API_URL + "/reviews", {
+          params: { product: currentId },
+        });
+
+        const data = response.data;
+        const list = Array.isArray(data)
+          ? data
+          : data.reviews || [];
+
+        if (active) setReviews(list);
+      } catch (err) {
+        console.error(
+          "Unable to load reviews:",
+          err.response?.data || err.message
+        );
+      } finally {
+        if (active) setReviewsLoading(false);
+      }
+    }
+
+    fetchReviews();
 
     return () => {
       active = false;
@@ -112,11 +147,20 @@ function ProductDetails() {
     product?.owner?.fullName ||
     "Seller information unavailable";
 
-  // Navigate to bargaining for THIS product only
+  const averageRating =
+    reviews.length > 0
+      ? (
+          reviews.reduce(
+            (total, review) => total + Number(review.rating || 0),
+            0
+          ) / reviews.length
+        ).toFixed(1)
+      : "0.0";
+
   const handleBargain = () => {
     if (!product || !currentId) return;
 
-    navigate(`/bargaining/${currentId}`, {
+    navigate("/bargaining/" + currentId, {
       state: {
         product: {
           ...product,
@@ -127,11 +171,75 @@ function ProductDetails() {
   };
 
   const handleBuyNow = () => {
-    if (!product) return;
+    if (!product || !currentId) return;
 
-    navigate("/buy", {
-      state: { product },
+    navigate("/meetpoint", {
+      state: {
+        product: {
+          ...product,
+          _id: product._id || currentId,
+        },
+        productId: currentId,
+        source: "buy",
+      },
     });
+  };
+
+  // Submit a product review
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+    setReviewMessage("");
+    setReviewError("");
+
+    if (!token) {
+      setReviewError("Please log in to submit a review.");
+      return;
+    }
+
+    if (!comment.trim()) {
+      setReviewError("Please write your review.");
+      return;
+    }
+
+    try {
+      setReviewLoading(true);
+
+      const response = await axios.post(
+        API_URL + "/reviews",
+        {
+          product: currentId,
+          rating: Number(rating),
+          comment: comment.trim(),
+        },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+
+      setReviewMessage(
+        response.data.message || "Review submitted successfully."
+      );
+      setComment("");
+
+      // Refresh the reviews list
+      const refreshed = await axios.get(API_URL + "/reviews", {
+        params: { product: currentId },
+      });
+
+      const data = refreshed.data;
+      setReviews(
+        Array.isArray(data) ? data : data.reviews || []
+      );
+    } catch (err) {
+      setReviewError(
+        err.response?.data?.message ||
+          "Unable to submit review. Please try again."
+      );
+    } finally {
+      setReviewLoading(false);
+    }
   };
 
   if (loading) {
@@ -174,10 +282,7 @@ function ProductDetails() {
         </button>
 
         <h2>C-Mart</h2>
-
-        <span className="pd-header-label">
-          Product Details
-        </span>
+        <span className="pd-header-label">Product Details</span>
       </header>
 
       <main className="pd-container">
@@ -192,9 +297,7 @@ function ProductDetails() {
               }}
             />
           ) : (
-            <div className="pd-no-image">
-              No Image Available
-            </div>
+            <div className="pd-no-image">No Image Available</div>
           )}
         </div>
 
@@ -203,13 +306,11 @@ function ProductDetails() {
             {product.category || "General"}
           </span>
 
-          <h1>
-            {product.name || product.title || "Untitled Product"}
-          </h1>
+          <h1>{product.name || product.title || "Untitled Product"}</h1>
 
           <p className="pd-price">
             {price !== null && price !== undefined
-              ? `₹${price}`
+              ? "₹" + price
               : "Price not available"}
           </p>
 
@@ -220,7 +321,6 @@ function ProductDetails() {
           <div className="pd-divider" />
 
           <h3>Description</h3>
-
           <p className="pd-description">
             {product.description || "No description available."}
           </p>
@@ -228,7 +328,6 @@ function ProductDetails() {
           <div className="pd-divider" />
 
           <h3>Seller Information</h3>
-
           <p className="pd-seller">
             <strong>Seller:</strong> {seller}
           </p>
@@ -272,6 +371,136 @@ function ProductDetails() {
           </div>
         </section>
       </main>
+
+      {/* Ratings and Reviews */}
+      <section className="pd-reviews-section">
+        <h2>Ratings &amp; Reviews</h2>
+
+        <div className="pd-rating-summary">
+          <span className="pd-average-rating">
+            ⭐ {averageRating}/5
+          </span>
+          <span>
+            {reviews.length} review{reviews.length !== 1 ? "s" : ""}
+          </span>
+        </div>
+
+        <div className="pd-divider" />
+
+        <h3>Write a Review</h3>
+
+        {!token ? (
+          <p>
+            Please <button type="button" onClick={() => navigate("/login")}>
+              log in
+            </button>{" "}
+            to submit a review.
+          </p>
+        ) : (
+          <form className="pd-review-form" onSubmit={handleReviewSubmit}>
+            <label htmlFor="pd-rating">Your Rating</label>
+
+            <div className="pd-star-picker">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  className={
+                    star <= rating
+                      ? "pd-star-button selected"
+                      : "pd-star-button"
+                  }
+                  onClick={() => setRating(star)}
+                  aria-label={"Rate " + star + " out of 5 stars"}
+                  aria-pressed={rating === star}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+
+            <label htmlFor="pd-comment">Your Review</label>
+            <textarea
+              id="pd-comment"
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Share your experience with this product..."
+              rows={4}
+              maxLength={1000}
+              required
+            />
+
+            <button
+              type="submit"
+              className="pd-submit-review-btn"
+              disabled={reviewLoading}
+            >
+              {reviewLoading ? "Submitting..." : "Submit Review"}
+            </button>
+          </form>
+        )}
+
+        {reviewMessage && (
+          <p className="pd-review-success">{reviewMessage}</p>
+        )}
+
+        {reviewError && (
+          <p className="pd-review-error">{reviewError}</p>
+        )}
+
+        <div className="pd-divider" />
+
+        <h3>Customer Reviews</h3>
+
+        {reviewsLoading ? (
+          <p>Loading reviews...</p>
+        ) : reviews.length === 0 ? (
+          <p>No reviews yet for this product.</p>
+        ) : (
+          <div className="pd-review-list">
+            {reviews.map((review) => (
+              <article
+                className="pd-review-card"
+                key={review._id}
+              >
+                <div className="pd-review-card-header">
+                  <strong>
+                    {review.user?.fullName ||
+                      review.user?.name ||
+                      "Student"}
+                  </strong>
+
+                  <span className="pd-review-stars">
+                    {"★".repeat(
+                      Math.max(
+                        0,
+                        Math.min(5, Number(review.rating) || 0)
+                      )
+                    )}
+                    <span className="pd-empty-stars">
+                      {"★".repeat(
+                        5 -
+                          Math.max(
+                            0,
+                            Math.min(5, Number(review.rating) || 0)
+                          )
+                      )}
+                    </span>
+                  </span>
+                </div>
+
+                <p>{review.comment}</p>
+
+                <small>
+                  {review.createdAt
+                    ? new Date(review.createdAt).toLocaleDateString()
+                    : ""}
+                </small>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

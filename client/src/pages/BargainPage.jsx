@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -33,6 +34,7 @@ function BargainPage() {
   const product = location.state?.product;
 
   const [offerPrice, setOfferPrice] = useState("");
+  const [offerMessage, setOfferMessage] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -55,13 +57,8 @@ function BargainPage() {
   }
 
   const productId = product._id || product.id;
-
-  const originalPrice = Number(
-    product.price ?? product.amount
-  );
-
-  const productName =
-    product.name || product.title || "Product";
+  const originalPrice = Number(product.price ?? product.amount);
+  const productName = product.name || product.title || "Product";
 
   const seller =
     product.seller?.fullName ||
@@ -84,9 +81,10 @@ function BargainPage() {
     setError("");
 
     const amount = Number(offerPrice);
+    const token = localStorage.getItem("token");
 
     if (!productId) {
-      setError("Product ID is missing. Reopen the product details.");
+      setError("Product ID is missing. Reopen Product Details.");
       return;
     }
 
@@ -105,10 +103,9 @@ function BargainPage() {
       return;
     }
 
-    const token = localStorage.getItem("token");
-
     if (!token) {
       setError("Please log in before sending an offer.");
+      navigate("/login");
       return;
     }
 
@@ -120,6 +117,7 @@ function BargainPage() {
         {
           productId: String(productId),
           offerPrice: amount,
+          message: offerMessage.trim(),
         },
         {
           headers: {
@@ -130,10 +128,11 @@ function BargainPage() {
 
       setMessage(
         response.data?.message ||
-          "Your offer was submitted successfully."
+          "Your offer has been submitted successfully."
       );
 
       setOfferPrice("");
+      setOfferMessage("");
     } catch (err) {
       console.error(
         "Bargaining request failed:",
@@ -148,7 +147,7 @@ function BargainPage() {
         );
       } else {
         setError(
-          "Cannot connect to the server. Check whether your backend is running."
+          "Cannot connect to the server. Check whether the backend is running."
         );
       }
     } finally {
@@ -165,6 +164,7 @@ function BargainPage() {
 
       <main style={styles.container}>
         <button
+          type="button"
           style={styles.backButton}
           onClick={() => navigate(-1)}
         >
@@ -178,6 +178,9 @@ function BargainPage() {
                 src={image}
                 alt={productName}
                 style={styles.image}
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
               />
             ) : (
               <div style={styles.noImage}>📦</div>
@@ -194,33 +197,31 @@ function BargainPage() {
             </p>
 
             <p style={styles.price}>
-              ₹
               {Number.isFinite(originalPrice)
-                ? originalPrice.toLocaleString("en-IN")
+                ? `₹${originalPrice.toLocaleString("en-IN")}`
                 : "Price unavailable"}
             </p>
 
-            <p style={styles.hint}>
-              Seller's current price
-            </p>
+            <p style={styles.hint}>Seller's current price</p>
           </section>
 
           <section style={styles.offerSection}>
             <h2>🤝 Make an Offer</h2>
 
             <p style={styles.hint}>
-              Enter the amount you are willing to pay for this
-              product. The seller can review your offer.
+              Enter your proposed price and an optional message
+              for the seller.
             </p>
 
             <form onSubmit={handleOffer}>
-              <label style={styles.label}>
+              <label style={styles.label} htmlFor="offerPrice">
                 Your Offer Price (₹)
               </label>
 
               <input
+                id="offerPrice"
                 type="number"
-                min="1"
+                min="0.01"
                 max={
                   Number.isFinite(originalPrice)
                     ? originalPrice - 0.01
@@ -238,12 +239,31 @@ function BargainPage() {
                 style={styles.input}
               />
 
+              <label style={styles.label} htmlFor="offerMessage">
+                Message to Seller (Optional)
+              </label>
+
+              <textarea
+                id="offerMessage"
+                value={offerMessage}
+                onChange={(event) => {
+                  setOfferMessage(event.target.value);
+                  setMessage("");
+                  setError("");
+                }}
+                placeholder="Write a message to the seller"
+                maxLength={300}
+                rows={3}
+                style={styles.textarea}
+              />
+
               <button
                 type="submit"
                 disabled={sending}
                 style={{
                   ...styles.offerButton,
                   opacity: sending ? 0.7 : 1,
+                  cursor: sending ? "wait" : "pointer",
                 }}
               >
                 {sending ? "Sending..." : "Send Offer →"}
@@ -251,9 +271,15 @@ function BargainPage() {
             </form>
 
             {message && (
-              <p style={styles.success} role="status">
-                {message}
-              </p>
+              <div style={styles.success} role="status">
+                <strong>✓ Offer submitted</strong>
+                <p>{message}</p>
+                <p>
+                  The request has been accepted by the server.
+                  Check Seller Offers after configuring the seller
+                  requests API and page.
+                </p>
+              </div>
             )}
 
             {error && (
@@ -267,10 +293,12 @@ function BargainPage() {
               <p>
                 1. Buyer submits an offer for this product.
                 <br />
-                2. Seller reviews the offer.
+                2. The backend validates and saves the request.
                 <br />
-                3. Seller can accept, reject, or make a
-                counter-offer if the backend supports it.
+                3. Seller views the request in Seller Offers.
+                <br />
+                4. Seller can accept, reject, or make a counter offer
+                when those APIs are implemented.
               </p>
             </div>
           </section>
@@ -372,6 +400,16 @@ const styles = {
     border: "1px solid #cbd5e1",
     borderRadius: "8px",
   },
+  textarea: {
+    boxSizing: "border-box",
+    width: "100%",
+    padding: "12px",
+    fontSize: "15px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "8px",
+    resize: "vertical",
+    fontFamily: "Arial, sans-serif",
+  },
   offerButton: {
     width: "100%",
     marginTop: "16px",
@@ -381,13 +419,14 @@ const styles = {
     background: "#2563eb",
     color: "#fff",
     fontWeight: "bold",
-    cursor: "pointer",
   },
   success: {
     padding: "12px",
     background: "#dcfce7",
     color: "#166534",
     borderRadius: "8px",
+    lineHeight: 1.6,
+    marginTop: "12px",
   },
   error: {
     padding: "12px",

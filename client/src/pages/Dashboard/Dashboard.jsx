@@ -1,68 +1,112 @@
 
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./Dashboard.css";
+
+const API_URL = "http://localhost:5000/api";
+
+function getImageUrl(product) {
+  const image =
+    product?.images?.[0] ||
+    product?.image ||
+    product?.imageUrl;
+
+  let imageUrl = "";
+
+  if (typeof image === "string") {
+    imageUrl = image;
+  } else if (image?.url) {
+    imageUrl = image.url;
+  } else if (image?.secure_url) {
+    imageUrl = image.secure_url;
+  }
+
+  if (!imageUrl) return "";
+
+  // Keep full URLs unchanged.
+  if (
+    imageUrl.startsWith("http://") ||
+    imageUrl.startsWith("https://") ||
+    imageUrl.startsWith("data:")
+  ) {
+    return imageUrl;
+  }
+
+  // Convert relative image paths to backend URLs.
+  return "http://localhost:5000/" + imageUrl.replace(/^\/+/, "");
+}
 
 function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const menuItems = [
     { icon: "🏠", title: "Dashboard", path: "/" },
     { icon: "🛍️", title: "Buy Products", path: "/products" },
     { icon: "💰", title: "Sell Products", path: "/sell" },
+    { icon: "🤝", title: "Seller Offers", path: "/seller-offers" },
     { icon: "🔄", title: "Swap Products", path: "/swap" },
     { icon: "🏷️", title: "Rent Products", path: "/rent" },
-    { icon: "🤝", title: "Bargaining", path: "/bargain" },
-    { icon: "📍", title: "Meet Point", path: "/meetpoint" },
     { icon: "📦", title: "My Orders", path: "/orders" },
-    { icon: "⭐", title: "Reviews & Ratings", path: "/reviews" },
     { icon: "⚠️", title: "Complaints", path: "/complaints" },
     { icon: "👤", title: "My Profile", path: "/profile" },
   ];
 
-  const featureCards = [
-    {
-      icon: "🛍️",
-      title: "Buy Products",
-      description: "Explore products available in your campus.",
-      path: "/products",
-      color: "blue",
-    },
-    {
-      icon: "💰",
-      title: "Sell Products",
-      description: "List your products for other students.",
-      path: "/sell",
-      color: "green",
-    },
-    {
-      icon: "🔄",
-      title: "Swap Products",
-      description: "Exchange your items with other students.",
-      path: "/swap",
-      color: "purple",
-    },
-    {
-      icon: "🏠",
-      title: "Rent Products",
-      description: "Find items to rent for a limited period.",
-      path: "/rent",
-      color: "orange",
-    },
-    {
-      icon: "🤝",
-      title: "Bargaining",
-      description: "Make offers and negotiate product prices.",
-      path: "/bargain",
-      color: "pink",
-    },
-    {
-      icon: "📍",
-      title: "Meet Point",
-      description: "Choose a convenient exchange location.",
-      path: "/meetpoint",
-      color: "cyan",
-    },
-  ];
+  useEffect(() => {
+    let active = true;
+
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await axios.get(API_URL + "/products");
+        const data = response.data;
+
+        const productList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.products)
+          ? data.products
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        const sortedProducts = [...productList].sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
+        );
+
+        if (active) {
+          setProducts(sortedProducts.slice(0, 8));
+        }
+      } catch (err) {
+        console.error(
+          "Dashboard products error:",
+          err.response?.data || err.message
+        );
+
+        if (active) {
+          setError("Unable to load products. Please try again.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchProducts();
+
+    return () => {
+      active = false;
+    };
+  }, [location.key]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -70,17 +114,27 @@ function Dashboard() {
     navigate("/login", { replace: true });
   };
 
+  const openProduct = (product) => {
+    const id = product._id || product.id;
+
+    if (id) {
+      navigate("/product/" + id);
+    } else {
+      navigate("/products");
+    }
+  };
+
   return (
     <div className="dashboard-layout">
-      {/* LEFT SIDEBAR */}
       <aside className="dashboard-sidebar">
         <div
           className="sidebar-brand"
           onClick={() => navigate("/")}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
               navigate("/");
             }
           }}
@@ -92,18 +146,24 @@ function Dashboard() {
         <div className="sidebar-label">MAIN MENU</div>
 
         <nav className="sidebar-navigation">
-          {menuItems.map((item) => (
-            <button
-              key={item.path}
-              className={`sidebar-link ${
-                item.path === "/" ? "active" : ""
-              }`}
-              onClick={() => navigate(item.path)}
-            >
-              <span className="sidebar-link-icon">{item.icon}</span>
-              <span>{item.title}</span>
-            </button>
-          ))}
+          {menuItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== "/" &&
+                location.pathname.startsWith(item.path + "/"));
+
+            return (
+              <button
+                key={item.path}
+                type="button"
+                className={"sidebar-link " + (isActive ? "active" : "")}
+                onClick={() => navigate(item.path)}
+              >
+                <span className="sidebar-link-icon">{item.icon}</span>
+                <span>{item.title}</span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="sidebar-bottom">
@@ -114,6 +174,7 @@ function Dashboard() {
               <p>Contact our support team.</p>
             </div>
             <button
+              type="button"
               aria-label="Open complaints"
               onClick={() => navigate("/complaints")}
             >
@@ -121,14 +182,17 @@ function Dashboard() {
             </button>
           </div>
 
-          <button className="sidebar-logout" onClick={handleLogout}>
+          <button
+            type="button"
+            className="sidebar-logout"
+            onClick={handleLogout}
+          >
             <span>↪️</span>
             Logout
           </button>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div>
@@ -137,6 +201,7 @@ function Dashboard() {
           </div>
 
           <button
+            type="button"
             className="topbar-profile"
             onClick={() => navigate("/profile")}
           >
@@ -145,7 +210,6 @@ function Dashboard() {
           </button>
         </header>
 
-        {/* WELCOME BANNER */}
         <section className="dashboard-welcome">
           <div className="welcome-content">
             <span className="welcome-badge">WELCOME TO C-MART 👋</span>
@@ -157,15 +221,16 @@ function Dashboard() {
             </h1>
 
             <p>
-              Buy, sell, swap, rent and negotiate products with
-              students in your campus community.
+              Discover products listed by students in your campus.
+              Buy, sell, swap and rent in one place.
             </p>
 
             <button
+              type="button"
               className="welcome-button"
               onClick={() => navigate("/products")}
             >
-              Explore Products <span>→</span>
+              Explore Products →
             </button>
           </div>
 
@@ -177,47 +242,109 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* QUICK ACCESS */}
-        <section className="dashboard-features">
+        <section className="dashboard-products">
           <div className="dashboard-section-heading">
             <div>
-              <p>EXPLORE C-MART</p>
-              <h2>Marketplace Services</h2>
+              <p>FRESH ON THE MARKET</p>
+              <h2>Recently Added Products</h2>
             </div>
 
-            <span>Choose a service to get started</span>
+            <button
+              type="button"
+              className="view-all-products"
+              onClick={() => navigate("/products")}
+            >
+              View All →
+            </button>
           </div>
 
-          <div className="dashboard-feature-grid">
-            {featureCards.map((feature) => (
+          {loading ? (
+            <div className="dashboard-product-message">
+              Loading products...
+            </div>
+          ) : error ? (
+            <div className="dashboard-product-message">
+              <p>{error}</p>
               <button
-                className="dashboard-feature-card"
-                key={feature.title}
-                onClick={() => navigate(feature.path)}
+                type="button"
+                onClick={() => navigate("/products")}
               >
-                <span
-                  className={`feature-card-icon ${feature.color}`}
-                >
-                  {feature.icon}
-                </span>
-
-                <span className="feature-card-title">
-                  {feature.title}
-                </span>
-
-                <span className="feature-card-description">
-                  {feature.description}
-                </span>
-
-                <span className="feature-card-action">
-                  Open Service →
-                </span>
+                Open Buy Products
               </button>
-            ))}
-          </div>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="dashboard-product-message">
+              <span>🛍️</span>
+              <h3>No products available yet</h3>
+              <p>Products added by students will appear here.</p>
+              <button
+                type="button"
+                onClick={() => navigate("/sell")}
+              >
+                Sell a Product
+              </button>
+            </div>
+          ) : (
+            <div className="dashboard-product-grid">
+              {products.map((product, index) => {
+                const imageUrl = getImageUrl(product);
+
+                const productName =
+                  product.name ||
+                  product.productName ||
+                  product.title ||
+                  "Product";
+
+                const price = product.price;
+                const productId = product._id || product.id;
+
+                return (
+                  <article
+                    className="dashboard-product-card"
+                    key={productId || productName + "-" + index}
+                  >
+                    <button
+                      type="button"
+                      className="dashboard-product-image"
+                      onClick={() => openProduct(product)}
+                      aria-label={"View " + productName}
+                    >
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={productName} />
+                      ) : (
+                        <div className="dashboard-image-placeholder">
+                          🛍️
+                        </div>
+                      )}
+                    </button>
+
+                    <div className="dashboard-product-info">
+                      <h3 title={productName}>{productName}</h3>
+
+                      <p className="dashboard-product-price">
+                        {price !== undefined &&
+                        price !== null &&
+                        price !== "" &&
+                        Number.isFinite(Number(price))
+                          ? "₹" + Number(price).toLocaleString("en-IN")
+                          : "Price not available"}
+                      </p>
+
+                      <button
+                        type="button"
+                        className="dashboard-product-details"
+                        onClick={() => openProduct(product)}
+                      >
+                        View Details →
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
-        {/* BOTTOM SUPPORT */}
         <section className="dashboard-support">
           <div>
             <span>⚠️</span>
@@ -227,7 +354,10 @@ function Dashboard() {
             </div>
           </div>
 
-          <button onClick={() => navigate("/complaints")}>
+          <button
+            type="button"
+            onClick={() => navigate("/complaints")}
+          >
             Submit Complaint →
           </button>
         </section>

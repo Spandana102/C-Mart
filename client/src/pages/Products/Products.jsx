@@ -10,7 +10,6 @@ const SERVER_URL = "http://localhost:5000";
 function getImageUrl(value) {
   if (!value) return "";
 
-  // Support image objects from Cloudinary or MongoDB
   if (typeof value === "object" && !Array.isArray(value)) {
     value =
       value.url ||
@@ -35,7 +34,6 @@ function getImageUrl(value) {
     return url;
   }
 
-  // Relative path, e.g. uploads/product.jpg
   return `${SERVER_URL}/${url.replace(/^\/+/, "")}`;
 }
 
@@ -82,30 +80,26 @@ function Products() {
       setLoading(true);
       setError("");
 
+      // Fetch all products from the shared marketplace.
+      // Do not filter by the currently logged-in user.
       const response = await axios.get(`${API_URL}/products`);
 
       const productData = Array.isArray(response.data)
         ? response.data
         : response.data?.products ||
           response.data?.data ||
-          [];
-
-      console.log("Products API response:", response.data);
-      console.log(
-        "Product image fields:",
-        productData.map((p) => ({
-          name: p.name,
-          images: p.images,
-          image: p.image,
-          imageUrl: p.imageUrl,
-          photo: p.photo,
-          thumbnail: p.thumbnail,
-        }))
-      );
+          response.data?.product
+          ? response.data?.products ||
+            response.data?.data ||
+            [response.data.product]
+          : [];
 
       setProducts(productData);
+
+      console.log("Marketplace products loaded:", productData.length);
     } catch (err) {
       console.error("Fetch products error:", err);
+
       setError(
         err.response?.data?.message ||
           "Failed to load products. Please try again."
@@ -224,6 +218,10 @@ function Products() {
               {products.length !== 1 ? "s" : ""} available
             </span>
           </div>
+
+          <button type="button" onClick={fetchProducts}>
+            ↻ Refresh Products
+          </button>
         </div>
 
         {loading && (
@@ -273,10 +271,6 @@ function Products() {
                         src={imageUrl}
                         alt={product.name || "Product"}
                         onError={(e) => {
-                          console.error(
-                            "Product image failed to load:",
-                            imageUrl
-                          );
                           e.currentTarget.style.display = "none";
                           e.currentTarget.parentElement.classList.add(
                             "image-error"
@@ -296,9 +290,7 @@ function Products() {
 
                     <div className="product-price">
                       ₹
-                      {Number(product.price || 0).toLocaleString(
-                        "en-IN"
-                      )}
+                      {Number(product.price || 0).toLocaleString("en-IN")}
                     </div>
 
                     <button
