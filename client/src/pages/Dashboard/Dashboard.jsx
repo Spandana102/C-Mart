@@ -5,36 +5,46 @@ import axios from "axios";
 import "./Dashboard.css";
 
 const API_URL = "http://localhost:5000/api";
+const SERVER_URL = "http://localhost:5000";
 
+// Get product image URL
 function getImageUrl(product) {
   const image =
     product?.images?.[0] ||
     product?.image ||
-    product?.imageUrl;
+    product?.imageUrl ||
+    product?.productImage;
 
   let imageUrl = "";
 
   if (typeof image === "string") {
     imageUrl = image;
-  } else if (image?.url) {
-    imageUrl = image.url;
-  } else if (image?.secure_url) {
-    imageUrl = image.secure_url;
+  } else if (image && typeof image === "object") {
+    imageUrl =
+      image.secure_url ||
+      image.url ||
+      image.imageUrl ||
+      image.path ||
+      "";
   }
 
   if (!imageUrl) return "";
 
-  // Keep full URLs unchanged.
+  const value = imageUrl.trim().replace(/\\/g, "/");
+
   if (
-    imageUrl.startsWith("http://") ||
-    imageUrl.startsWith("https://") ||
-    imageUrl.startsWith("data:")
+    /^https?:\/\//i.test(value) ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:")
   ) {
-    return imageUrl;
+    return value;
   }
 
-  // Convert relative image paths to backend URLs.
-  return "http://localhost:5000/" + imageUrl.replace(/^\/+/, "");
+  if (value.startsWith("//")) {
+    return `https:${value}`;
+  }
+
+  return `${SERVER_URL}/${value.replace(/^\/+/, "")}`;
 }
 
 function Dashboard() {
@@ -45,18 +55,24 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Sidebar menu only
   const menuItems = [
     { icon: "🏠", title: "Dashboard", path: "/" },
     { icon: "🛍️", title: "Buy Products", path: "/products" },
     { icon: "💰", title: "Sell Products", path: "/sell" },
+    { icon: "📦", title: "My Products", path: "/my-products" },
     { icon: "🤝", title: "Seller Offers", path: "/seller-offers" },
     { icon: "🔄", title: "Swap Products", path: "/swap" },
     { icon: "🏷️", title: "Rent Products", path: "/rent" },
-    { icon: "📦", title: "My Orders", path: "/orders" },
+    { icon: "💬", title: "Bargaining", path: "/bargain" },
+    { icon: "📍", title: "Meet Point", path: "/meetpoint" },
+    { icon: "🧾", title: "My Orders", path: "/orders" },
+    { icon: "⭐", title: "Reviews & Ratings", path: "/reviews" },
     { icon: "⚠️", title: "Complaints", path: "/complaints" },
     { icon: "👤", title: "My Profile", path: "/profile" },
   ];
 
+  // Fetch products uploaded by students
   useEffect(() => {
     let active = true;
 
@@ -65,7 +81,10 @@ function Dashboard() {
         setLoading(true);
         setError("");
 
-        const response = await axios.get(API_URL + "/products");
+        const response = await axios.get(
+          `${API_URL}/products`
+        );
+
         const data = response.data;
 
         const productList = Array.isArray(data)
@@ -76,6 +95,7 @@ function Dashboard() {
           ? data.data
           : [];
 
+        // Latest uploaded products first
         const sortedProducts = [...productList].sort(
           (a, b) =>
             new Date(b.createdAt || 0).getTime() -
@@ -83,7 +103,7 @@ function Dashboard() {
         );
 
         if (active) {
-          setProducts(sortedProducts.slice(0, 8));
+          setProducts(sortedProducts);
         }
       } catch (err) {
         console.error(
@@ -92,7 +112,9 @@ function Dashboard() {
         );
 
         if (active) {
-          setError("Unable to load products. Please try again.");
+          setError(
+            "Unable to load products. Please try again."
+          );
         }
       } finally {
         if (active) {
@@ -108,17 +130,20 @@ function Dashboard() {
     };
   }, [location.key]);
 
+  // Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     navigate("/login", { replace: true });
   };
 
+  // Open selected product details
   const openProduct = (product) => {
     const id = product._id || product.id;
 
     if (id) {
-      navigate("/product/" + id);
+      navigate(`/product/${id}`);
     } else {
       navigate("/products");
     }
@@ -126,6 +151,7 @@ function Dashboard() {
 
   return (
     <div className="dashboard-layout">
+      {/* LEFT SIDEBAR */}
       <aside className="dashboard-sidebar">
         <div
           className="sidebar-brand"
@@ -133,7 +159,10 @@ function Dashboard() {
           role="button"
           tabIndex={0}
           onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
+            if (
+              event.key === "Enter" ||
+              event.key === " "
+            ) {
               event.preventDefault();
               navigate("/");
             }
@@ -143,23 +172,33 @@ function Dashboard() {
           <span>C-Mart</span>
         </div>
 
-        <div className="sidebar-label">MAIN MENU</div>
+        <div className="sidebar-label">
+          MAIN MENU
+        </div>
 
         <nav className="sidebar-navigation">
           {menuItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
               (item.path !== "/" &&
-                location.pathname.startsWith(item.path + "/"));
+                location.pathname.startsWith(
+                  item.path + "/"
+                ));
 
             return (
               <button
                 key={item.path}
                 type="button"
-                className={"sidebar-link " + (isActive ? "active" : "")}
+                className={
+                  "sidebar-link " +
+                  (isActive ? "active" : "")
+                }
                 onClick={() => navigate(item.path)}
               >
-                <span className="sidebar-link-icon">{item.icon}</span>
+                <span className="sidebar-link-icon">
+                  {item.icon}
+                </span>
+
                 <span>{item.title}</span>
               </button>
             );
@@ -169,14 +208,18 @@ function Dashboard() {
         <div className="sidebar-bottom">
           <div className="sidebar-help">
             <span>💬</span>
+
             <div>
               <strong>Need Help?</strong>
               <p>Contact our support team.</p>
             </div>
+
             <button
               type="button"
               aria-label="Open complaints"
-              onClick={() => navigate("/complaints")}
+              onClick={() =>
+                navigate("/complaints")
+              }
             >
               →
             </button>
@@ -193,10 +236,15 @@ function Dashboard() {
         </div>
       </aside>
 
+      {/* RIGHT SIDE CONTENT */}
       <main className="dashboard-main">
+        {/* Topbar */}
         <header className="dashboard-topbar">
           <div>
-            <p className="topbar-subtitle">CAMPUS MARKETPLACE</p>
+            <p className="topbar-subtitle">
+              CAMPUS MARKETPLACE
+            </p>
+
             <h2>Student Dashboard</h2>
           </div>
 
@@ -205,14 +253,20 @@ function Dashboard() {
             className="topbar-profile"
             onClick={() => navigate("/profile")}
           >
-            <span className="profile-avatar">👤</span>
+            <span className="profile-avatar">
+              👤
+            </span>
+
             <span>My Profile</span>
           </button>
         </header>
 
+        {/* Welcome Banner */}
         <section className="dashboard-welcome">
           <div className="welcome-content">
-            <span className="welcome-badge">WELCOME TO C-MART 👋</span>
+            <span className="welcome-badge">
+              WELCOME TO C-MART 👋
+            </span>
 
             <h1>
               Your Campus.
@@ -221,8 +275,10 @@ function Dashboard() {
             </h1>
 
             <p>
-              Discover products listed by students in your campus.
-              Buy, sell, swap and rent in one place.
+              Discover products uploaded by
+              students in your campus.
+              Explore products, compare prices
+              and find what you need.
             </p>
 
             <button
@@ -234,14 +290,29 @@ function Dashboard() {
             </button>
           </div>
 
-          <div className="welcome-illustration" aria-hidden="true">
-            <span className="illustration-circle">🛍️</span>
-            <span className="illustration-item illustration-one">📚</span>
-            <span className="illustration-item illustration-two">💻</span>
-            <span className="illustration-item illustration-three">🎧</span>
+          <div
+            className="welcome-illustration"
+            aria-hidden="true"
+          >
+            <span className="illustration-circle">
+              🛍️
+            </span>
+
+            <span className="illustration-item illustration-one">
+              📚
+            </span>
+
+            <span className="illustration-item illustration-two">
+              💻
+            </span>
+
+            <span className="illustration-item illustration-three">
+              🎧
+            </span>
           </div>
         </section>
 
+        {/* ONLY UPLOADED PRODUCTS */}
         <section className="dashboard-products">
           <div className="dashboard-section-heading">
             <div>
@@ -265,6 +336,7 @@ function Dashboard() {
           ) : error ? (
             <div className="dashboard-product-message">
               <p>{error}</p>
+
               <button
                 type="button"
                 onClick={() => navigate("/products")}
@@ -275,8 +347,14 @@ function Dashboard() {
           ) : products.length === 0 ? (
             <div className="dashboard-product-message">
               <span>🛍️</span>
+
               <h3>No products available yet</h3>
-              <p>Products added by students will appear here.</p>
+
+              <p>
+                Products uploaded by students
+                will appear here.
+              </p>
+
               <button
                 type="button"
                 onClick={() => navigate("/sell")}
@@ -287,7 +365,8 @@ function Dashboard() {
           ) : (
             <div className="dashboard-product-grid">
               {products.map((product, index) => {
-                const imageUrl = getImageUrl(product);
+                const imageUrl =
+                  getImageUrl(product);
 
                 const productName =
                   product.name ||
@@ -296,21 +375,38 @@ function Dashboard() {
                   "Product";
 
                 const price = product.price;
-                const productId = product._id || product.id;
+
+                const productId =
+                  product._id || product.id;
 
                 return (
                   <article
                     className="dashboard-product-card"
-                    key={productId || productName + "-" + index}
+                    key={
+                      productId ||
+                      `${productName}-${index}`
+                    }
                   >
+                    {/* Product Image */}
                     <button
                       type="button"
                       className="dashboard-product-image"
-                      onClick={() => openProduct(product)}
-                      aria-label={"View " + productName}
+                      onClick={() =>
+                        openProduct(product)
+                      }
+                      aria-label={
+                        `View ${productName}`
+                      }
                     >
                       {imageUrl ? (
-                        <img src={imageUrl} alt={productName} />
+                        <img
+                          src={imageUrl}
+                          alt={productName}
+                          onError={(event) => {
+                            event.currentTarget.style.display =
+                              "none";
+                          }}
+                        />
                       ) : (
                         <div className="dashboard-image-placeholder">
                           🛍️
@@ -318,22 +414,33 @@ function Dashboard() {
                       )}
                     </button>
 
+                    {/* Product Details */}
                     <div className="dashboard-product-info">
-                      <h3 title={productName}>{productName}</h3>
+                      <h3 title={productName}>
+                        {productName}
+                      </h3>
 
                       <p className="dashboard-product-price">
                         {price !== undefined &&
                         price !== null &&
                         price !== "" &&
-                        Number.isFinite(Number(price))
-                          ? "₹" + Number(price).toLocaleString("en-IN")
+                        Number.isFinite(
+                          Number(price)
+                        )
+                          ? `₹${Number(
+                              price
+                            ).toLocaleString(
+                              "en-IN"
+                            )}`
                           : "Price not available"}
                       </p>
 
                       <button
                         type="button"
                         className="dashboard-product-details"
-                        onClick={() => openProduct(product)}
+                        onClick={() =>
+                          openProduct(product)
+                        }
                       >
                         View Details →
                       </button>
@@ -345,25 +452,10 @@ function Dashboard() {
           )}
         </section>
 
-        <section className="dashboard-support">
-          <div>
-            <span>⚠️</span>
-            <div>
-              <h3>Need assistance?</h3>
-              <p>Submit a complaint if you face any issue.</p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate("/complaints")}
-          >
-            Submit Complaint →
-          </button>
-        </section>
-
+        {/* Footer */}
         <footer className="dashboard-footer">
-          © 2026 C-Mart · Campus Marketplace for Students
+          © 2026 C-Mart · Campus Marketplace
+          for Students
         </footer>
       </main>
     </div>

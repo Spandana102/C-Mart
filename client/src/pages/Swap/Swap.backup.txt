@@ -1,0 +1,581 @@
+
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./Sell.css";
+
+const API_URL = "http://localhost:5000/api";
+
+const initialForm = {
+  name: "",
+  category: "",
+  price: "",
+  mrp: "",
+  condition: "",
+  description: "",
+  stock: 1,
+};
+
+function Sell() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState(initialForm);
+  const [images, setImages] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const urls = images.map((file) =>
+      URL.createObjectURL(file)
+    );
+
+    setPreviews(urls);
+
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [images]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const selected = Array.from(e.target.files || []);
+
+    if (selected.length > 5) {
+      setError("Maximum 5 images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    const invalid = selected.find(
+      (file) =>
+        !file.type.startsWith("image/") ||
+        file.size > 5 * 1024 * 1024
+    );
+
+    if (invalid) {
+      setError(
+        "Select valid images smaller than 5 MB each."
+      );
+      e.target.value = "";
+      return;
+    }
+
+    setError("");
+    setImages(selected);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (loading) return;
+
+    setError("");
+
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+      alert("Please login before selling a product.");
+      navigate("/login");
+      return;
+    }
+
+    let user;
+
+    try {
+      user = JSON.parse(storedUser);
+    } catch {
+      setError("Invalid login information. Login again.");
+      return;
+    }
+
+    const sellerId =
+      user._id || user.id || user.user?._id;
+
+    if (!sellerId) {
+      setError(
+        "Seller information is missing. Please login again."
+      );
+      return;
+    }
+
+    if (
+      !formData.name.trim() ||
+      !formData.category ||
+      !formData.condition ||
+      !formData.description.trim() ||
+      !formData.price
+    ) {
+      setError("Please fill all required fields.");
+      return;
+    }
+
+    if (
+      Number(formData.price) <= 0 ||
+      !Number.isFinite(Number(formData.price))
+    ) {
+      setError("Enter a valid selling price.");
+      return;
+    }
+
+    if (
+      !Number.isInteger(Number(formData.stock)) ||
+      Number(formData.stock) < 1
+    ) {
+      setError("Stock must be at least 1.");
+      return;
+    }
+
+    if (images.length === 0) {
+      setError("Please upload at least one product image.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const imageUrls = [];
+
+      for (let i = 0; i < images.length; i++) {
+        setUploadStatus(
+          `Uploading image ${i + 1} of ${images.length}...`
+        );
+
+        const uploadData = new FormData();
+        uploadData.append("image", images[i]);
+
+        const uploadResponse = await axios.post(
+          `${API_URL}/upload/image`,
+          uploadData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const imageUrl = uploadResponse.data?.imageUrl;
+
+        if (
+          !uploadResponse.data?.success ||
+          !imageUrl
+        ) {
+          throw new Error(
+            `Image ${i + 1} upload failed.`
+          );
+        }
+
+        imageUrls.push(imageUrl);
+      }
+
+      setUploadStatus("Saving product...");
+
+      const productData = {
+        sellerId,
+        name: formData.name.trim(),
+        category: formData.category,
+        price: Number(formData.price),
+        mrp: Number(formData.mrp) || 0,
+        condition: formData.condition,
+        description: formData.description.trim(),
+        stock: Number(formData.stock),
+        images: imageUrls,
+      };
+
+      const response = await axios.post(
+        `${API_URL}/products`,
+        productData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Created product:", response.data);
+
+      if (!response.data?.success) {
+        throw new Error("Product creation failed.");
+      }
+
+      setFormData({ ...initialForm });
+      setImages([]);
+      setUploadStatus("");
+
+      alert("Product listed successfully with images!");
+      navigate("/products");
+    } catch (err) {
+      console.error("Sell error:", err);
+
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to upload product."
+      );
+    } finally {
+      setLoading(false);
+      setUploadStatus("");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  return (
+    <div className="sell-page">
+      {/* Navbar */}
+      <nav className="sell-navbar">
+        <div
+          className="sell-logo"
+          onClick={() => navigate("/")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") navigate("/");
+          }}
+        >
+          <span>🛍️</span>
+          <span>C-Mart</span>
+        </div>
+
+        <div className="sell-nav-links">
+          <button onClick={() => navigate("/")}>
+            Home
+          </button>
+          <button onClick={() => navigate("/products")}>
+            Marketplace
+          </button>
+          <button onClick={() => navigate("/orders")}>
+            Orders
+          </button>
+          <button onClick={() => navigate("/profile")}>
+            Profile
+          </button>
+          <button
+            className="sell-logout"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+      </nav>
+
+      {/* Header */}
+      <section className="sell-header">
+        <div>
+          <p className="sell-label">SELL ON C-MART</p>
+          <h1>Sell Your Product</h1>
+          <p>
+            Give your unused products a second life by
+            selling them to students in your campus
+            community.
+          </p>
+        </div>
+        <div className="sell-header-icon">🏷️</div>
+      </section>
+
+      {/* Main Content */}
+      <main className="sell-container">
+        <div className="sell-form-card">
+          <div className="form-title">
+            <h2>Product Information</h2>
+            <p>
+              Enter the details of the product you want
+              to sell.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {/* Product Name */}
+            <div className="form-group">
+              <label htmlFor="sell-name">
+                Product Name <span>*</span>
+              </label>
+              <input
+                id="sell-name"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Example: Engineering Calculator"
+                required
+              />
+            </div>
+
+            {/* Category and Condition */}
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="sell-category">
+                  Category <span>*</span>
+                </label>
+                <select
+                  id="sell-category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select Category</option>
+                  <option value="Electronics">
+                    Electronics
+                  </option>
+                  <option value="Books">Books</option>
+                  <option value="Stationery">
+                    Stationery
+                  </option>
+                  <option value="Furniture">
+                    Furniture
+                  </option>
+                  <option value="Clothing">
+                    Clothing
+                  </option>
+                  <option value="Sports">Sports</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sell-condition">
+                  Condition <span>*</span>
+                </label>
+                <select
+                  id="sell-condition"
+                  name="condition"
+                  value={formData.condition}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select Condition</option>
+                  <option value="New">New</option>
+                  <option value="Used">Used</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Price, MRP, Stock */}
+            <div className="form-row three-columns">
+              <div className="form-group">
+                <label htmlFor="sell-price">
+                  Selling Price <span>*</span>
+                </label>
+                <div className="price-input">
+                  <span>₹</span>
+                  <input
+                    id="sell-price"
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="500"
+                    min="1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sell-mrp">MRP</label>
+                <div className="price-input">
+                  <span>₹</span>
+                  <input
+                    id="sell-mrp"
+                    type="number"
+                    name="mrp"
+                    value={formData.mrp}
+                    onChange={handleChange}
+                    placeholder="800"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="sell-stock">
+                  Stock <span>*</span>
+                </label>
+                <input
+                  id="sell-stock"
+                  type="number"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  min="1"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="form-group">
+              <label htmlFor="sell-description">
+                Description <span>*</span>
+              </label>
+              <textarea
+                id="sell-description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Describe the product, its usage, condition and important details..."
+                rows={5}
+                required
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div className="form-group">
+              <label htmlFor="sell-images">
+                Product Images <span>*</span>
+              </label>
+
+              <div className="image-upload-box">
+                <div className="upload-icon">📷</div>
+                <h3>Upload Product Images</h3>
+                <p>
+                  Select up to 5 images, maximum 5 MB each.
+                </p>
+
+                <input
+                  id="sell-images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  disabled={loading}
+                />
+
+                {images.length > 0 && (
+                  <p className="selected-images">
+                    {images.length} image
+                    {images.length > 1 ? "s" : ""} selected
+                  </p>
+                )}
+
+                {previews.length > 0 && (
+                  <div className="image-preview-container">
+                    {previews.map((url, index) => (
+                      <img
+                        key={url}
+                        src={url}
+                        alt={`Product preview ${index + 1}`}
+                        className="image-preview"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {error && (
+              <p
+                role="alert"
+                style={{
+                  color: "#dc2626",
+                  marginBottom: "15px",
+                }}
+              >
+                {error}
+              </p>
+            )}
+
+            {uploadStatus && (
+              <p
+                role="status"
+                style={{
+                  color: "#2563eb",
+                  marginBottom: "15px",
+                }}
+              >
+                {uploadStatus}
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="form-actions">
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => navigate("/")}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="post-product-btn"
+                disabled={loading}
+              >
+                {loading
+                  ? "Uploading Product..."
+                  : "🚀 Post Product"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Selling Tips */}
+        <aside className="sell-info-card">
+          <div className="info-icon">💡</div>
+          <h2>Selling Tips</h2>
+
+          <div className="tip">
+            <span>✓</span>
+            <p>Use a clear and descriptive product name.</p>
+          </div>
+
+          <div className="tip">
+            <span>✓</span>
+            <p>Mention the actual condition of the product.</p>
+          </div>
+
+          <div className="tip">
+            <span>✓</span>
+            <p>Add a reasonable selling price.</p>
+          </div>
+
+          <div className="tip">
+            <span>✓</span>
+            <p>Upload clear product images.</p>
+          </div>
+
+          <div className="tip">
+            <span>✓</span>
+            <p>Give an honest product description.</p>
+          </div>
+
+          <div className="sell-note">
+            <strong>Campus Marketplace</strong>
+            <p>
+              Sell your unused products and help fellow
+              students find useful items at affordable
+              prices.
+            </p>
+          </div>
+        </aside>
+      </main>
+
+      {/* Footer */}
+      <footer className="sell-footer">
+        <div className="footer-logo">🛍️ C-Mart</div>
+        <p>
+          Campus Marketplace • Buy • Sell • Swap • Rent
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+export default Sell;

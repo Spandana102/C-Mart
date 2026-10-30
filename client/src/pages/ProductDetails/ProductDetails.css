@@ -1,127 +1,181 @@
 
 .product-details-page {
   min-height: 100vh;
-  background: #f5f7fb;
-  color: #1f2937;
+  background: #f4f7fc;
   font-family: Arial, sans-serif;
+  color: #172033;
 }
 
 .pd-header {
+  height: 78px;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 6%;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 0 5%;
+  border-bottom: 1px solid #e3e8f0;
 }
 
 .pd-header h2 {
-  margin: 0;
   color: #2563eb;
+  font-size: 30px;
+  margin: 0;
 }
 
 .pd-header-label {
   color: #64748b;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .pd-back-btn {
-  padding: 10px 16px;
-  border: 1px solid #d1d5db;
+  background: white;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  background: #ffffff;
+  padding: 11px 19px;
+  font-size: 15px;
   cursor: pointer;
 }
 
 .pd-container {
+  max-width: 1350px;
+  margin: 42px auto;
+  padding: 30px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(20, 40, 80, 0.06);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 36px;
-  max-width: 1100px;
-  margin: 35px auto;
-  padding: 28px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 5px 24px rgba(15, 23, 42, 0.07);
+  grid-template-columns: 1fr 1.05fr;
+  gap: 48px;
 }
 
 .pd-image-section {
+  min-width: 0;
+}
+
+.pd-image-frame {
+  width: 100%;
+  height: 500px;
+  background: #f1f5f9;
+  border-radius: 13px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 350px;
-  background: #f1f5f9;
-  border-radius: 12px;
-  overflow: hidden;
 }
 
 .pd-product-image {
   width: 100%;
-  height: 420px;
+  height: 100%;
   object-fit: contain;
 }
 
 .pd-no-image {
   color: #64748b;
-  padding: 30px;
+  font-size: 16px;
 }
 
-.pd-info-section h1 {
-  margin: 12px 0;
-  font-size: 30px;
-  overflow-wrap: anywhere;
+.pd-thumbnails {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.pd-thumbnail {
+  flex: 0 0 100px;
+  height: 90px;
+  padding: 0;
+  background: #f1f5f9;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.pd-thumbnail.active {
+  border-color: #2563eb;
+}
+
+.pd-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-info-section {
+  padding: 8px 0;
 }
 
 .pd-category {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
   background: #dbeafe;
-  color: #1d4ed8;
+  color: #2563eb;
+  padding: 8px 14px;
+  border-radius: 20px;
   font-size: 13px;
 }
 
+.pd-info-section h1 {
+  font-size: 32px;
+  margin: 18px 0;
+  color: #111827;
+}
+
 .pd-price {
-  margin: 15px 0;
-  color: #15803d;
-  font-size: 28px;
-  font-weight: bold;
+  font-size: 30px;
+  font-weight: 700;
+  color: #00883e;
+  margin: 20px 0;
 }
 
-.pd-condition,
-.pd-description,
-.pd-seller {
+.pd-condition {
   color: #475569;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-}
-
-.pd-info-section h3 {
-  margin-bottom: 8px;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .pd-divider {
   height: 1px;
-  margin: 20px 0;
-  background: #e5e7eb;
+  background: #e2e8f0;
+  margin: 26px 0;
+}
+
+.pd-info-section h3 {
+  font-size: 21px;
+  margin-bottom: 14px;
+}
+
+.pd-description {
+  font-size: 16px;
+  color: #475569;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.pd-seller {
+  font-size: 16px;
+  color: #475569;
+  line-height: 1.7;
 }
 
 .pd-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 26px;
+  margin-top: 30px;
 }
 
-.pd-buy-btn,
-.pd-home-btn {
-  padding: 13px 20px;
+.pd-actions button {
+  padding: 15px 25px;
   border: none;
-  border-radius: 8px;
-  font-size: 15px;
+  border-radius: 9px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.pd-actions button:hover {
+  transform: translateY(-2px);
 }
 
 .pd-buy-btn {
@@ -129,44 +183,67 @@
   color: white;
 }
 
-.pd-buy-btn:hover {
-  background: #1d4ed8;
+.pd-bargain-btn {
+  background: #f59e0b;
+  color: white;
 }
 
 .pd-home-btn {
   background: #e2e8f0;
-  color: #1e293b;
+  color: #334155;
 }
 
 .product-details-message {
-  margin: 50px auto;
-  padding: 24px;
-  max-width: 600px;
+  padding: 60px 20px;
   text-align: center;
-  overflow-wrap: anywhere;
+  font-size: 18px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 850px) {
   .pd-container {
     grid-template-columns: 1fr;
-    margin: 16px;
-    padding: 18px;
-    gap: 22px;
+    margin: 20px;
+    gap: 25px;
   }
 
-  .pd-product-image {
+  .pd-image-frame {
+    height: 350px;
+  }
+
+  .pd-header h2 {
+    font-size: 23px;
+  }
+
+  .pd-header-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pd-container {
+    padding: 16px;
+    margin: 12px;
+  }
+
+  .pd-image-frame {
     height: 280px;
   }
 
   .pd-info-section h1 {
-    font-size: 24px;
+    font-size: 26px;
   }
 
-  .pd-header {
-    padding: 14px;
-    flex-wrap: wrap;
+  .pd-thumbnail {
+    flex-basis: 75px;
+    height: 70px;
+  }
+
+  .pd-actions button {
+    font-size: 14px;
+    padding: 13px 18px;
   }
 }
+<<<<<<< HEAD
 
 .pd-bargain-btn {
   padding: 13px 20px;
@@ -320,3 +397,5 @@
     flex-direction: column;
   }
 }
+=======
+>>>>>>> 2abe0de (Update My Products and Product Ratings Reviews)

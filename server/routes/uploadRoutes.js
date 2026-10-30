@@ -1,102 +1,90 @@
+
 const express = require("express");
 const multer = require("multer");
-const cloudinary = require("../config/cloudinary");
+const cloudinary = require("cloudinary").v2;
 
 const router = express.Router();
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 5 * 1024 * 1024,
-    },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Upload single image
-router.post("/image", upload.single("image"), async (req, res) => {
-    console.log("=================================");
-    console.log("IMAGE UPLOAD REQUEST RECEIVED");
-    console.log("=================================");
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only images are allowed"));
+    }
+    cb(null, true);
+  },
+});
 
-    try {
-        if (!req.file) {
-            console.log("ERROR: No file received");
+router.post("/image", (req, res) => {
+  upload.single("image")(req, res, (uploadError) => {
+    if (uploadError) {
+      return res.status(400).json({
+        success: false,
+        message: uploadError.message,
+      });
+    }
 
-            return res.status(400).json({
-                success: false,
-                message: "No image uploaded",
-            });
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image selected",
+      });
+    }
+
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "Cloudinary configuration is missing",
+      });
+    }
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "c-mart/products",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          console.error(
+            "Cloudinary Upload Error:",
+            error.message
+          );
+
+          return res.status(500).json({
+            success: false,
+            message: "Cloudinary image upload failed",
+          });
         }
 
-        console.log("File name:", req.file.originalname);
-        console.log("File type:", req.file.mimetype);
-        console.log("File size:", req.file.size);
-
-        console.log("Uploading to Cloudinary...");
-
-        const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                folder: "c-mart/products",
-                resource_type: "image",
-            },
-            (error, result) => {
-                if (error) {
-                    console.error(
-                        "CLOUDINARY UPLOAD ERROR:",
-                        error
-                    );
-
-                    return res.status(500).json({
-                        success: false,
-                        message: "Cloudinary upload failed",
-                        error: error.message,
-                    });
-                }
-
-                console.log(
-                    "Cloudinary upload successful!"
-                );
-
-                console.log(
-                    "Image URL:",
-                    result.secure_url
-                );
-
-                return res.status(200).json({
-                    success: true,
-                    message: "Image uploaded successfully",
-                    imageUrl: result.secure_url,
-                });
-            }
-        );
-
-        uploadStream.end(req.file.buffer);
-
-    } catch (error) {
-        console.error(
-            "UPLOAD ROUTE ERROR:",
-            error
-        );
-
-        return res.status(500).json({
+        if (!result?.secure_url) {
+          return res.status(500).json({
             success: false,
-            message: "Image upload failed",
-            error: error.message,
-        });
-    }
-});
+            message: "Cloudinary did not return an image URL",
+          });
+        }
 
-// Multer error handler
-router.use((error, req, res, next) => {
-    console.error(
-        "MULTER ERROR:",
-        error
+        return res.status(200).json({
+          success: true,
+          imageUrl: result.secure_url,
+        });
+      }
     );
 
-    return res.status(500).json({
-        success: false,
-        message: "Image upload failed",
-        error: error.message,
-    });
+    stream.end(req.file.buffer);
+  });
 });
 
 module.exports = router;

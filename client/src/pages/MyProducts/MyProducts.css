@@ -1,0 +1,114 @@
+
+.my-products-page {
+  min-height: 100vh;
+  padding: 40px 6%;
+  background: #f5f7fb;
+}
+
+.my-products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  gap: 15px;
+}
+
+.my-products-header h1 {
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.my-products-header p {
+  color: #64748b;
+}
+
+.my-products-header button,
+.my-products-empty button {
+  padding: 12px 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.my-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.my-product-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.my-product-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  background: #f8fafc;
+}
+
+.my-product-info {
+  padding: 20px;
+}
+
+.my-product-info h3 {
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.my-product-info h2 {
+  color: #2563eb;
+  margin-bottom: 12px;
+}
+
+.my-product-info p {
+  color: #64748b;
+}
+
+.my-product-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.my-product-actions button {
+  flex: 1;
+  padding: 10px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.my-product-actions .delete-btn {
+  background: #dc2626;
+}
+
+.my-products-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 14px;
+}
+
+.my-products-empty p {
+  margin: 15px 0;
+}
+
+.my-products-error {
+  color: #dc2626;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .my-products-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

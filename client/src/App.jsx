@@ -22,6 +22,7 @@ import Orders from "./pages/Orders/Orders";
 import Products from "./pages/Products/Products.jsx";
 import Sell from "./pages/Sell/Sell";
 import ProductDetails from "./pages/ProductDetails/ProductDetails";
+import MyProducts from "./pages/MyProducts/MyProducts";
 import Complaint from "./pages/Complaints/Complaints.jsx";
 
 // Bargaining
@@ -46,8 +47,30 @@ function App() {
 
         {/* Marketplace */}
         <Route path="/products" element={<Products />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/sell" element={<Sell />} />
+        <Route
+          path="/product/:id"
+          element={<ProductDetails />}
+        />
+
+        {/* Sell Product */}
+        <Route
+          path="/sell"
+          element={
+            <ProtectedRoute>
+              <Sell />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* My Products */}
+        <Route
+          path="/my-products"
+          element={
+            <ProtectedRoute>
+              <MyProducts />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Student Features */}
         <Route path="/swap" element={<Swap />} />
@@ -55,9 +78,14 @@ function App() {
         <Route path="/meetpoint" element={<MeetPoint />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/complaints" element={<Complaint />} />
 
-        {/* Protected Profile */}
+        {/* Complaints */}
+        <Route
+          path="/complaints"
+          element={<Complaint />}
+        />
+
+        {/* Profile */}
         <Route
           path="/profile"
           element={
@@ -72,7 +100,11 @@ function App() {
           path="/bargaining/:productId"
           element={<BargainPage />}
         />
-        <Route path="/bargain" element={<BargainPage />} />
+
+        <Route
+          path="/bargain"
+          element={<BargainPage />}
+        />
 
         {/* Seller Offers */}
         <Route
@@ -85,7 +117,10 @@ function App() {
         />
 
         {/* Admin */}
-        <Route path="/admin" element={<Admin />} />
+        <Route
+          path="/admin"
+          element={<Admin />}
+        />
       </Routes>
     </BrowserRouter>
   );
