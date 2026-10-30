@@ -3,79 +3,70 @@ const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema(
   {
-    // Product Name
     name: {
       type: String,
-      required: true,
+      required: [true, "Product name is required"],
       trim: true,
     },
 
-    // Selling Price
     price: {
       type: Number,
-      required: true,
-      min: 0,
+      required: [true, "Product price is required"],
+      min: [0, "Price cannot be negative"],
     },
 
-    // Original Price
     mrp: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    // Product Category
     category: {
       type: String,
-      required: true,
+      required: [true, "Product category is required"],
       trim: true,
     },
 
-    // Product Description
     description: {
       type: String,
       default: "",
+      trim: true,
     },
 
-    // Cloudinary Image URLs
     images: {
       type: [String],
       default: [],
     },
 
-    // Available Stock
     stock: {
       type: Number,
-      default: 0,
+      default: 1,
       min: 0,
     },
 
-    // Product Condition
     condition: {
       type: String,
       enum: ["New", "Used"],
       default: "Used",
     },
 
-    // Product Brand
     brand: {
       type: String,
       default: "",
       trim: true,
     },
 
-    // Additional Product Details
     specifications: {
       type: Map,
       of: String,
       default: {},
     },
 
-    // Product Seller
+    // Owner of the product
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "Seller ID is required"],
       index: true,
     },
   },
@@ -84,18 +75,21 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// Marketplace category and latest products
+// Category filtering
 productSchema.index({
   category: 1,
   createdAt: -1,
 });
 
-// Latest products listing
+// Latest marketplace products
 productSchema.index({
   createdAt: -1,
 });
 
-module.exports = mongoose.model(
-  "Product",
-  productSchema
-);
+// Seller's uploaded products
+productSchema.index({
+  sellerId: 1,
+  createdAt: -1,
+});
+
+module.exports = mongoose.model("Product", productSchema);

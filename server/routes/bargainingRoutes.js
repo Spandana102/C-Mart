@@ -1,6 +1,7 @@
 
 const express = require("express");
 const mongoose = require("mongoose");
+
 const router = express.Router();
 
 const Product = require("../models/Product");
@@ -10,29 +11,45 @@ const authMiddleware = require("../middleware/authMiddleware");
 const getUserId = (req) =>
   req.user?._id || req.user?.id || req.user?.userId;
 
-// Submit a buyer offer
+const validId = (id) => mongoose.isValidObjectId(id);
+
+const validPrice = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return false;
+  }
+
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0;
+};
+
+// =====================================================
+// 1. BUYER - SUBMIT BARGAIN OFFER
+// POST /api/bargaining
+// =====================================================
+
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { productId, offerPrice, message = "" } = req.body;
     const buyerId = getUserId(req);
+    const { productId, offerPrice, message = "" } = req.body;
 
-    if (!mongoose.isValidObjectId(buyerId)) {
+    if (!validId(buyerId)) {
       return res.status(401).json({
-        message: "Unable to identify the logged-in user",
+        success: false,
+        message: "Please login again.",
       });
     }
 
-    if (!mongoose.isValidObjectId(productId)) {
+    if (!validId(productId)) {
       return res.status(400).json({
-        message: "Invalid product ID",
+        success: false,
+        message: "Invalid product ID.",
       });
     }
 
-    const amount = Number(offerPrice);
-
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!validPrice(offerPrice)) {
       return res.status(400).json({
-        message: "Please enter a valid offer price",
+        success: false,
+        message: "Please enter a valid offer price.",
       });
     }
 
@@ -40,26 +57,47 @@ router.post("/", authMiddleware, async (req, res) => {
 
     if (!product) {
       return res.status(404).json({
-        message: "Product not found",
+        success: false,
+        message: "Product not found.",
       });
     }
 
-    if (!product.sellerId) {
+    if (!validId(product.sellerId)) {
       return res.status(400).json({
+        success: false,
         message:
-          "This product has no seller assigned. Update the product owner first.",
+          "This product has no seller assigned. Please contact the administrator.",
       });
     }
 
     if (String(product.sellerId) === String(buyerId)) {
       return res.status(400).json({
-        message: "You cannot bargain on your own product",
+        success: false,
+        message: "You cannot bargain on your own product.",
       });
     }
 
+    const amount = Number(offerPrice);
+
     if (amount >= Number(product.price)) {
       return res.status(400).json({
-        message: "Offer price must be lower than the listed price",
+        success: false,
+        message: "Offer must be lower than the listed price.",
+      });
+    }
+
+    // Avoid duplicate pending requests for same product
+    const existingOffer = await Bargain.findOne({
+      productId: product._id,
+      buyerId,
+      status: "Pending",
+    });
+
+    if (existingOffer) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "You already have a pending offer for this product.",
       });
     }
 
@@ -74,163 +112,248 @@ router.post("/", authMiddleware, async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Bargaining offer submitted successfully",
+      message: "Bargaining offer submitted successfully.",
       bargain,
     });
   } catch (error) {
-    console.error("Submit bargaining offer:", error);
+    console.error("Submit bargain error:", error);
 
     return res.status(500).json({
-      message: "Failed to submit bargaining offer",
+      success: false,
+      message: "Failed to submit bargaining offer.",
     });
   }
 });
 
-// Get offers received by the logged-in seller
+// =====================================================
+// 2. SELLER - GET INCOMING OFFERS
+// GET /api/bargaining/seller
+// =====================================================
+
 router.get("/seller", authMiddleware, async (req, res) => {
   try {
     const sellerId = getUserId(req);
 
-    if (!mongoose.isValidObjectId(sellerId)) {
+    if (!validId(sellerId)) {
       return res.status(401).json({
-        message: "Unable to identify the logged-in seller",
+        success: false,
+        message: "Please login again.",
       });
     }
 
-    const offers = await Bargain.find({ sellerId })
-      .populate("productId", "name price images category")
+    const offers = await Bargain.find({
+      sellerId,
+    })
+      .populate(
+        "productId",
+        "name price mrp images category condition"
+      )
       .populate("buyerId", "fullName email")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
+      count: offers.length,
       offers,
     });
   } catch (error) {
-    console.error("Fetch seller offers:", error);
+    console.error("Seller offers error:", error);
 
     return res.status(500).json({
-      message: "Failed to fetch seller offers",
+      success: false,
+      message: "Failed to fetch seller offers.",
     });
   }
 });
 
-// Accept offer
+// =====================================================
+// 3. BUYER - GET MY SUBMITTED OFFERS
+// GET /api/bargaining/buyer
+// =====================================================
+
+router.get("/buyer", authMiddleware, async (req, res) => {
+  try {
+    const buyerId = getUserId(req);
+
+    if (!validId(buyerId)) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login again.",
+      });
+    }
+
+    const offers = await Bargain.find({
+      buyerId,
+    })
+      .populate(
+        "productId",
+        "name price images category"
+      )
+      .populate("sellerId", "fullName")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: offers.length,
+      offers,
+    });
+  } catch (error) {
+    console.error("Buyer offers error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch buyer offers.",
+    });
+  }
+});
+
+// =====================================================
+// 4. SELLER - ACCEPT OFFER
+// PATCH /api/bargaining/:id/accept
+// =====================================================
+
 router.patch("/:id/accept", authMiddleware, async (req, res) => {
   try {
     const sellerId = getUserId(req);
 
-    if (!mongoose.isValidObjectId(sellerId)) {
+    if (!validId(sellerId)) {
       return res.status(401).json({
-        message: "Please log in again",
+        success: false,
+        message: "Please login again.",
       });
     }
 
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    if (!validId(req.params.id)) {
       return res.status(400).json({
-        message: "Invalid offer ID",
+        success: false,
+        message: "Invalid offer ID.",
       });
     }
 
-    const offer = await Bargain.findOne({
-      _id: req.params.id,
-      sellerId,
-      status: "Pending",
-    });
+    const offer = await Bargain.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        sellerId,
+        status: "Pending",
+      },
+      {
+        $set: {
+          status: "Accepted",
+        },
+      },
+      { new: true, runValidators: true }
+    );
 
     if (!offer) {
       return res.status(404).json({
+        success: false,
         message:
-          "Pending offer not found, or you are not its seller",
+          "Pending offer not found or you are not the seller.",
       });
     }
 
-    offer.status = "Accepted";
-    await offer.save();
-
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: "Offer accepted successfully",
+      message: "Offer accepted successfully.",
       offer,
     });
   } catch (error) {
-    console.error("Accept offer:", error);
+    console.error("Accept offer error:", error);
 
     return res.status(500).json({
-      message: "Failed to accept offer",
+      success: false,
+      message: "Failed to accept offer.",
     });
   }
 });
 
-// Reject offer
+// =====================================================
+// 5. SELLER - REJECT OFFER
+// PATCH /api/bargaining/:id/reject
+// =====================================================
+
 router.patch("/:id/reject", authMiddleware, async (req, res) => {
   try {
     const sellerId = getUserId(req);
 
-    if (!mongoose.isValidObjectId(sellerId)) {
+    if (!validId(sellerId)) {
       return res.status(401).json({
-        message: "Please log in again",
+        success: false,
+        message: "Please login again.",
       });
     }
 
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    if (!validId(req.params.id)) {
       return res.status(400).json({
-        message: "Invalid offer ID",
+        success: false,
+        message: "Invalid offer ID.",
       });
     }
 
-    const offer = await Bargain.findOne({
-      _id: req.params.id,
-      sellerId,
-      status: "Pending",
-    });
+    const offer = await Bargain.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        sellerId,
+        status: "Pending",
+      },
+      {
+        $set: {
+          status: "Rejected",
+        },
+      },
+      { new: true, runValidators: true }
+    );
 
     if (!offer) {
       return res.status(404).json({
+        success: false,
         message:
-          "Pending offer not found, or you are not its seller",
+          "Pending offer not found or you are not the seller.",
       });
     }
 
-    offer.status = "Rejected";
-    await offer.save();
-
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: "Offer rejected",
+      message: "Offer rejected successfully.",
       offer,
     });
   } catch (error) {
-    console.error("Reject offer:", error);
+    console.error("Reject offer error:", error);
 
     return res.status(500).json({
-      message: "Failed to reject offer",
+      success: false,
+      message: "Failed to reject offer.",
     });
   }
 });
 
-// Seller sends a counter offer
+// =====================================================
+// 6. SELLER - SEND COUNTER OFFER
+// PATCH /api/bargaining/:id/counter
+// =====================================================
+
 router.patch("/:id/counter", authMiddleware, async (req, res) => {
   try {
     const sellerId = getUserId(req);
 
-    if (!mongoose.isValidObjectId(sellerId)) {
+    if (!validId(sellerId)) {
       return res.status(401).json({
-        message: "Please log in again",
+        success: false,
+        message: "Please login again.",
       });
     }
 
-    if (!mongoose.isValidObjectId(req.params.id)) {
+    if (!validId(req.params.id)) {
       return res.status(400).json({
-        message: "Invalid offer ID",
+        success: false,
+        message: "Invalid offer ID.",
       });
     }
 
-    const counterPrice = Number(req.body.counterPrice);
-
-    if (!Number.isFinite(counterPrice) || counterPrice <= 0) {
+    if (!validPrice(req.body.counterPrice)) {
       return res.status(400).json({
-        message: "Please enter a valid counter price",
+        success: false,
+        message: "Enter a valid counter price.",
       });
     }
 
@@ -242,8 +365,9 @@ router.patch("/:id/counter", authMiddleware, async (req, res) => {
 
     if (!offer) {
       return res.status(404).json({
+        success: false,
         message:
-          "Pending offer not found, or you are not its seller",
+          "Pending offer not found or you are not the seller.",
       });
     }
 
@@ -251,34 +375,185 @@ router.patch("/:id/counter", authMiddleware, async (req, res) => {
 
     if (!product) {
       return res.status(404).json({
-        message: "Product not found",
+        success: false,
+        message: "Product not found.",
       });
     }
 
-    if (counterPrice >= Number(product.price)) {
+    const counterPrice = Number(req.body.counterPrice);
+
+    if (
+      counterPrice <= Number(offer.offerPrice) ||
+      counterPrice >= Number(product.price)
+    ) {
       return res.status(400).json({
+        success: false,
         message:
-          "Counter price must be lower than the listed product price",
+          "Counter price must be higher than buyer offer and lower than listed price.",
       });
     }
 
-    offer.counterPrice = counterPrice;
-    offer.status = "Countered";
+    const updatedOffer = await Bargain.findOneAndUpdate(
+      {
+        _id: offer._id,
+        sellerId,
+        status: "Pending",
+      },
+      {
+        $set: {
+          counterPrice,
+          status: "Countered",
+        },
+      },
+      { new: true, runValidators: true }
+    );
 
-    await offer.save();
+    if (!updatedOffer) {
+      return res.status(409).json({
+        success: false,
+        message: "This offer has already been updated.",
+      });
+    }
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      message: "Counter offer submitted successfully",
-      offer,
+      message: "Counter offer sent successfully.",
+      offer: updatedOffer,
     });
   } catch (error) {
-    console.error("Counter offer:", error);
+    console.error("Counter offer error:", error);
 
     return res.status(500).json({
-      message: "Failed to submit counter offer",
+      success: false,
+      message: "Failed to send counter offer.",
     });
   }
 });
+
+// =====================================================
+// 7. BUYER - ACCEPT SELLER COUNTER OFFER
+// PATCH /api/bargaining/:id/buyer-accept
+// =====================================================
+
+router.patch(
+  "/:id/buyer-accept",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const buyerId = getUserId(req);
+
+      if (!validId(buyerId)) {
+        return res.status(401).json({
+          success: false,
+          message: "Please login again.",
+        });
+      }
+
+      if (!validId(req.params.id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid offer ID.",
+        });
+      }
+
+      const offer = await Bargain.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          buyerId,
+          status: "Countered",
+        },
+        {
+          $set: {
+            status: "Accepted",
+          },
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!offer) {
+        return res.status(404).json({
+          success: false,
+          message: "Counter offer not found.",
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Counter offer accepted.",
+        offer,
+      });
+    } catch (error) {
+      console.error("Buyer accept error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to accept counter offer.",
+      });
+    }
+  }
+);
+
+// =====================================================
+// 8. BUYER - REJECT SELLER COUNTER OFFER
+// PATCH /api/bargaining/:id/buyer-reject
+// =====================================================
+
+router.patch(
+  "/:id/buyer-reject",
+  authMiddleware,
+  async (req, res) => {
+    try {
+      const buyerId = getUserId(req);
+
+      if (!validId(buyerId)) {
+        return res.status(401).json({
+          success: false,
+          message: "Please login again.",
+        });
+      }
+
+      if (!validId(req.params.id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid offer ID.",
+        });
+      }
+
+      const offer = await Bargain.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          buyerId,
+          status: "Countered",
+        },
+        {
+          $set: {
+            status: "Rejected",
+          },
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!offer) {
+        return res.status(404).json({
+          success: false,
+          message: "Counter offer not found.",
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Counter offer rejected.",
+        offer,
+      });
+    } catch (error) {
+      console.error("Buyer reject error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to reject counter offer.",
+      });
+    }
+  }
+);
 
 module.exports = router;

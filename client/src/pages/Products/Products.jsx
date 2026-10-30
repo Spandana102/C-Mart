@@ -7,7 +7,57 @@ import "./Products.css";
 const API_URL = "http://localhost:5000/api";
 const SERVER_URL = "http://localhost:5000";
 
-// Convert image data into a usable URL
+const CATEGORIES = [
+  {
+    label: "All Products",
+    icon: "🛍️",
+    value: "All",
+    aliases: [],
+  },
+  {
+    label: "Books & Study Materials",
+    icon: "📚",
+    value: "Books",
+    aliases: ["books", "study materials", "textbooks", "notes"],
+  },
+  {
+    label: "Stationery & Calculators",
+    icon: "✏️",
+    value: "Stationery",
+    aliases: ["stationery", "calculators", "calculator"],
+  },
+  {
+    label: "Electronics & Gadgets",
+    icon: "💻",
+    value: "Electronics",
+    aliases: ["electronics", "gadgets", "electronic accessories"],
+  },
+  {
+    label: "Lab & Project Materials",
+    icon: "🔬",
+    value: "Lab Materials",
+    aliases: ["lab materials", "lab equipment", "project materials"],
+  },
+  {
+    label: "Bags & College Essentials",
+    icon: "🎒",
+    value: "College Essentials",
+    aliases: ["college essentials", "bags", "campus items"],
+  },
+  {
+    label: "Drawing & Workshop Tools",
+    icon: "📐",
+    value: "Workshop Tools",
+    aliases: ["workshop tools", "drawing tools", "drawing materials"],
+  },
+  {
+    label: "Other",
+    icon: "📦",
+    value: "Other",
+    aliases: ["other", "others", "miscellaneous"],
+  },
+];
+
 function getImageUrl(value) {
   if (!value) return "";
 
@@ -52,7 +102,6 @@ function getImageUrl(value) {
   return `${SERVER_URL}/${url.replace(/^\/+/, "")}`;
 }
 
-// Find product image
 function getProductImage(product) {
   if (!product) return "";
 
@@ -73,7 +122,6 @@ function getProductImage(product) {
   return "";
 }
 
-// Product image with fallback
 function ProductImage({ product }) {
   const imageUrl = getProductImage(product);
   const [failedUrl, setFailedUrl] = useState("");
@@ -81,9 +129,7 @@ function ProductImage({ product }) {
   if (!imageUrl || failedUrl === imageUrl) {
     return (
       <div className="no-image">
-        <span style={{ fontSize: "40px" }}>
-          📦
-        </span>
+        <span style={{ fontSize: "40px" }}>📦</span>
         <span>Image unavailable</span>
       </div>
     );
@@ -95,33 +141,32 @@ function ProductImage({ product }) {
       alt={product.name || "Product"}
       loading="lazy"
       onError={() => {
-        console.error(
-          "Failed to load image:",
-          imageUrl
-        );
+        console.error("Failed to load image:", imageUrl);
         setFailedUrl(imageUrl);
       }}
     />
   );
 }
 
-// Extract products from API response
 function extractProducts(data) {
   if (Array.isArray(data)) return data;
-
-  if (Array.isArray(data?.products)) {
-    return data.products;
-  }
-
-  if (Array.isArray(data?.data)) {
-    return data.data;
-  }
-
-  if (data?.product) {
-    return [data.product];
-  }
-
+  if (Array.isArray(data?.products)) return data.products;
+  if (Array.isArray(data?.data)) return data.data;
+  if (data?.product) return [data.product];
   return [];
+}
+
+function formatPrice(price) {
+  if (
+    price === undefined ||
+    price === null ||
+    price === "" ||
+    !Number.isFinite(Number(price))
+  ) {
+    return "Price unavailable";
+  }
+
+  return `₹${Number(price).toLocaleString("en-IN")}`;
 }
 
 function Products() {
@@ -131,6 +176,9 @@ function Products() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
   const fetchProducts = async (signal) => {
     try {
       setLoading(true);
@@ -138,12 +186,10 @@ function Products() {
 
       const response = await axios.get(
         `${API_URL}/products`,
-        { signal }
+        signal ? { signal } : {}
       );
 
-      const productData = extractProducts(
-        response.data
-      );
+      const productData = extractProducts(response.data);
 
       const sortedProducts = [...productData].sort(
         (a, b) =>
@@ -151,7 +197,9 @@ function Products() {
           new Date(a.createdAt || 0).getTime()
       );
 
-      setProducts(sortedProducts);
+      if (!signal?.aborted) {
+        setProducts(sortedProducts);
+      }
     } catch (err) {
       if (
         err.code === "ERR_CANCELED" ||
@@ -165,10 +213,12 @@ function Products() {
         err.response?.data || err.message
       );
 
-      setError(
-        err.response?.data?.message ||
+      if (!signal?.aborted) {
+        setError(
+          err.response?.data?.message ||
           "Failed to load products. Please try again."
-      );
+        );
+      }
     } finally {
       if (!signal?.aborted) {
         setLoading(false);
@@ -181,10 +231,44 @@ function Products() {
 
     fetchProducts(controller.signal);
 
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, []);
+
+  const filteredProducts = products.filter((product) => {
+    const search = searchTerm.trim().toLowerCase();
+
+    const name = String(
+      product.name || product.productName || ""
+    ).toLowerCase();
+
+    const description = String(
+      product.description || ""
+    ).toLowerCase();
+
+    const category = String(
+      product.category || ""
+    ).trim().toLowerCase();
+
+    const matchesSearch =
+      name.includes(search) ||
+      description.includes(search) ||
+      category.includes(search);
+
+    if (selectedCategory === "All") {
+      return matchesSearch;
+    }
+
+    const selected = CATEGORIES.find(
+      (item) => item.value === selectedCategory
+    );
+
+    const matchesCategory =
+      selected?.aliases.includes(category) ||
+      category === selectedCategory.toLowerCase() ||
+      category === selected?.label.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
 
   const handleViewDetails = (product) => {
     const productId = product?._id || product?.id;
@@ -201,21 +285,6 @@ function Products() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login", { replace: true });
-  };
-
-  const formatPrice = (price) => {
-    if (
-      price === undefined ||
-      price === null ||
-      price === "" ||
-      !Number.isFinite(Number(price))
-    ) {
-      return "Price unavailable";
-    }
-
-    return `₹${Number(price).toLocaleString(
-      "en-IN"
-    )}`;
   };
 
   return (
@@ -237,9 +306,7 @@ function Products() {
             }
           }}
         >
-          <span className="products-logo-icon">
-            🛍️
-          </span>
+          <span className="products-logo-icon">🛍️</span>
           <span>C-Mart</span>
         </div>
 
@@ -308,10 +375,9 @@ function Products() {
           </h1>
 
           <p className="products-description">
-            Discover products from your campus
-            community. Open any product to explore
-            its images, description, seller
-            information, reviews and ratings.
+            Discover books, calculators, electronics,
+            lab materials and other useful college
+            products from your campus community.
           </p>
 
           <div className="products-hero-buttons">
@@ -360,11 +426,9 @@ function Products() {
           <div>
             <p>AVAILABLE PRODUCTS</p>
             <h2>Shop from Your Campus</h2>
-
             <span>
               {products.length} product
-              {products.length !== 1 ? "s" : ""}{" "}
-              available
+              {products.length !== 1 ? "s" : ""} available
             </span>
           </div>
 
@@ -377,18 +441,64 @@ function Products() {
           </button>
         </div>
 
+        {/* Search and Categories */}
+        <div className="marketplace-filters">
+          <div className="marketplace-search">
+            <span>🔍</span>
+            <input
+              type="search"
+              placeholder="Search books, calculators, laptops..."
+              value={searchTerm}
+              onChange={(event) =>
+                setSearchTerm(event.target.value)
+              }
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                className="clear-search"
+                onClick={() => setSearchTerm("")}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <h3>Shop by Category</h3>
+
+          <div className="marketplace-categories">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category.value}
+                type="button"
+                className={
+                  selectedCategory === category.value
+                    ? "category-btn selected"
+                    : "category-btn"
+                }
+                onClick={() =>
+                  setSelectedCategory(category.value)
+                }
+              >
+                <span>{category.icon}</span>
+                {category.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="filter-results">
+            Showing {filteredProducts.length} of{" "}
+            {products.length} products
+          </p>
+        </div>
+
         {/* Loading */}
         {loading && (
           <div className="products-loading">
-            <div className="loading-box">
-              🛍️
-            </div>
-
+            <div className="loading-box">🛍️</div>
             <h2>Loading Marketplace...</h2>
-
-            <p>
-              Finding products available on C-Mart.
-            </p>
+            <p>Finding products available on C-Mart.</p>
           </div>
         )}
 
@@ -396,7 +506,6 @@ function Products() {
         {!loading && error && (
           <div className="products-error">
             <p>⚠️ {error}</p>
-
             <button
               type="button"
               onClick={() => fetchProducts()}
@@ -406,7 +515,7 @@ function Products() {
           </div>
         )}
 
-        {/* Empty Products */}
+        {/* No Products */}
         {!loading &&
           !error &&
           products.length === 0 && (
@@ -414,14 +523,11 @@ function Products() {
               <div className="no-products-icon">
                 🛒
               </div>
-
               <h2>No products available</h2>
-
               <p>
-                There are no products listed on
-                C-Mart yet. Please check again later.
+                There are no products listed on C-Mart
+                yet. Please check again later.
               </p>
-
               <button
                 type="button"
                 onClick={() => navigate("/")}
@@ -431,12 +537,38 @@ function Products() {
             </div>
           )}
 
+        {/* No Filter Matches */}
+        {!loading &&
+          !error &&
+          products.length > 0 &&
+          filteredProducts.length === 0 && (
+            <div className="no-products">
+              <div className="no-products-icon">
+                🔍
+              </div>
+              <h2>No matching products found</h2>
+              <p>
+                Try another search or select a
+                different category.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory("All");
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+
         {/* Product Cards */}
         {!loading &&
           !error &&
-          products.length > 0 && (
+          filteredProducts.length > 0 && (
             <div className="product-grid">
-              {products.map((product, index) => {
+              {filteredProducts.map((product, index) => {
                 const productId =
                   product._id || product.id;
 
@@ -455,9 +587,7 @@ function Products() {
                         product.name || "product"
                       } details`}
                     >
-                      <ProductImage
-                        product={product}
-                      />
+                      <ProductImage product={product} />
                     </button>
 
                     <div className="product-details">
@@ -518,8 +648,7 @@ function Products() {
         </div>
 
         <p>
-          Campus Marketplace • Buy • Sell •
-          Swap • Rent
+          Campus Marketplace • Buy • Sell • Swap • Rent
         </p>
       </footer>
     </div>

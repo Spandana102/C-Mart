@@ -5,29 +5,34 @@ const swapRequestSchema = new mongoose.Schema(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
+      ref: "SwapProduct",
       required: true,
     },
+
     sellerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+
     buyerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+
     offeredProductName: {
       type: String,
       required: true,
       trim: true,
     },
+
     offeredProductDescription: {
       type: String,
       default: "",
       trim: true,
     },
+
     status: {
       type: String,
       enum: ["Pending", "Accepted", "Rejected"],
@@ -37,4 +42,7 @@ const swapRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("SwapRequest", swapRequestSchema);
+module.exports = mongoose.model(
+  "SwapRequest",
+  swapRequestSchema
+);
