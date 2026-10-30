@@ -17,7 +17,7 @@ import Admin from "./pages/Admin/Admin";
 import Swap from "./pages/Swap/Swap";
 import Rent from "./pages/Rent/Rent";
 import MeetPoint from "./pages/MeetPoint/MeetPoint";
-import Reviews from "./pages/Reviewes/Reviews";
+import Reviews from "./pages/ReviewsPage.jsx";
 import Orders from "./pages/Orders/Orders";
 import Products from "./pages/Products/Products.jsx";
 import Sell from "./pages/Sell/Sell";
@@ -36,10 +36,7 @@ function App() {
         {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
         {/* Dashboard */}
@@ -47,10 +44,7 @@ function App() {
 
         {/* Marketplace */}
         <Route path="/products" element={<Products />} />
-        <Route
-          path="/product/:id"
-          element={<ProductDetails />}
-        />
+        <Route path="/product/:id" element={<ProductDetails />} />
 
         {/* Sell Product */}
         <Route
@@ -80,10 +74,7 @@ function App() {
         <Route path="/orders" element={<Orders />} />
 
         {/* Complaints */}
-        <Route
-          path="/complaints"
-          element={<Complaint />}
-        />
+        <Route path="/complaints" element={<Complaint />} />
 
         {/* Profile */}
         <Route
@@ -100,11 +91,7 @@ function App() {
           path="/bargaining/:productId"
           element={<BargainPage />}
         />
-
-        <Route
-          path="/bargain"
-          element={<BargainPage />}
-        />
+        <Route path="/bargain" element={<BargainPage />} />
 
         {/* Seller Offers */}
         <Route
@@ -117,10 +104,7 @@ function App() {
         />
 
         {/* Admin */}
-        <Route
-          path="/admin"
-          element={<Admin />}
-        />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </BrowserRouter>
   );
