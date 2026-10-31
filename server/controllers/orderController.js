@@ -1,21 +1,27 @@
 
 const mongoose = require("mongoose");
+const cloudinary = require("cloudinary").v2;
 
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
 
 // ==========================================
-// HELPER - GET LOGGED-IN USER ID
+// CLOUDINARY CONFIGURATION
 // ==========================================
 
-const getLoggedInUserId = (req) => {
-  return req.user?.id || req.user?._id || null;
-};
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // ==========================================
-// HELPER - GET PRODUCT SELLER ID
+// HELPERS
 // ==========================================
+
+const getLoggedInUserId = (req) =>
+  req.user?.id || req.user?._id || null;
 
 const getProductSellerId = (product) => {
   const seller =
@@ -32,16 +38,46 @@ const getProductSellerId = (product) => {
   return seller;
 };
 
+const isBlocked = (user) =>
+  user?.status === "Blocked" ||
+  user?.isBlocked === true;
+
+const sendError = (res, status, message) =>
+  res.status(status).json({
+    success: false,
+    message,
+  });
+
+const isValidUserId = (id) =>
+  id && mongoose.isValidObjectId(id);
+
+const allowedMeetPoints = [
+  "College Main Gate",
+  "College Library",
+  "College Canteen",
+  "College Ground",
+];
+
 // ==========================================
-// HELPER - CHECK BLOCKED USER
+// UPLOAD IMAGE TO CLOUDINARY
 // ==========================================
 
-const isBlocked = (user) => {
-  return (
-    user?.status === "Blocked" ||
-    user?.isBlocked === true
-  );
-};
+const uploadToCloudinary = (buffer) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "c-mart/payment-proofs",
+        resource_type: "image",
+        overwrite: false,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    stream.end(buffer);
+  });
 
 // ==========================================
 // CREATE ORDER
@@ -52,27 +88,18 @@ const createOrder = async (req, res) => {
   try {
     const buyerId = getLoggedInUserId(req);
 
-    if (!buyerId || !mongoose.isValidObjectId(buyerId)) {
-      return res.status(401).json({
-        success: false,
-        message: "Please login to place an order.",
-      });
+    if (!isValidUserId(buyerId)) {
+      return sendError(
+        res, 401, "Please login to place an order."
+      );
     }
 
     const buyer = await User.findById(buyerId);
 
-    if (!buyer) {
-      return res.status(401).json({
-        success: false,
-        message: "Buyer account not found.",
-      });
-    }
-
-    if (isBlocked(buyer)) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account is blocked.",
-      });
+    if (!buyer || isBlocked(buyer)) {
+      return sendError(
+        res, 403, "Buyer account is unavailable."
+      );
     }
 
     const {
@@ -81,58 +108,41 @@ const createOrder = async (req, res) => {
       meetPoint,
       meetingDate,
       meetingTime,
+      paymentMethod = "UPI",
     } = req.body || {};
 
-    // Validate product ID
-    if (
-      !productId ||
-      !mongoose.isValidObjectId(productId)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid product ID is required.",
-      });
+    if (!mongoose.isValidObjectId(productId)) {
+      return sendError(
+        res, 400, "Valid product ID is required."
+      );
     }
 
-    // Validate quantity
     const orderQuantity = Number(quantity);
 
     if (
       !Number.isInteger(orderQuantity) ||
       orderQuantity < 1
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order quantity.",
-      });
+      return sendError(
+        res, 400, "Invalid order quantity."
+      );
     }
-
-    // Validate meet point
-    const allowedMeetPoints = [
-      "College Main Gate",
-      "College Library",
-      "College Canteen",
-      "College Ground",
-    ];
 
     if (!allowedMeetPoints.includes(meetPoint)) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a valid meet point.",
-      });
+      return sendError(
+        res, 400, "Please select a valid meet point."
+      );
     }
 
-    // Validate meeting date and time
     if (
       typeof meetingDate !== "string" ||
       typeof meetingTime !== "string" ||
       !/^\d{4}-\d{2}-\d{2}$/.test(meetingDate) ||
       !/^([01]\d|2[0-3]):[0-5]\d$/.test(meetingTime)
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid meeting date and time are required.",
-      });
+      return sendError(
+        res, 400, "Valid meeting date and time required."
+      );
     }
 
     const meetingDateTime = new Date(
@@ -141,70 +151,62 @@ const createOrder = async (req, res) => {
 
     if (
       Number.isNaN(meetingDateTime.getTime()) ||
-      meetingDateTime <= new Date()
+      meetingDateTime <= new Date() ||
+      meetingDateTime.getFullYear() !==
+        Number(meetingDate.slice(0, 4)) ||
+      meetingDateTime.getMonth() + 1 !==
+        Number(meetingDate.slice(5, 7)) ||
+      meetingDateTime.getDate() !==
+        Number(meetingDate.slice(8, 10))
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Meeting date and time must be in the future.",
-      });
+      return sendError(
+        res, 400, "Meeting date and time must be valid and in the future."
+      );
     }
 
-    // Fetch product from database
+    if (!["UPI", "Cash", "Other"].includes(paymentMethod)) {
+      return sendError(
+        res, 400, "Invalid payment method."
+      );
+    }
+
     const product = await Product.findById(productId);
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found.",
-      });
+      return sendError(
+        res, 404, "Product not found."
+      );
     }
 
-    // Seller must come from database
     const sellerId = getProductSellerId(product);
 
-    if (
-      !sellerId ||
-      !mongoose.isValidObjectId(sellerId)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Seller information is missing for this product.",
-      });
+    if (!isValidUserId(sellerId)) {
+      return sendError(
+        res, 400, "Seller information is missing."
+      );
     }
 
-    // Prevent buying own product
     if (String(sellerId) === String(buyerId)) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot buy your own product.",
-      });
+      return sendError(
+        res, 400, "You cannot buy your own product."
+      );
     }
 
     const seller = await User.findById(sellerId);
 
-    if (!seller) {
-      return res.status(404).json({
-        success: false,
-        message: "Seller account not found.",
-      });
+    if (!seller || isBlocked(seller)) {
+      return sendError(
+        res, 403, "Seller account is unavailable."
+      );
     }
 
-    if (isBlocked(seller)) {
-      return res.status(403).json({
-        success: false,
-        message: "This seller is currently unavailable.",
-      });
-    }
-
-    // Validate stock if product has stock field
     if (
       product.stock != null &&
       Number(product.stock) < orderQuantity
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Insufficient product stock.",
-      });
+      return sendError(
+        res, 400, "Insufficient product stock."
+      );
     }
 
     const productPrice = Number(product.price);
@@ -213,26 +215,24 @@ const createOrder = async (req, res) => {
       !Number.isFinite(productPrice) ||
       productPrice <= 0
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Product price is invalid.",
-      });
+      return sendError(
+        res, 400, "Product price is invalid."
+      );
     }
 
-    // Create order
     const order = await Order.create({
       buyer: buyerId,
       seller: sellerId,
       product: product._id,
       productName:
-        product.name ||
-        product.title ||
-        "Product",
+        product.name || product.title || "Product",
       price: productPrice,
       quantity: orderQuantity,
       meetPoint,
       meetingDate,
       meetingTime,
+      paymentMethod,
+      paymentStatus: "Not Submitted",
       status: "Processing",
     });
 
@@ -248,40 +248,31 @@ const createOrder = async (req, res) => {
 
   } catch (error) {
     console.error("Create Order Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create order.",
-    });
+    return sendError(res, 500, "Failed to create order.");
   }
 };
 
 // ==========================================
 // GET BUYER ORDERS
-// GET /api/orders/my
-// GET /api/orders/user/:buyer
 // ==========================================
 
 const getUserOrders = async (req, res) => {
   try {
     const buyerId = getLoggedInUserId(req);
 
-    if (!buyerId || !mongoose.isValidObjectId(buyerId)) {
-      return res.status(401).json({
-        success: false,
-        message: "Please login to view orders.",
-      });
+    if (!isValidUserId(buyerId)) {
+      return sendError(
+        res, 401, "Please login to view orders."
+      );
     }
 
-    // Old route compatibility
     if (
       req.params.buyer &&
       String(req.params.buyer) !== String(buyerId)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only view your own orders.",
-      });
+      return sendError(
+        res, 403, "You can only view your own orders."
+      );
     }
 
     const orders = await Order.find({
@@ -291,46 +282,34 @@ const getUserOrders = async (req, res) => {
       .populate("seller", "fullName")
       .sort({ createdAt: -1 });
 
-    // Keep array response for existing Orders.jsx
+    // Preserve existing frontend response format
     return res.status(200).json(orders);
 
   } catch (error) {
     console.error("Get Buyer Orders Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to get orders.",
-    });
+    return sendError(res, 500, "Failed to get orders.");
   }
 };
 
 // ==========================================
-// GET SELLER RECEIVED ORDERS
-// GET /api/orders/seller
+// GET SELLER ORDERS
 // ==========================================
 
 const getSellerOrders = async (req, res) => {
   try {
     const sellerId = getLoggedInUserId(req);
 
-    if (!sellerId || !mongoose.isValidObjectId(sellerId)) {
-      return res.status(401).json({
-        success: false,
-        message: "Please login to view received orders.",
-      });
+    if (!isValidUserId(sellerId)) {
+      return sendError(
+        res, 401, "Please login to view received orders."
+      );
     }
 
     const orders = await Order.find({
       seller: sellerId,
     })
-      .populate(
-        "buyer",
-        "fullName email collegeId"
-      )
-      .populate(
-        "product",
-        "name title images price"
-      )
+      .populate("buyer", "fullName email collegeId")
+      .populate("product", "name title images price")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -341,11 +320,224 @@ const getSellerOrders = async (req, res) => {
 
   } catch (error) {
     console.error("Get Seller Orders Error:", error);
+    return sendError(
+      res, 500, "Failed to get received orders."
+    );
+  }
+};
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to get received orders.",
+// ==========================================
+// UPLOAD PAYMENT SCREENSHOT - BUYER ONLY
+// POST /api/orders/:id/payment-proof
+// ==========================================
+
+const uploadPaymentProof = async (req, res) => {
+  try {
+    const buyerId = getLoggedInUserId(req);
+    const orderId = req.params.id;
+
+    if (!isValidUserId(buyerId)) {
+      return sendError(res, 401, "Please login again.");
+    }
+
+    if (!mongoose.isValidObjectId(orderId)) {
+      return sendError(res, 400, "Invalid order ID.");
+    }
+
+    if (!req.file?.buffer) {
+      return sendError(
+        res, 400, "Please select a payment screenshot."
+      );
+    }
+
+    // Check image file signature, not only MIME type
+    const buffer = req.file.buffer;
+    const isJPEG =
+      buffer.length >= 3 &&
+      buffer.subarray(0, 3).equals(
+        Buffer.from([0xff, 0xd8, 0xff])
+      );
+    const isPNG =
+      buffer.length >= 8 &&
+      buffer.subarray(0, 8).equals(
+        Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+      );
+    const isWebP =
+      buffer.length >= 12 &&
+      buffer.toString("ascii", 0, 4) === "RIFF" &&
+      buffer.toString("ascii", 8, 12) === "WEBP";
+
+    if (!isJPEG && !isPNG && !isWebP) {
+      return sendError(
+        res, 400, "Invalid image file."
+      );
+    }
+
+    const order = await Order.findOne({
+      _id: orderId,
+      buyer: buyerId,
     });
+
+    if (!order) {
+      return sendError(
+        res, 404, "Order not found or access denied."
+      );
+    }
+
+    if (
+      order.status === "Cancelled" ||
+      order.status === "Delivered"
+    ) {
+      return sendError(
+        res, 400, "Cannot upload proof for this order."
+      );
+    }
+
+    if (
+      !["Not Submitted", "Rejected"].includes(
+        order.paymentStatus || "Not Submitted"
+      )
+    ) {
+      return sendError(
+        res, 400, "Payment proof is already submitted."
+      );
+    }
+
+    const result = await uploadToCloudinary(buffer);
+
+    if (!result?.secure_url || !result?.public_id) {
+      return sendError(
+        res, 500, "Payment image upload failed."
+      );
+    }
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        buyer: buyerId,
+        status: { $nin: ["Cancelled", "Delivered"] },
+        paymentStatus: {
+          $in: ["Not Submitted", "Rejected"],
+        },
+      },
+      {
+        $set: {
+          paymentScreenshot: result.secure_url,
+          paymentScreenshotPublicId: result.public_id,
+          paymentStatus: "Pending",
+          paymentSubmittedAt: new Date(),
+          paymentVerifiedAt: null,
+          paymentVerifiedBy: null,
+          paymentRejectionReason: "",
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      // Remove image if order state changed during upload
+      await cloudinary.uploader.destroy(result.public_id)
+        .catch((error) => {
+          console.error("Cloudinary cleanup:", error);
+        });
+
+      return sendError(
+        res, 409, "Order changed. Please refresh and retry."
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment proof submitted for verification.",
+      order: updatedOrder,
+    });
+
+  } catch (error) {
+    console.error("Payment Upload Error:", error);
+    return sendError(
+      res, 500, "Failed to upload payment proof."
+    );
+  }
+};
+
+// ==========================================
+// VERIFY / REJECT PAYMENT - SELLER ONLY
+// PATCH /api/orders/:id/payment-status
+// ==========================================
+
+const updatePaymentStatus = async (req, res) => {
+  try {
+    const sellerId = getLoggedInUserId(req);
+    const orderId = req.params.id;
+    const { status, reason = "" } = req.body || {};
+
+    if (!isValidUserId(sellerId)) {
+      return sendError(res, 401, "Please login again.");
+    }
+
+    if (!mongoose.isValidObjectId(orderId)) {
+      return sendError(res, 400, "Invalid order ID.");
+    }
+
+    if (!["Verified", "Rejected"].includes(status)) {
+      return sendError(
+        res, 400, "Status must be Verified or Rejected."
+      );
+    }
+
+    if (
+      typeof reason !== "string" ||
+      reason.length > 500
+    ) {
+      return sendError(
+        res, 400, "Invalid rejection reason."
+      );
+    }
+
+    const order = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        seller: sellerId,
+        paymentStatus: "Pending",
+        paymentScreenshot: { $nin: ["", null] },
+        status: { $nin: ["Cancelled", "Delivered"] },
+      },
+      {
+        $set: {
+          paymentStatus: status,
+          paymentVerifiedAt:
+            status === "Verified" ? new Date() : null,
+          paymentVerifiedBy:
+            status === "Verified" ? sellerId : null,
+          paymentRejectionReason:
+            status === "Rejected" ? reason.trim() : "",
+        },
+      },
+      { new: true }
+    );
+
+    if (!order) {
+      return sendError(
+        res,
+        409,
+        "Order unavailable, access denied, or payment is not pending."
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        status === "Verified"
+          ? "Payment verified successfully."
+          : "Payment proof rejected.",
+      order,
+    });
+
+  } catch (error) {
+    console.error("Payment Verification Error:", error);
+    return sendError(
+      res, 500, "Failed to update payment status."
+    );
   }
 };
 
@@ -360,91 +552,86 @@ const updateOrderStatus = async (req, res) => {
     const orderId = req.params.id || req.params.orderId;
     const { status } = req.body || {};
 
-    if (!sellerId || !mongoose.isValidObjectId(sellerId)) {
-      return res.status(401).json({
-        success: false,
-        message: "Please login again.",
-      });
+    if (!isValidUserId(sellerId)) {
+      return sendError(res, 401, "Please login again.");
     }
 
     if (!mongoose.isValidObjectId(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order ID.",
-      });
+      return sendError(res, 400, "Invalid order ID.");
     }
 
-    const allowedStatuses = [
-      "Processing",
-      "Confirmed",
-      "Delivered",
-      "Cancelled",
-    ];
+    const allowedTransitions = {
+      Processing: ["Confirmed", "Cancelled"],
+      Confirmed: ["Delivered", "Cancelled"],
+    };
 
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order status.",
-      });
-    }
-
-    // Only seller who owns the order can update it
     const order = await Order.findOne({
       _id: orderId,
       seller: sellerId,
     });
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found or access denied.",
-      });
+      return sendError(
+        res, 404, "Order not found or access denied."
+      );
     }
-
-    // Prevent changing a completed/cancelled order
-    if (
-      order.status === "Delivered" ||
-      order.status === "Cancelled"
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "This order can no longer be updated.",
-      });
-    }
-
-    // Validate allowed transitions
-    const allowedTransitions = {
-      Processing: ["Confirmed", "Cancelled"],
-      Confirmed: ["Delivered", "Cancelled"],
-    };
 
     if (
       !allowedTransitions[order.status]?.includes(status)
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order status transition.",
-      });
+      return sendError(
+        res, 400, "Invalid order status transition."
+      );
     }
 
-    order.status = status;
-    await order.save();
+    // A UPI order cannot be confirmed without
+    // verified payment proof.
+    if (
+      paymentRequired(order) &&
+      ["Confirmed", "Delivered"].includes(status) &&
+      order.paymentStatus !== "Verified"
+    ) {
+      return sendError(
+        res, 400, "Verify payment before confirming the order."
+      );
+    }
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        seller: sellerId,
+        status: order.status,
+        ...(paymentRequired(order) &&
+        ["Confirmed", "Delivered"].includes(status)
+          ? { paymentStatus: "Verified" }
+          : {}),
+      },
+      { $set: { status } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedOrder) {
+      return sendError(
+        res, 409, "Order changed. Refresh and retry."
+      );
+    }
 
     return res.status(200).json({
       success: true,
       message: "Order status updated successfully.",
-      order,
+      order: updatedOrder,
     });
 
   } catch (error) {
     console.error("Update Order Status Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update order status.",
-    });
+    return sendError(
+      res, 500, "Failed to update order status."
+    );
   }
 };
+
+const paymentRequired = (order) =>
+  (order.paymentMethod || "UPI") === "UPI";
 
 // ==========================================
 // EXPORT CONTROLLERS
@@ -455,4 +642,6 @@ module.exports = {
   getUserOrders,
   getSellerOrders,
   updateOrderStatus,
+  uploadPaymentProof,
+  updatePaymentStatus,
 };

@@ -4,12 +4,15 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 
 // ==========================================
-// JWT AUTHENTICATION MIDDLEWARE
+// C-MART JWT AUTHENTICATION MIDDLEWARE
 // ==========================================
 
 const authMiddleware = async (req, res, next) => {
   try {
-    // STEP 1: Read Authorization header
+    // ======================================
+    // STEP 1: CHECK AUTHORIZATION HEADER
+    // ======================================
+
     const authHeader = req.headers.authorization;
 
     if (
@@ -18,14 +21,20 @@ const authMiddleware = async (req, res, next) => {
     ) {
       return res.status(401).json({
         success: false,
-        message: "No valid token provided. Please login.",
+        message: "Authentication required. Please login.",
       });
     }
 
-    // STEP 2: Extract JWT token
+    // ======================================
+    // STEP 2: EXTRACT JWT TOKEN
+    // ======================================
+
     const token = authHeader.trim().split(/\s+/)[1];
 
-    // STEP 3: Verify JWT configuration
+    // ======================================
+    // STEP 3: CHECK JWT SECRET
+    // ======================================
+
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET is missing");
 
@@ -35,7 +44,10 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // STEP 4: Verify token signature and expiry
+    // ======================================
+    // STEP 4: VERIFY JWT TOKEN
+    // ======================================
+
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET,
@@ -44,8 +56,11 @@ const authMiddleware = async (req, res, next) => {
       }
     );
 
-    // STEP 5: Validate user ID from JWT
-    const userId = decoded.id;
+    // ======================================
+    // STEP 5: VALIDATE USER ID
+    // ======================================
+
+    const userId = decoded?.id;
 
     if (
       typeof userId !== "string" ||
@@ -53,11 +68,14 @@ const authMiddleware = async (req, res, next) => {
     ) {
       return res.status(401).json({
         success: false,
-        message: "Invalid token payload. Please login again.",
+        message: "Invalid session. Please login again.",
       });
     }
 
-    // STEP 6: Fetch current user from MongoDB
+    // ======================================
+    // STEP 6: FETCH USER FROM DATABASE
+    // ======================================
+
     const user = await User.findById(userId).select(
       "_id fullName email role status isBlocked collegeId phoneNumber"
     );
@@ -69,42 +87,65 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // STEP 7: Check whether account is blocked
-    const blocked =
+    // ======================================
+    // STEP 7: CHECK BLOCKED ACCOUNT
+    // ======================================
+
+    const isBlocked =
       user.isBlocked === true ||
       String(user.status || "").toLowerCase() === "blocked";
 
-    if (blocked) {
+    if (isBlocked) {
       return res.status(403).json({
         success: false,
         message:
-          "Your account has been blocked. Please contact the administrator.",
+          "Your account is blocked. Please contact the administrator.",
       });
     }
 
-    // STEP 8: Attach verified user information
+    // ======================================
+    // STEP 8: ATTACH USER TO REQUEST
+    // ======================================
+
+    const authenticatedUserId = user._id.toString();
+
     req.user = {
-      id: user._id.toString(),
-      _id: user._id.toString(),
-      userId: user._id.toString(),
+      id: authenticatedUserId,
+      _id: authenticatedUserId,
+      userId: authenticatedUserId,
+
       fullName: user.fullName,
       email: user.email,
       collegeId: user.collegeId,
       phoneNumber: user.phoneNumber,
+
       role: user.role || "user",
       status: user.status || "Active",
       isBlocked: false,
     };
 
-    // STEP 9: Continue to protected route
+    // ======================================
+    // STEP 9: CONTINUE TO API ROUTE
+    // ======================================
+
     return next();
+
   } catch (error) {
+
+    // ======================================
+    // EXPIRED JWT TOKEN
+    // ======================================
+
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
         message: "Session expired. Please login again.",
       });
     }
+
+    // ======================================
+    // INVALID JWT TOKEN
+    // ======================================
 
     if (
       error.name === "JsonWebTokenError" ||
@@ -116,6 +157,21 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
+    // ======================================
+    // INVALID MONGODB USER ID
+    // ======================================
+
+    if (error instanceof mongoose.Error.CastError) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid user account.",
+      });
+    }
+
+    // ======================================
+    // INTERNAL AUTHENTICATION ERROR
+    // ======================================
+
     console.error(
       "Authentication Error:",
       error.message
@@ -123,7 +179,8 @@ const authMiddleware = async (req, res, next) => {
 
     return res.status(500).json({
       success: false,
-      message: "Authentication failed.",
+      message:
+        "Authentication failed. Please try again.",
     });
   }
 };

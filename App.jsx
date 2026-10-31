@@ -1,5 +1,10 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 // Authentication Pages
 import Register from "./pages/Register/Register";
@@ -37,44 +42,74 @@ import SellerOffers from "./pages/SellerOffers";
 import Reviews from "./pages/Reviews/Reviews";
 import Complaints from "./pages/Complaints/Complaints";
 
+// Chat Module
+import Chat from "./pages/Chat/Chat";
+
+// Notifications Module
+import Notifications from "./pages/Notifications/Notifications";
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Authentication Routes */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+
         <Route
           path="/forgot-password"
           element={<ForgotPassword />}
         />
+
         <Route
           path="/verify-otp"
           element={<VerifyOTP />}
         />
+
         <Route
           path="/reset-password"
           element={<ResetPassword />}
         />
 
         {/* Dashboard */}
-        <Route path="/" element={<Dashboard />} />
+        <Route
+          path="/"
+          element={<Dashboard />}
+        />
 
         {/* Product Routes */}
-        <Route path="/products" element={<Products />} />
+        <Route
+          path="/products"
+          element={<Products />}
+        />
+
         <Route
           path="/product/:id"
           element={<ProductDetails />}
         />
-        <Route path="/sell" element={<Sell />} />
+
+        <Route
+          path="/sell"
+          element={<Sell />}
+        />
 
         {/* Orders */}
-        <Route path="/orders" element={<Orders />} />
+        <Route
+          path="/orders"
+          element={<Orders />}
+        />
 
         {/* Swap, Rent and Meet Point */}
-        <Route path="/swap" element={<Swap />} />
-        <Route path="/rent" element={<Rent />} />
+        <Route
+          path="/swap"
+          element={<Swap />}
+        />
+
+        <Route
+          path="/rent"
+          element={<Rent />}
+        />
+
         <Route
           path="/meetpoint"
           element={<MeetPoint />}
@@ -85,16 +120,41 @@ function App() {
           path="/bargain"
           element={<BargainPage />}
         />
+
         <Route
           path="/seller-offers"
           element={<SellerOffers />}
         />
 
         {/* Reviews and Complaints */}
-        <Route path="/reviews" element={<Reviews />} />
+        <Route
+          path="/reviews"
+          element={<Reviews />}
+        />
+
         <Route
           path="/complaints"
           element={<Complaints />}
+        />
+
+        {/* Chat Module */}
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Notifications Module */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
         />
 
         {/* Protected Profile */}
@@ -118,7 +178,6 @@ function App() {
           path="*"
           element={<Navigate to="/" replace />}
         />
-
       </Routes>
     </BrowserRouter>
   );

@@ -1,8 +1,24 @@
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../services/api";
 import "./Profile.css";
+
+const DASHBOARD_PATH = "/dashboard";
+
+const emptyForm = {
+  fullName: "",
+  email: "",
+  collegeId: "",
+  phoneNumber: "",
+};
+
+const getProfileForm = (profile) => ({
+  fullName: profile?.fullName || "",
+  email: profile?.email || "",
+  collegeId: profile?.collegeId || "",
+  phoneNumber: profile?.phoneNumber || "",
+});
 
 function Profile() {
   const navigate = useNavigate();
@@ -13,19 +29,28 @@ function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [formData, setFormData] = useState(emptyForm);
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    collegeId: "",
-    phoneNumber: "",
-  });
+  // ==========================================
+  // DASHBOARD NAVIGATION
+  // ==========================================
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  const goToDashboard = () => {
+    const token = localStorage.getItem("token");
 
-  const fetchProfile = async () => {
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    navigate(DASHBOARD_PATH);
+  };
+
+  // ==========================================
+  // FETCH PROFILE
+  // ==========================================
+
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -33,7 +58,7 @@ function Profile() {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        navigate("/login");
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -43,35 +68,41 @@ function Profile() {
         },
       });
 
-      const profile = response.data.user;
+      const profile = response.data?.user;
 
       if (!profile) {
         throw new Error("Profile information not found.");
       }
 
       setUser(profile);
-
-      setFormData({
-        fullName: profile.fullName || "",
-        email: profile.email || "",
-        collegeId: profile.collegeId || "",
-        phoneNumber: profile.phoneNumber || "",
-      });
+      setFormData(getProfileForm(profile));
     } catch (err) {
       console.error("Fetch Profile Error:", err);
 
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to load profile."
-      );
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Failed to load profile."
+        );
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  // ==========================================
+  // INPUT CHANGE
+  // ==========================================
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
     setFormData((previous) => ({
       ...previous,
@@ -79,33 +110,43 @@ function Profile() {
     }));
   };
 
+  // ==========================================
+  // EDIT PROFILE
+  // ==========================================
+
   const handleEdit = () => {
     setError("");
     setSuccess("");
     setEditing(true);
   };
 
-  const handleCancel = () => {
-    setFormData({
-      fullName: user.fullName || "",
-      email: user.email || "",
-      collegeId: user.collegeId || "",
-      phoneNumber: user.phoneNumber || "",
-    });
+  // ==========================================
+  // CANCEL EDIT
+  // ==========================================
 
+  const handleCancel = () => {
+    if (!user) return;
+
+    setFormData(getProfileForm(user));
     setEditing(false);
     setError("");
   };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
+  // ==========================================
+  // UPDATE PROFILE
+  // ==========================================
 
-    if (
-      !formData.fullName.trim() ||
-      !formData.email.trim() ||
-      !formData.collegeId.trim() ||
-      !formData.phoneNumber.trim()
-    ) {
+  const handleUpdate = async (event) => {
+    event.preventDefault();
+
+    const updatedData = {
+      fullName: formData.fullName.trim(),
+      email: formData.email.trim(),
+      collegeId: formData.collegeId.trim(),
+      phoneNumber: formData.phoneNumber.trim(),
+    };
+
+    if (Object.values(updatedData).some((value) => !value)) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -117,14 +158,14 @@ function Profile() {
 
       const token = localStorage.getItem("token");
 
+      if (!token) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
       const response = await API.put(
         "/auth/profile",
-        {
-          fullName: formData.fullName.trim(),
-          email: formData.email.trim(),
-          collegeId: formData.collegeId.trim(),
-          phoneNumber: formData.phoneNumber.trim(),
-        },
+        updatedData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -132,41 +173,45 @@ function Profile() {
         }
       );
 
-      const updatedUser = response.data.user;
+      const updatedUser = response.data?.user;
 
       if (!updatedUser) {
-        throw new Error("Updated profile was not returned.");
+        throw new Error(
+          "Updated profile was not returned."
+        );
       }
 
       setUser(updatedUser);
+      setFormData(getProfileForm(updatedUser));
 
-      setFormData({
-        fullName: updatedUser.fullName || "",
-        email: updatedUser.email || "",
-        collegeId: updatedUser.collegeId || "",
-        phoneNumber: updatedUser.phoneNumber || "",
-      });
+      // Keep localStorage user details updated.
+      try {
+        const stored = JSON.parse(
+          localStorage.getItem("user") || "{}"
+        );
 
-      // Keep user information synchronized
-      const storedUser = localStorage.getItem("user");
-
-      if (storedUser) {
-        try {
-          const oldUser = JSON.parse(storedUser);
-
-          localStorage.setItem(
-            "user",
-            JSON.stringify({
-              ...oldUser,
+        const mergedUser = stored?.user
+          ? {
+              ...stored,
+              user: {
+                ...stored.user,
+                ...updatedUser,
+              },
+            }
+          : {
+              ...stored,
               ...updatedUser,
-            })
-          );
-        } catch {
-          localStorage.setItem(
-            "user",
-            JSON.stringify(updatedUser)
-          );
-        }
+            };
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(mergedUser)
+        );
+      } catch {
+        localStorage.setItem(
+          "user",
+          JSON.stringify(updatedUser)
+        );
       }
 
       setEditing(false);
@@ -184,14 +229,23 @@ function Profile() {
     }
   };
 
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     navigate("/login", { replace: true });
   };
 
+  // ==========================================
+  // HELPERS
+  // ==========================================
+
   const getInitials = (name) => {
-    if (!name) return "U";
+    if (!name || typeof name !== "string") return "U";
 
     return name
       .trim()
@@ -202,7 +256,15 @@ function Profile() {
   };
 
   const displayValue = (value) =>
-    value ? value : "Not provided";
+    value === null ||
+    value === undefined ||
+    String(value).trim() === ""
+      ? "Not provided"
+      : value;
+
+  // ==========================================
+  // PROFILE UI
+  // ==========================================
 
   return (
     <div className="profile-page">
@@ -212,26 +274,34 @@ function Profile() {
         <button
           type="button"
           className="profile-brand"
-          onClick={() => navigate("/")}
+          onClick={goToDashboard}
         >
           <span>🛍️</span>
           <span>C-Mart</span>
         </button>
 
         <div className="profile-nav-links">
-          <button onClick={() => navigate("/")}>
+          <button type="button" onClick={goToDashboard}>
             Home
           </button>
 
-          <button onClick={() => navigate("/orders")}>
+          <button
+            type="button"
+            onClick={() => navigate("/orders")}
+          >
             Orders
           </button>
 
-          <button className="profile-nav-active">
+          <button
+            type="button"
+            className="profile-nav-active"
+            aria-current="page"
+          >
             Profile
           </button>
 
           <button
+            type="button"
             className="profile-nav-logout"
             onClick={handleLogout}
           >
@@ -245,29 +315,28 @@ function Profile() {
 
         <div className="profile-page-heading">
           <div>
-            <p className="profile-eyebrow">
-              MY ACCOUNT
-            </p>
+            <p className="profile-eyebrow">MY ACCOUNT</p>
 
             <h1>
               My <span>Profile</span>
             </h1>
 
             <p>
-              Manage your personal information and
-              campus marketplace account.
+              Manage your personal information and campus
+              marketplace account.
             </p>
           </div>
 
           <button
+            type="button"
             className="profile-back-btn"
-            onClick={() => navigate("/")}
+            onClick={goToDashboard}
           >
             ← Dashboard
           </button>
         </div>
 
-        {/* ERROR / SUCCESS */}
+        {/* ALERTS */}
 
         {error && (
           <div className="profile-alert error" role="alert">
@@ -281,21 +350,21 @@ function Profile() {
           </div>
         )}
 
-        {/* LOADING */}
+        {/* PROFILE CONTENT */}
 
         {loading ? (
           <div className="profile-loading">
-            <div className="profile-loading-icon">
-              👤
-            </div>
+            <div className="profile-loading-icon">👤</div>
             <h2>Loading your profile...</h2>
             <p>Please wait a moment.</p>
           </div>
         ) : !user ? (
           <div className="profile-loading">
+            <div className="profile-loading-icon">⚠️</div>
             <h2>Profile not available</h2>
 
             <button
+              type="button"
               className="edit-button"
               onClick={fetchProfile}
             >
@@ -314,9 +383,7 @@ function Profile() {
                   {getInitials(user.fullName)}
                 </div>
 
-                <h2>
-                  {displayValue(user.fullName)}
-                </h2>
+                <h2>{displayValue(user.fullName)}</h2>
 
                 <p className="profile-sidebar-email">
                   {displayValue(user.email)}
@@ -333,7 +400,6 @@ function Profile() {
                 <div className="profile-mini-info">
                   <div>
                     <span>🎓</span>
-
                     <div>
                       <small>College ID</small>
                       <strong>
@@ -344,7 +410,6 @@ function Profile() {
 
                   <div>
                     <span>📱</span>
-
                     <div>
                       <small>Phone Number</small>
                       <strong>
@@ -355,8 +420,9 @@ function Profile() {
                 </div>
 
                 <button
+                  type="button"
                   className="profile-sidebar-dashboard"
-                  onClick={() => navigate("/")}
+                  onClick={goToDashboard}
                 >
                   Go to Dashboard →
                 </button>
@@ -387,6 +453,7 @@ function Profile() {
 
                 {!editing && (
                   <button
+                    type="button"
                     className="edit-button"
                     onClick={handleEdit}
                   >
@@ -402,7 +469,6 @@ function Profile() {
                       <div className="profile-field-icon">
                         👤
                       </div>
-
                       <div className="profile-field-text">
                         <strong>Full Name</strong>
                         <span>
@@ -415,7 +481,6 @@ function Profile() {
                       <div className="profile-field-icon">
                         ✉️
                       </div>
-
                       <div className="profile-field-text">
                         <strong>Email Address</strong>
                         <span>
@@ -428,7 +493,6 @@ function Profile() {
                       <div className="profile-field-icon">
                         🎓
                       </div>
-
                       <div className="profile-field-text">
                         <strong>College ID</strong>
                         <span>
@@ -441,7 +505,6 @@ function Profile() {
                       <div className="profile-field-icon">
                         📱
                       </div>
-
                       <div className="profile-field-text">
                         <strong>Phone Number</strong>
                         <span>
@@ -454,7 +517,6 @@ function Profile() {
                       <div className="profile-field-icon">
                         🛡️
                       </div>
-
                       <div className="profile-field-text">
                         <strong>Account Role</strong>
                         <span>
@@ -468,18 +530,18 @@ function Profile() {
 
                   <div className="profile-account-note">
                     <span>🔒</span>
-
                     <div>
                       <strong>Account Information</strong>
                       <p>
-                        Keep your contact information
-                        updated for smooth campus
-                        transactions.
+                        Keep your contact information updated
+                        for smooth campus transactions.
                       </p>
                     </div>
                   </div>
                 </>
               ) : (
+                /* EDIT PROFILE FORM */
+
                 <form
                   className="profile-form"
                   onSubmit={handleUpdate}
@@ -489,7 +551,6 @@ function Profile() {
                       <label htmlFor="profile-fullName">
                         Full Name
                       </label>
-
                       <input
                         id="profile-fullName"
                         type="text"
@@ -499,6 +560,7 @@ function Profile() {
                         placeholder="Enter full name"
                         maxLength={100}
                         required
+                        disabled={saving}
                       />
                     </div>
 
@@ -506,7 +568,6 @@ function Profile() {
                       <label htmlFor="profile-email">
                         Email Address
                       </label>
-
                       <input
                         id="profile-email"
                         type="email"
@@ -515,6 +576,7 @@ function Profile() {
                         onChange={handleChange}
                         placeholder="Enter email address"
                         required
+                        disabled={saving}
                       />
                     </div>
 
@@ -522,7 +584,6 @@ function Profile() {
                       <label htmlFor="profile-collegeId">
                         College ID
                       </label>
-
                       <input
                         id="profile-collegeId"
                         type="text"
@@ -531,6 +592,7 @@ function Profile() {
                         onChange={handleChange}
                         placeholder="Enter college ID"
                         required
+                        disabled={saving}
                       />
                     </div>
 
@@ -538,7 +600,6 @@ function Profile() {
                       <label htmlFor="profile-phoneNumber">
                         Phone Number
                       </label>
-
                       <input
                         id="profile-phoneNumber"
                         type="tel"
@@ -547,6 +608,7 @@ function Profile() {
                         onChange={handleChange}
                         placeholder="Enter phone number"
                         required
+                        disabled={saving}
                       />
                     </div>
                   </div>
@@ -578,9 +640,10 @@ function Profile() {
         )}
       </main>
 
+      {/* FOOTER */}
+
       <footer className="profile-footer">
         <strong>🛍️ C-Mart</strong>
-
         <p>
           Campus Marketplace • Buy • Sell • Swap • Rent
         </p>

@@ -77,17 +77,100 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Processing",
     },
+
+    // PAYMENT INFORMATION
+    paymentMethod: {
+      type: String,
+      enum: ["UPI", "Cash", "Other"],
+      default: "UPI",
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: [
+        "Not Submitted",
+        "Pending",
+        "Verified",
+        "Rejected",
+      ],
+      default: "Not Submitted",
+    },
+
+    // PAYMENT SCREENSHOT
+    paymentScreenshot: {
+      type: String,
+      default: "",
+    },
+
+    // CLOUDINARY IMAGE IDENTIFIER
+    paymentScreenshotPublicId: {
+      type: String,
+      default: "",
+    },
+
+    // PAYMENT SUBMISSION DATE
+    paymentSubmittedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // PAYMENT VERIFICATION DATE
+    paymentVerifiedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // SELLER WHO VERIFIED PAYMENT
+    paymentVerifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    // PAYMENT REJECTION REASON
+    paymentRejectionReason: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 500,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Buyer order history
-orderSchema.index({ buyer: 1, createdAt: -1 });
+// BUYER ORDER HISTORY
+orderSchema.index({
+  buyer: 1,
+  createdAt: -1,
+});
 
-// Seller received orders
-orderSchema.index({ seller: 1, createdAt: -1 });
+// SELLER RECEIVED ORDERS
+orderSchema.index({
+  seller: 1,
+  createdAt: -1,
+});
+
+// SELLER PAYMENT VERIFICATION QUEUE
+orderSchema.index({
+  seller: 1,
+  paymentStatus: 1,
+});
+
+// PREVENT BUYER AND SELLER BEING SAME USER
+orderSchema.pre("validate", function () {
+  if (
+    this.buyer &&
+    this.seller &&
+    this.buyer.toString() === this.seller.toString()
+  ) {
+    this.invalidate(
+      "seller",
+      "Buyer cannot purchase their own product."
+    );
+  }
+});
 
 module.exports =
   mongoose.models.Order ||

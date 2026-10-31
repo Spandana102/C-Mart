@@ -6,6 +6,11 @@ import "./Products.css";
 
 const API_URL = "http://localhost:5000/api";
 const SERVER_URL = "http://localhost:5000";
+const DASHBOARD_PATH = "/dashboard";
+
+// ==========================================
+// COLLEGE RELATED CATEGORIES
+// ==========================================
 
 const CATEGORIES = [
   {
@@ -18,45 +23,78 @@ const CATEGORIES = [
     label: "Books & Study Materials",
     icon: "📚",
     value: "Books",
-    aliases: ["books", "study materials", "textbooks", "notes"],
+    aliases: [
+      "books",
+      "study materials",
+      "textbooks",
+      "notes",
+    ],
   },
   {
     label: "Stationery & Calculators",
     icon: "✏️",
     value: "Stationery",
-    aliases: ["stationery", "calculators", "calculator"],
+    aliases: [
+      "stationery",
+      "calculators",
+      "calculator",
+    ],
   },
   {
     label: "Electronics & Gadgets",
     icon: "💻",
     value: "Electronics",
-    aliases: ["electronics", "gadgets", "electronic accessories"],
+    aliases: [
+      "electronics",
+      "gadgets",
+      "electronic accessories",
+    ],
   },
   {
     label: "Lab & Project Materials",
     icon: "🔬",
     value: "Lab Materials",
-    aliases: ["lab materials", "lab equipment", "project materials"],
+    aliases: [
+      "lab materials",
+      "lab equipment",
+      "project materials",
+    ],
   },
   {
     label: "Bags & College Essentials",
     icon: "🎒",
     value: "College Essentials",
-    aliases: ["college essentials", "bags", "campus items"],
+    aliases: [
+      "college essentials",
+      "bags",
+      "campus items",
+    ],
   },
   {
     label: "Drawing & Workshop Tools",
     icon: "📐",
     value: "Workshop Tools",
-    aliases: ["workshop tools", "drawing tools", "drawing materials"],
+    aliases: [
+      "workshop tools",
+      "drawing tools",
+      "drawing materials",
+    ],
   },
   {
     label: "Other",
     icon: "📦",
     value: "Other",
-    aliases: ["other", "others", "miscellaneous"],
+    aliases: [
+      "other",
+      "others",
+      "miscellaneous",
+    ],
   },
 ];
+
+// ==========================================
+// IMAGE URL HELPER
+// ==========================================
 
 function getImageUrl(value) {
   if (!value) return "";
@@ -64,19 +102,21 @@ function getImageUrl(value) {
   if (Array.isArray(value)) {
     for (const item of value) {
       const url = getImageUrl(item);
+
       if (url) return url;
     }
+
     return "";
   }
 
   if (typeof value === "object") {
     return getImageUrl(
       value.secure_url ||
-      value.url ||
-      value.imageUrl ||
-      value.path ||
-      value.src ||
-      ""
+        value.url ||
+        value.imageUrl ||
+        value.path ||
+        value.src ||
+        ""
     );
   }
 
@@ -87,8 +127,7 @@ function getImageUrl(value) {
   if (!url) return "";
 
   if (
-    url.startsWith("https://") ||
-    url.startsWith("http://") ||
+    /^https?:\/\//i.test(url) ||
     url.startsWith("data:image/") ||
     url.startsWith("blob:")
   ) {
@@ -116,11 +155,16 @@ function getProductImage(product) {
 
   for (const field of fields) {
     const url = getImageUrl(field);
+
     if (url) return url;
   }
 
   return "";
 }
+
+// ==========================================
+// PRODUCT IMAGE COMPONENT
+// ==========================================
 
 function ProductImage({ product }) {
   const imageUrl = getProductImage(product);
@@ -129,7 +173,9 @@ function ProductImage({ product }) {
   if (!imageUrl || failedUrl === imageUrl) {
     return (
       <div className="no-image">
-        <span style={{ fontSize: "40px" }}>📦</span>
+        <span style={{ fontSize: "40px" }}>
+          📦
+        </span>
         <span>Image unavailable</span>
       </div>
     );
@@ -141,20 +187,42 @@ function ProductImage({ product }) {
       alt={product.name || "Product"}
       loading="lazy"
       onError={() => {
-        console.error("Failed to load image:", imageUrl);
+        console.error(
+          "Failed to load image:",
+          imageUrl
+        );
+
         setFailedUrl(imageUrl);
       }}
     />
   );
 }
 
+// ==========================================
+// EXTRACT PRODUCTS FROM API
+// ==========================================
+
 function extractProducts(data) {
   if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.products)) return data.products;
-  if (Array.isArray(data?.data)) return data.data;
-  if (data?.product) return [data.product];
+
+  if (Array.isArray(data?.products)) {
+    return data.products;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  if (data?.product) {
+    return [data.product];
+  }
+
   return [];
 }
+
+// ==========================================
+// FORMAT PRICE
+// ==========================================
 
 function formatPrice(price) {
   if (
@@ -169,6 +237,10 @@ function formatPrice(price) {
   return `₹${Number(price).toLocaleString("en-IN")}`;
 }
 
+// ==========================================
+// MAIN PRODUCTS COMPONENT
+// ==========================================
+
 function Products() {
   const navigate = useNavigate();
 
@@ -177,7 +249,27 @@ function Products() {
   const [error, setError] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] =
+    useState("All");
+
+  // ========================================
+  // NAVIGATE TO USER DASHBOARD
+  // ========================================
+
+  const goToDashboard = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    navigate(DASHBOARD_PATH);
+  };
+
+  // ========================================
+  // FETCH PRODUCTS
+  // ========================================
 
   const fetchProducts = async (signal) => {
     try {
@@ -189,7 +281,9 @@ function Products() {
         signal ? { signal } : {}
       );
 
-      const productData = extractProducts(response.data);
+      const productData = extractProducts(
+        response.data
+      );
 
       const sortedProducts = [...productData].sort(
         (a, b) =>
@@ -216,7 +310,7 @@ function Products() {
       if (!signal?.aborted) {
         setError(
           err.response?.data?.message ||
-          "Failed to load products. Please try again."
+            "Failed to load products. Please try again."
         );
       }
     } finally {
@@ -234,66 +328,100 @@ function Products() {
     return () => controller.abort();
   }, []);
 
-  const filteredProducts = products.filter((product) => {
-    const search = searchTerm.trim().toLowerCase();
+  // ========================================
+  // SEARCH AND CATEGORY FILTER
+  // ========================================
 
-    const name = String(
-      product.name || product.productName || ""
-    ).toLowerCase();
+  const filteredProducts = products.filter(
+    (product) => {
+      const search = searchTerm
+        .trim()
+        .toLowerCase();
 
-    const description = String(
-      product.description || ""
-    ).toLowerCase();
+      const name = String(
+        product.name ||
+          product.productName ||
+          ""
+      ).toLowerCase();
 
-    const category = String(
-      product.category || ""
-    ).trim().toLowerCase();
+      const description = String(
+        product.description || ""
+      ).toLowerCase();
 
-    const matchesSearch =
-      name.includes(search) ||
-      description.includes(search) ||
-      category.includes(search);
+      const category = String(
+        product.category || ""
+      )
+        .trim()
+        .toLowerCase();
 
-    if (selectedCategory === "All") {
-      return matchesSearch;
+      const matchesSearch =
+        name.includes(search) ||
+        description.includes(search) ||
+        category.includes(search);
+
+      if (selectedCategory === "All") {
+        return matchesSearch;
+      }
+
+      const selected = CATEGORIES.find(
+        (item) =>
+          item.value === selectedCategory
+      );
+
+      const matchesCategory =
+        selected?.aliases.includes(category) ||
+        category ===
+          selectedCategory.toLowerCase() ||
+        category ===
+          selected?.label.toLowerCase();
+
+      return matchesSearch && matchesCategory;
     }
+  );
 
-    const selected = CATEGORIES.find(
-      (item) => item.value === selectedCategory
-    );
-
-    const matchesCategory =
-      selected?.aliases.includes(category) ||
-      category === selectedCategory.toLowerCase() ||
-      category === selected?.label.toLowerCase();
-
-    return matchesSearch && matchesCategory;
-  });
+  // ========================================
+  // VIEW PRODUCT DETAILS
+  // ========================================
 
   const handleViewDetails = (product) => {
-    const productId = product?._id || product?.id;
+    const productId =
+      product?._id || product?.id;
 
     if (!productId) {
-      setError("Product details are unavailable.");
+      setError(
+        "Product details are unavailable."
+      );
       return;
     }
 
     navigate(`/product/${productId}`);
   };
 
+  // ========================================
+  // LOGOUT
+  // ========================================
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login", { replace: true });
+
+    navigate("/login", {
+      replace: true,
+    });
   };
+
+  // ========================================
+  // RENDER
+  // ========================================
 
   return (
     <div className="products-page">
-      {/* Navbar */}
+      {/* NAVBAR */}
+
       <nav className="products-navbar">
         <div
           className="products-logo"
-          onClick={() => navigate("/")}
+          onClick={goToDashboard}
           role="button"
           tabIndex={0}
           onKeyDown={(event) => {
@@ -302,18 +430,21 @@ function Products() {
               event.key === " "
             ) {
               event.preventDefault();
-              navigate("/");
+              goToDashboard();
             }
           }}
         >
-          <span className="products-logo-icon">🛍️</span>
+          <span className="products-logo-icon">
+            🛍️
+          </span>
+
           <span>C-Mart</span>
         </div>
 
         <div className="products-nav-links">
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={goToDashboard}
           >
             Home
           </button>
@@ -327,7 +458,9 @@ function Products() {
 
           <button
             type="button"
-            onClick={() => navigate("/my-products")}
+            onClick={() =>
+              navigate("/my-products")
+            }
           >
             My Products
           </button>
@@ -341,14 +474,18 @@ function Products() {
 
           <button
             type="button"
-            onClick={() => navigate("/complaints")}
+            onClick={() =>
+              navigate("/complaints")
+            }
           >
             Complaints
           </button>
 
           <button
             type="button"
-            onClick={() => navigate("/profile")}
+            onClick={() =>
+              navigate("/profile")
+            }
           >
             Profile
           </button>
@@ -363,7 +500,8 @@ function Products() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* HERO SECTION */}
+
       <section className="products-hero">
         <div className="products-hero-content">
           <p className="products-label">
@@ -371,20 +509,22 @@ function Products() {
           </p>
 
           <h1>
-            Explore the <span>Marketplace</span>
+            Explore the{" "}
+            <span>Marketplace</span>
           </h1>
 
           <p className="products-description">
-            Discover books, calculators, electronics,
-            lab materials and other useful college
-            products from your campus community.
+            Discover books, calculators,
+            electronics, lab materials and
+            other useful college products
+            from your campus community.
           </p>
 
           <div className="products-hero-buttons">
             <button
               type="button"
               className="back-dashboard"
-              onClick={() => navigate("/")}
+              onClick={goToDashboard}
             >
               ← Dashboard
             </button>
@@ -392,7 +532,9 @@ function Products() {
             <button
               type="button"
               className="orders-button"
-              onClick={() => navigate("/orders")}
+              onClick={() =>
+                navigate("/orders")
+              }
             >
               📦 My Orders
             </button>
@@ -400,7 +542,7 @@ function Products() {
         </div>
 
         <div className="marketplace-visual">
-          <div className="market-circle"></div>
+          <div className="market-circle" />
 
           <div className="market-main-icon">
             🛍️
@@ -420,44 +562,97 @@ function Products() {
         </div>
       </section>
 
-      {/* Products Section */}
+      {/* PRODUCTS SECTION */}
+
       <section className="products-section">
-        <div className="products-section-heading">
-          <div>
-            <p>AVAILABLE PRODUCTS</p>
-            <h2>Shop from Your Campus</h2>
-            <span>
-              {products.length} product
-              {products.length !== 1 ? "s" : ""} available
-            </span>
+        {/* MODERN PRODUCTS HEADER */}
+
+        <div className="products-section-heading buy-products-header">
+          <div className="buy-header-content">
+            <div className="buy-header-label">
+              <span className="buy-label-dot" />
+              AVAILABLE PRODUCTS
+            </div>
+
+            <h2>
+              Shop from{" "}
+              <span>Your Campus</span>
+            </h2>
+
+            <p className="buy-header-description">
+              Discover books, electronics,
+              calculators, stationery and
+              other useful products from
+              your campus community.
+            </p>
+
+            <div className="buy-header-bottom">
+              <div className="buy-products-count">
+                <span className="buy-count-icon">
+                  🛍️
+                </span>
+
+                <span>
+                  <strong>
+                    {products.length}
+                  </strong>{" "}
+                  product
+                  {products.length !== 1
+                    ? "s"
+                    : ""}{" "}
+                  available
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="buy-refresh-btn"
+                onClick={() =>
+                  fetchProducts()
+                }
+                disabled={loading}
+              >
+                <span>↻</span>
+
+                {loading
+                  ? "Refreshing..."
+                  : "Refresh Products"}
+              </button>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => fetchProducts()}
-            disabled={loading}
+          <div
+            className="buy-header-decoration"
+            aria-hidden="true"
           >
-            ↻ Refresh Products
-          </button>
+            <span>🛍️</span>
+          </div>
         </div>
 
-        {/* Search and Categories */}
+        {/* SEARCH AND CATEGORIES */}
+
         <div className="marketplace-filters">
           <div className="marketplace-search">
             <span>🔍</span>
+
             <input
               type="search"
               placeholder="Search books, calculators, laptops..."
               value={searchTerm}
               onChange={(event) =>
-                setSearchTerm(event.target.value)
+                setSearchTerm(
+                  event.target.value
+                )
               }
             />
+
             {searchTerm && (
               <button
                 type="button"
                 className="clear-search"
-                onClick={() => setSearchTerm("")}
+                onClick={() =>
+                  setSearchTerm("")
+                }
                 aria-label="Clear search"
               >
                 ✕
@@ -473,49 +668,71 @@ function Products() {
                 key={category.value}
                 type="button"
                 className={
-                  selectedCategory === category.value
+                  selectedCategory ===
+                  category.value
                     ? "category-btn selected"
                     : "category-btn"
                 }
                 onClick={() =>
-                  setSelectedCategory(category.value)
+                  setSelectedCategory(
+                    category.value
+                  )
                 }
               >
-                <span>{category.icon}</span>
+                <span>
+                  {category.icon}
+                </span>
+
                 {category.label}
               </button>
             ))}
           </div>
 
           <p className="filter-results">
-            Showing {filteredProducts.length} of{" "}
+            Showing{" "}
+            {filteredProducts.length} of{" "}
             {products.length} products
           </p>
         </div>
 
-        {/* Loading */}
+        {/* LOADING */}
+
         {loading && (
           <div className="products-loading">
-            <div className="loading-box">🛍️</div>
-            <h2>Loading Marketplace...</h2>
-            <p>Finding products available on C-Mart.</p>
+            <div className="loading-box">
+              🛍️
+            </div>
+
+            <h2>
+              Loading Marketplace...
+            </h2>
+
+            <p>
+              Finding products available
+              on C-Mart.
+            </p>
           </div>
         )}
 
-        {/* Error */}
+        {/* ERROR */}
+
         {!loading && error && (
           <div className="products-error">
             <p>⚠️ {error}</p>
+
             <button
               type="button"
-              onClick={() => fetchProducts()}
+              onClick={() =>
+                fetchProducts()
+              }
             >
               Try Again
             </button>
           </div>
         )}
 
-        {/* No Products */}
+        {/* NO PRODUCTS */}
+
         {!loading &&
           !error &&
           products.length === 0 && (
@@ -523,21 +740,28 @@ function Products() {
               <div className="no-products-icon">
                 🛒
               </div>
-              <h2>No products available</h2>
+
+              <h2>
+                No products available
+              </h2>
+
               <p>
-                There are no products listed on C-Mart
-                yet. Please check again later.
+                There are no products
+                listed on C-Mart yet.
+                Please check again later.
               </p>
+
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={goToDashboard}
               >
                 ← Back to Dashboard
               </button>
             </div>
           )}
 
-        {/* No Filter Matches */}
+        {/* NO FILTER MATCHES */}
+
         {!loading &&
           !error &&
           products.length > 0 &&
@@ -546,11 +770,16 @@ function Products() {
               <div className="no-products-icon">
                 🔍
               </div>
-              <h2>No matching products found</h2>
+
+              <h2>
+                No matching products found
+              </h2>
+
               <p>
-                Try another search or select a
-                different category.
+                Try another search or
+                select a different category.
               </p>
+
               <button
                 type="button"
                 onClick={() => {
@@ -563,92 +792,117 @@ function Products() {
             </div>
           )}
 
-        {/* Product Cards */}
+        {/* PRODUCT CARDS */}
+
         {!loading &&
           !error &&
           filteredProducts.length > 0 && (
             <div className="product-grid">
-              {filteredProducts.map((product, index) => {
-                const productId =
-                  product._id || product.id;
+              {filteredProducts.map(
+                (product, index) => {
+                  const productId =
+                    product._id ||
+                    product.id;
 
-                return (
-                  <article
-                    className="product-card"
-                    key={productId || index}
-                  >
-                    <button
-                      type="button"
-                      className="product-image-wrapper"
-                      onClick={() =>
-                        handleViewDetails(product)
+                  return (
+                    <article
+                      className="product-card"
+                      key={
+                        productId ||
+                        index
                       }
-                      aria-label={`View ${
-                        product.name || "product"
-                      } details`}
                     >
-                      <ProductImage product={product} />
-                    </button>
-
-                    <div className="product-details">
-                      <h3>
-                        {product.name ||
-                          product.productName ||
-                          "Unnamed Product"}
-                      </h3>
-
-                      <div className="product-price">
-                        {formatPrice(product.price)}
-                      </div>
-
                       <button
                         type="button"
-                        className="buy-button"
+                        className="product-image-wrapper"
                         onClick={() =>
-                          handleViewDetails(product)
+                          handleViewDetails(
+                            product
+                          )
                         }
+                        aria-label={`View ${
+                          product.name ||
+                          "product"
+                        } details`}
                       >
-                        View Details →
+                        <ProductImage
+                          product={product}
+                        />
                       </button>
-                    </div>
-                  </article>
-                );
-              })}
+
+                      <div className="product-details">
+                        <h3>
+                          {product.name ||
+                            product.productName ||
+                            "Unnamed Product"}
+                        </h3>
+
+                        <div className="product-price">
+                          {formatPrice(
+                            product.price
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          className="buy-button"
+                          onClick={() =>
+                            handleViewDetails(
+                              product
+                            )
+                          }
+                        >
+                          View Details →
+                        </button>
+                      </div>
+                    </article>
+                  );
+                }
+              )}
             </div>
           )}
       </section>
 
-      {/* Bottom Banner */}
+      {/* BOTTOM BANNER */}
+
       <section className="marketplace-banner">
         <div>
-          <p>CAMPUS SHOPPING MADE EASY</p>
+          <p>
+            CAMPUS SHOPPING MADE EASY
+          </p>
 
           <h2>
-            Find it. Check it. Choose it.
+            Find it. Check it.
+            Choose it.
           </h2>
 
           <span>
-            View product details and reviews
-            before making your purchase.
+            View product details and
+            reviews before making
+            your purchase.
           </span>
         </div>
 
         <button
           type="button"
-          onClick={() => navigate("/orders")}
+          onClick={() =>
+            navigate("/orders")
+          }
         >
           View My Orders →
         </button>
       </section>
 
-      {/* Footer */}
+      {/* FOOTER */}
+
       <footer className="products-footer">
         <div className="products-footer-logo">
           🛍️ C-Mart
         </div>
 
         <p>
-          Campus Marketplace • Buy • Sell • Swap • Rent
+          Campus Marketplace • Buy •
+          Sell • Swap • Rent
         </p>
       </footer>
     </div>

@@ -5,6 +5,7 @@ import axios from "axios";
 import "./Sell.css";
 
 const API_URL = "http://localhost:5000/api";
+const DASHBOARD_PATH = "/dashboard";
 
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -44,6 +45,21 @@ function Sell() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // ==========================================
+  // DASHBOARD NAVIGATION
+  // ==========================================
+
+  const goToDashboard = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    navigate(DASHBOARD_PATH);
+  };
 
   // ==========================================
   // IMAGE PREVIEWS
@@ -118,7 +134,9 @@ function Sell() {
     if (loading) return;
 
     setImages((previous) =>
-      previous.filter((_, imageIndex) => imageIndex !== index)
+      previous.filter(
+        (_, imageIndex) => imageIndex !== index
+      )
     );
   };
 
@@ -151,7 +169,8 @@ function Sell() {
       !imageUrl
     ) {
       throw new Error(
-        response.data?.message || "Image upload failed."
+        response.data?.message ||
+          "Image upload failed."
       );
     }
 
@@ -196,7 +215,9 @@ function Sell() {
 
     const price = Number(formData.price);
     const mrp =
-      formData.mrp === "" ? 0 : Number(formData.mrp);
+      formData.mrp === ""
+        ? 0
+        : Number(formData.mrp);
     const stock = Number(formData.stock);
 
     if (!Number.isFinite(price) || price <= 0) {
@@ -207,10 +228,7 @@ function Sell() {
       return "Please enter a valid MRP.";
     }
 
-    if (
-      !Number.isInteger(stock) ||
-      stock < 1
-    ) {
+    if (!Number.isInteger(stock) || stock < 1) {
       return "Stock must be at least 1.";
     }
 
@@ -242,7 +260,9 @@ function Sell() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      setError("Please login before selling a product.");
+      setError(
+        "Please login before selling a product."
+      );
       navigate("/login");
       return;
     }
@@ -260,7 +280,11 @@ function Sell() {
       // STEP 1: UPLOAD IMAGES
       const imageUrls = [];
 
-      for (let index = 0; index < images.length; index++) {
+      for (
+        let index = 0;
+        index < images.length;
+        index++
+      ) {
         setUploadStatus(
           `Uploading image ${index + 1} of ${images.length}...`
         );
@@ -280,7 +304,9 @@ function Sell() {
       }
 
       // STEP 2: CREATE PRODUCT
-      setUploadStatus("Saving product to marketplace...");
+      setUploadStatus(
+        "Saving product to marketplace..."
+      );
 
       const productData = {
         name: formData.name.trim(),
@@ -297,8 +323,7 @@ function Sell() {
         images: imageUrls,
       };
 
-      // sellerId is assigned securely by backend
-      // from the logged-in user's JWT token.
+      // Backend assigns sellerId from JWT.
 
       const response = await axios.post(
         `${API_URL}/products`,
@@ -321,7 +346,9 @@ function Sell() {
         );
       }
 
-      setSuccess("Product listed successfully!");
+      setSuccess(
+        "Product listed successfully!"
+      );
       setUploadStatus("");
       setUploadProgress(100);
 
@@ -330,7 +357,8 @@ function Sell() {
 
       navigate("/my-products", {
         state: {
-          success: "Product listed successfully!",
+          success:
+            "Product listed successfully!",
         },
       });
     } catch (err) {
@@ -360,7 +388,10 @@ function Sell() {
         setError(
           "Request timed out. Please check your connection."
         );
-      } else if (!err.response && err.message === "Network Error") {
+      } else if (
+        !err.response &&
+        err.message === "Network Error"
+      ) {
         setError(
           "Cannot connect to backend. Check that MongoDB and server are running."
         );
@@ -384,8 +415,15 @@ function Sell() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login", { replace: true });
+
+    navigate("/login", {
+      replace: true,
+    });
   };
+
+  // ==========================================
+  // UI
+  // ==========================================
 
   return (
     <div className="sell-page">
@@ -394,7 +432,7 @@ function Sell() {
         <button
           type="button"
           className="sell-logo"
-          onClick={() => navigate("/")}
+          onClick={goToDashboard}
           style={{
             border: "none",
             background: "transparent",
@@ -408,7 +446,7 @@ function Sell() {
         <div className="sell-nav-links">
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={goToDashboard}
           >
             Home
           </button>
@@ -422,14 +460,18 @@ function Sell() {
 
           <button
             type="button"
-            onClick={() => navigate("/my-products")}
+            onClick={() =>
+              navigate("/my-products")
+            }
           >
             My Products
           </button>
 
           <button
             type="button"
-            onClick={() => navigate("/seller-offers")}
+            onClick={() =>
+              navigate("/seller-offers")
+            }
           >
             Seller Offers
           </button>
@@ -461,18 +503,22 @@ function Sell() {
       {/* HEADER */}
       <section className="sell-header">
         <div>
-          <p className="sell-label">SELL ON C-MART</p>
+          <p className="sell-label">
+            SELL ON C-MART
+          </p>
 
           <h1>Sell Your Product</h1>
 
           <p>
-            Give your unused products a second life
-            by selling them to students in your
-            campus community.
+            Give your unused products a second
+            life by selling them to students in
+            your campus community.
           </p>
         </div>
 
-        <div className="sell-header-icon">🏷️</div>
+        <div className="sell-header-icon">
+          🏷️
+        </div>
       </section>
 
       <main className="sell-container">
@@ -550,8 +596,12 @@ function Sell() {
                   required
                   disabled={loading}
                 >
-                  <option value="New">New</option>
-                  <option value="Used">Used</option>
+                  <option value="New">
+                    New
+                  </option>
+                  <option value="Used">
+                    Used
+                  </option>
                 </select>
               </div>
             </div>
@@ -582,7 +632,9 @@ function Sell() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="sell-mrp">MRP</label>
+                <label htmlFor="sell-mrp">
+                  MRP
+                </label>
 
                 <div className="price-input">
                   <span>₹</span>
@@ -663,7 +715,9 @@ function Sell() {
               </label>
 
               <div className="image-upload-box">
-                <div className="upload-icon">📷</div>
+                <div className="upload-icon">
+                  📷
+                </div>
 
                 <h3>Upload Product Images</h3>
 
@@ -684,7 +738,10 @@ function Sell() {
                 {images.length > 0 && (
                   <p className="selected-images">
                     {images.length} image
-                    {images.length !== 1 ? "s" : ""} selected
+                    {images.length !== 1
+                      ? "s"
+                      : ""}{" "}
+                    selected
                   </p>
                 )}
 
@@ -700,15 +757,21 @@ function Sell() {
                       >
                         <img
                           src={url}
-                          alt={`Product preview ${index + 1}`}
+                          alt={`Product preview ${
+                            index + 1
+                          }`}
                           className="image-preview"
                         />
 
                         <button
                           type="button"
-                          onClick={() => removeImage(index)}
+                          onClick={() =>
+                            removeImage(index)
+                          }
                           disabled={loading}
-                          aria-label={`Remove image ${index + 1}`}
+                          aria-label={`Remove image ${
+                            index + 1
+                          }`}
                           style={{
                             position: "absolute",
                             top: 5,
@@ -760,7 +823,11 @@ function Sell() {
 
             {/* UPLOAD PROGRESS */}
             {loading && (
-              <div style={{ marginBottom: 18 }}>
+              <div
+                style={{
+                  marginBottom: 18,
+                }}
+              >
                 <p
                   role="status"
                   style={{
@@ -768,7 +835,8 @@ function Sell() {
                     fontWeight: 600,
                   }}
                 >
-                  {uploadStatus || "Processing..."}
+                  {uploadStatus ||
+                    "Processing..."}
                 </p>
 
                 <div
@@ -784,7 +852,8 @@ function Sell() {
                       height: "100%",
                       width: `${uploadProgress}%`,
                       background: "#2563eb",
-                      transition: "width 0.3s ease",
+                      transition:
+                        "width 0.3s ease",
                     }}
                   />
                 </div>
@@ -796,7 +865,7 @@ function Sell() {
               <button
                 type="button"
                 className="cancel-btn"
-                onClick={() => navigate("/")}
+                onClick={goToDashboard}
                 disabled={loading}
               >
                 Cancel
@@ -817,41 +886,56 @@ function Sell() {
 
         {/* SELLING TIPS */}
         <aside className="sell-info-card">
-          <div className="info-icon">💡</div>
+          <div className="info-icon">
+            💡
+          </div>
 
           <h2>Selling Tips</h2>
 
           <div className="tip">
             <span>✓</span>
-            <p>Use a clear product name.</p>
+            <p>
+              Use a clear product name.
+            </p>
           </div>
 
           <div className="tip">
             <span>✓</span>
-            <p>Mention the actual product condition.</p>
+            <p>
+              Mention the actual product
+              condition.
+            </p>
           </div>
 
           <div className="tip">
             <span>✓</span>
-            <p>Set a reasonable selling price.</p>
+            <p>
+              Set a reasonable selling price.
+            </p>
           </div>
 
           <div className="tip">
             <span>✓</span>
-            <p>Upload clear product images.</p>
+            <p>
+              Upload clear product images.
+            </p>
           </div>
 
           <div className="tip">
             <span>✓</span>
-            <p>Provide an honest description.</p>
+            <p>
+              Provide an honest description.
+            </p>
           </div>
 
           <div className="sell-note">
-            <strong>Campus Marketplace</strong>
+            <strong>
+              Campus Marketplace
+            </strong>
 
             <p>
-              Sell unused products and help fellow
-              students find useful items.
+              Sell unused products and help
+              fellow students find useful items.
             </p>
           </div>
         </aside>
@@ -859,10 +943,13 @@ function Sell() {
 
       {/* FOOTER */}
       <footer className="sell-footer">
-        <div className="footer-logo">🛍️ C-Mart</div>
+        <div className="footer-logo">
+          🛍️ C-Mart
+        </div>
 
         <p>
-          Campus Marketplace • Buy • Sell • Swap • Rent
+          Campus Marketplace • Buy • Sell •
+          Swap • Rent
         </p>
       </footer>
     </div>

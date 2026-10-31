@@ -1,4 +1,3 @@
-
 import React from "react";
 
 function ProductCard({
@@ -9,29 +8,29 @@ function ProductCard({
   onRequestSwap,
   onAccept,
   onReject,
-  swapRequested,
-  requestStatus,
+  swapRequested = false,
+  requestStatus = "",
   onEdit,
   onDelete,
 }) {
   const hasImage = Boolean(image);
+  const normalizedStatus = String(requestStatus || "").trim().toLowerCase();
+  const isPending = normalizedStatus === "pending";
 
   return (
     <div className="product-card">
-
-      {/* PRODUCT IMAGE */}
       <div className="swap-product-image">
-        {hasImage ? (
+        {hasImage && (
           <img
             src={image}
             alt={name || "Swap Product"}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-              e.currentTarget.nextElementSibling.style.display = "flex";
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+              const placeholder = event.currentTarget.nextElementSibling;
+              if (placeholder) placeholder.style.display = "flex";
             }}
           />
-        ) : null}
-
+        )}
         <div
           className="swap-image-placeholder"
           style={{ display: hasImage ? "none" : "flex" }}
@@ -40,28 +39,18 @@ function ProductCard({
         </div>
       </div>
 
-      {/* PRODUCT DETAILS */}
       <div className="swap-product-details">
         <h3>{name || "Unnamed Product"}</h3>
+        <p><strong>Category:</strong> {category || "Other"}</p>
+        <p><strong>Condition:</strong> {condition || "Not specified"}</p>
 
-        <p>
-          <strong>Category:</strong> {category || "Other"}
-        </p>
-
-        <p>
-          <strong>Condition:</strong> {condition || "Not specified"}
-        </p>
-
-        {/* REQUEST STATUS */}
         {requestStatus && (
-          <p className={`swap-status ${requestStatus.toLowerCase()}`}>
+          <p className={`swap-status ${normalizedStatus}`}>
             Swap Status: {requestStatus}
           </p>
         )}
 
-        {/* ACTION BUTTONS */}
         <div className="swap-card-actions">
-
           {onRequestSwap && (
             <button
               type="button"
@@ -73,7 +62,7 @@ function ProductCard({
             </button>
           )}
 
-          {onAccept && requestStatus === "Pending" && (
+          {isPending && typeof onAccept === "function" && (
             <button
               type="button"
               className="accept-swap-btn"
@@ -83,7 +72,7 @@ function ProductCard({
             </button>
           )}
 
-          {onReject && requestStatus === "Pending" && (
+          {isPending && typeof onReject === "function" && (
             <button
               type="button"
               className="reject-swap-btn"
@@ -94,25 +83,16 @@ function ProductCard({
           )}
 
           {onEdit && (
-            <button
-              type="button"
-              className="edit-swap-btn"
-              onClick={onEdit}
-            >
+            <button type="button" className="edit-swap-btn" onClick={onEdit}>
               Edit
             </button>
           )}
 
           {onDelete && (
-            <button
-              type="button"
-              className="delete-swap-btn"
-              onClick={onDelete}
-            >
+            <button type="button" className="delete-swap-btn" onClick={onDelete}>
               Delete
             </button>
           )}
-
         </div>
       </div>
     </div>

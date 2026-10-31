@@ -80,3 +80,133 @@
   background: #fee2e2;
   color: #991b1b;
 }
+/* ========================================
+   C-MART SWAP - ADDITIONAL CARD STYLES
+======================================== */
+
+.swap-container .product-card {
+  overflow: hidden;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.swap-container .product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+/* Product image */
+
+.swap-product-image {
+  height: 220px;
+  overflow: hidden;
+}
+
+.swap-product-image img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+/* Action buttons */
+
+.swap-container .product-card .swap-card-actions button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #ffffff;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.swap-container .product-card .swap-card-actions button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.swap-container .product-card .swap-card-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Accept button */
+
+.swap-container .product-card .accept-swap-btn {
+  background: #16a34a;
+}
+
+/* Reject button */
+
+.swap-container .product-card .reject-swap-btn {
+  background: #dc2626;
+}
+
+/* Request Swap button */
+
+.swap-container .product-card .request-swap-btn {
+  background: #2563eb;
+}
+
+/* Edit button */
+
+.swap-container .product-card .edit-swap-btn {
+  background: #f59e0b;
+  color: #111827;
+}
+
+/* Delete button */
+
+.swap-container .product-card .delete-swap-btn {
+  background: #dc2626;
+}
+
+/* Status labels */
+
+.swap-status {
+  display: inline-block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.swap-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.swap-status.accepted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.swap-status.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Mobile responsive */
+
+@media (max-width: 600px) {
+  .swap-product-image,
+  .swap-product-image img {
+    height: 190px;
+    min-height: 190px;
+  }
+
+  .swap-card-actions {
+    gap: 8px;
+  }
+
+  .swap-container .product-card .swap-card-actions button {
+    flex: 1 1 auto;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}

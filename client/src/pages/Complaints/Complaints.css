@@ -1,627 +1,605 @@
-/* ================================
+
+/* ==========================================
    C-MART COMPLAINTS PAGE
-================================ */
+   COMPLETE CSS
+========================================== */
 
 .complaints-page {
   min-height: 100vh;
-  background: #f8fafc;
-  color: #0f172a;
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f7fc;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #1e293b;
+  display: flex;
+  flex-direction: column;
 }
 
+.complaints-page * {
+  box-sizing: border-box;
+}
 
-/* ================================
+/* ==========================================
    NAVBAR
-================================ */
+========================================== */
 
 .complaints-navbar {
-  height: 76px;
-
+  width: 100%;
+  min-height: 76px;
+  padding: 15px 6%;
   background: #ffffff;
-
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e7eaf2;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
 
-  padding: 0 7%;
-
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  box-shadow: 0 2px 12px rgba(30, 41, 59, 0.04);
 }
+
+/* LOGO */
 
 .complaints-logo {
   display: flex;
   align-items: center;
-
   gap: 10px;
 
-  color: #2563eb;
+  padding: 0;
+  margin: 0;
 
-  font-size: 27px;
+  border: none;
+  outline: none;
+  background: transparent;
+
+  font-size: 24px;
   font-weight: 800;
+  color: #5141cb;
 
   cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
 }
 
 .complaints-logo span:first-child {
-  font-size: 31px;
+  font-size: 29px;
 }
 
+.complaints-logo:hover {
+  color: #382ba6;
+}
 
 /* NAV LINKS */
 
 .complaints-nav-links {
   display: flex;
   align-items: center;
-
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .complaints-nav-links button {
-  border: none;
+  padding: 10px 17px;
 
   background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
 
   color: #475569;
-
-  padding: 11px 16px;
-
-  border-radius: 8px;
-
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
+  font-family: inherit;
 
   cursor: pointer;
-
-  transition: 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .complaints-nav-links button:hover {
-  background: #eff6ff;
-
-  color: #2563eb;
+  background: #f0edff;
+  color: #5141cb;
 }
 
+.complaints-nav-links button:focus-visible,
+.complaints-logo:focus-visible {
+  outline: 3px solid #bcb3ff;
+  outline-offset: 3px;
+}
 
-/* ================================
-   MAIN CONTAINER
-================================ */
+/* ==========================================
+   MAIN CONTENT
+========================================== */
 
 .complaints-container {
-  max-width: 850px;
+  width: 100%;
+  max-width: 1100px;
 
   margin: 0 auto;
+  padding: 50px 22px 65px;
 
-  padding: 60px 25px 70px;
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-
-/* ================================
-   CARD
-================================ */
+/* MAIN CARD */
 
 .complaints-card {
+  width: 100%;
+  max-width: 780px;
+
+  padding: 42px 45px;
+
   background: #ffffff;
+  border: 1px solid #e8eaf3;
+  border-radius: 20px;
 
-  border: 1px solid #e2e8f0;
-
-  border-radius: 22px;
-
-  padding: 42px;
-
-  box-shadow:
-    0 15px 40px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 12px 38px rgba(39, 49, 91, 0.06);
 }
 
-
-/* ================================
+/* ==========================================
    HEADER
-================================ */
+========================================== */
 
 .complaints-header {
   text-align: center;
-
-  padding-bottom: 30px;
-
-  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 35px;
 }
 
 .complaints-icon {
-  width: 75px;
-  height: 75px;
-
-  margin: 0 auto 18px;
+  width: 72px;
+  height: 72px;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
-  background: #fff7ed;
+  margin: 0 auto 20px;
 
+  background: #f0edff;
   border-radius: 20px;
 
-  font-size: 38px;
-
-  box-shadow:
-    0 8px 20px rgba(249, 115, 22, 0.12);
+  font-size: 33px;
 }
 
 .complaints-label {
   margin: 0 0 10px;
 
-  color: #2563eb;
-
-  font-size: 14px;
-
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: 1.8px;
 
-  letter-spacing: 1.5px;
+  color: #6554d7;
 }
 
 .complaints-header h1 {
-  margin: 0;
+  margin: 0 0 13px;
 
-  color: #0f172a;
-
-  font-size: 40px;
-
-  line-height: 1.2;
-
+  font-size: 32px;
   font-weight: 800;
+  line-height: 1.25;
+
+  color: #1e293b;
 }
 
 .complaints-header > p:last-child {
-  max-width: 600px;
-
-  margin: 14px auto 0;
+  max-width: 460px;
+  margin: 0 auto;
 
   color: #64748b;
-
-  font-size: 17px;
-
-  line-height: 1.7;
+  font-size: 14px;
+  line-height: 1.8;
 }
 
-
-/* ================================
+/* ==========================================
    FORM
-================================ */
+========================================== */
 
 .complaints-form {
-  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  width: 100%;
+  text-align: left;
 }
 
+/* FORM GROUP */
+
 .complaint-group {
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .complaint-group label {
   display: block;
 
-  margin-bottom: 9px;
-
   color: #334155;
-
-  font-size: 16px;
-
+  font-size: 14px;
   font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
 }
 
 .complaint-group label span {
-  color: #ef4444;
-
+  color: #e11d48;
   margin-left: 3px;
 }
 
-
-/* INPUT + TEXTAREA */
+/* INPUT AND TEXTAREA */
 
 .complaint-group input,
 .complaint-group textarea {
   width: 100%;
 
-  box-sizing: border-box;
-
-  border: 1px solid #cbd5e1;
-
-  border-radius: 11px;
-
-  background: #ffffff;
-
-  color: #0f172a;
-
   padding: 14px 16px;
 
-  font-family: inherit;
+  border: 1.5px solid #dbe1ec;
+  border-radius: 11px;
 
-  font-size: 16px;
+  background: #fbfcff;
+
+  color: #1e293b;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
 
   outline: none;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .complaint-group input {
-  height: 52px;
+  min-height: 52px;
 }
 
 .complaint-group textarea {
+  min-height: 170px;
   resize: vertical;
-
-  min-height: 160px;
-
-  line-height: 1.6;
 }
 
 .complaint-group input::placeholder,
 .complaint-group textarea::placeholder {
-  color: #94a3b8;
-
-  font-size: 15px;
+  color: #9aa6b6;
 }
 
 .complaint-group input:focus,
 .complaint-group textarea:focus {
-  border-color: #2563eb;
+  border-color: #6957e6;
+  background: #ffffff;
 
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(105, 87, 230, 0.1);
 }
 
+.complaint-group input:disabled,
+.complaint-group textarea:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
 
-/* ================================
+/* ==========================================
+   SUBMIT BUTTON
+========================================== */
+
+.complaint-submit-btn {
+  width: 100%;
+  min-height: 54px;
+
+  padding: 14px 22px;
+
+  background: linear-gradient(
+    135deg,
+    #5b46d9,
+    #7864ed
+  );
+
+  border: none;
+  border-radius: 11px;
+
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 16px rgba(91, 70, 217, 0.2);
+
+  transition: all 0.2s ease;
+}
+
+.complaint-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow: 0 9px 22px rgba(91, 70, 217, 0.28);
+}
+
+.complaint-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.complaint-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ==========================================
    SUCCESS MESSAGE
-================================ */
+========================================== */
 
 .complaint-success {
   display: flex;
-
   align-items: flex-start;
-
-  gap: 12px;
+  gap: 13px;
 
   padding: 16px 18px;
 
-  margin-bottom: 20px;
-
-  background: #f0fdf4;
-
-  border: 1px solid #bbf7d0;
-
+  background: #ecfdf3;
+  border: 1px solid #bbebcd;
   border-radius: 11px;
 
   color: #166534;
 }
 
 .complaint-success > span {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .complaint-success strong {
   display: block;
-
-  font-size: 16px;
-}
-
-.complaint-success p {
-  margin: 4px 0 0;
-
+  margin-bottom: 4px;
   font-size: 14px;
 }
 
+.complaint-success p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
 
-/* ================================
+/* ==========================================
    ERROR MESSAGE
-================================ */
+========================================== */
 
 .complaint-error {
   display: flex;
-
   align-items: flex-start;
-
-  gap: 12px;
+  gap: 13px;
 
   padding: 16px 18px;
 
-  margin-bottom: 20px;
-
-  background: #fef2f2;
-
-  border: 1px solid #fecaca;
-
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
   border-radius: 11px;
 
-  color: #991b1b;
+  color: #be123c;
 }
 
 .complaint-error > span {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .complaint-error strong {
   display: block;
-
-  font-size: 16px;
-}
-
-.complaint-error p {
-  margin: 4px 0 0;
-
+  margin-bottom: 4px;
   font-size: 14px;
 }
 
-
-/* ================================
-   SUBMIT BUTTON
-================================ */
-
-.complaint-submit-btn {
-  width: 100%;
-
-  border: none;
-
-  border-radius: 11px;
-
-  padding: 15px 20px;
-
-  background: #2563eb;
-
-  color: #ffffff;
-
-  font-size: 17px;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 8px 20px rgba(37, 99, 235, 0.2);
-
-  transition: 0.2s ease;
+.complaint-error p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.complaint-submit-btn:hover {
-  background: #1d4ed8;
-
-  transform: translateY(-1px);
-}
-
-.complaint-submit-btn:disabled {
-  background: #94a3b8;
-
-  cursor: not-allowed;
-
-  transform: none;
-
-  box-shadow: none;
-}
-
-
-/* ================================
-   INFORMATION
-================================ */
+/* ==========================================
+   INFORMATION SECTION
+========================================== */
 
 .complaints-info {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 36px;
+  padding-top: 26px;
 
-  gap: 18px;
-
-  margin-top: 30px;
-
-  padding-top: 28px;
-
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e8eaf3;
 }
 
 .info-item {
   display: flex;
-
   align-items: flex-start;
-
-  gap: 12px;
+  gap: 13px;
 
   padding: 18px;
 
-  background: #f8fafc;
-
-  border: 1px solid #e2e8f0;
-
+  background: #f8f9ff;
+  border: 1px solid #ecebfa;
   border-radius: 12px;
+
+  text-align: left;
 }
 
 .info-item > span {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  width: 39px;
+  height: 39px;
+
+  background: #ece9ff;
+  border-radius: 10px;
+
+  font-size: 20px;
 }
 
 .info-item strong {
-  color: #334155;
+  display: block;
+  margin-bottom: 5px;
 
-  font-size: 15px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .info-item p {
-  margin: 5px 0 0;
+  margin: 0;
 
   color: #64748b;
-
-  font-size: 13px;
-
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.7;
 }
 
-
-/* ================================
+/* ==========================================
    FOOTER
-================================ */
+========================================== */
 
 .complaints-footer {
-  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 
-  padding: 32px 30px;
+  padding: 24px 16px;
 
-  background: #0f172a;
-
-  color: #ffffff;
+  background: #ffffff;
+  border-top: 1px solid #e8eaf3;
 
   text-align: center;
 }
 
-.footer-logo {
-  font-size: 21px;
-
+.complaints-footer .footer-logo {
+  color: #5141cb;
+  font-size: 19px;
   font-weight: 800;
-
-  margin-bottom: 8px;
 }
 
 .complaints-footer p {
   margin: 0;
 
   color: #94a3b8;
-
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 1.6;
 }
 
+/* ==========================================
+   TABLET RESPONSIVE
+========================================== */
 
-/* ================================
-   TABLET
-================================ */
-
-@media (max-width: 800px) {
-
+@media (max-width: 768px) {
   .complaints-navbar {
-    padding: 0 4%;
-  }
-
-  .complaints-nav-links button {
-    padding: 9px 10px;
-
-    font-size: 14px;
-  }
-
-  .complaints-container {
-    padding: 45px 20px 55px;
-  }
-
-  .complaints-card {
-    padding: 32px;
-  }
-
-  .complaints-header h1 {
-    font-size: 34px;
-  }
-
-  .complaints-info {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-/* ================================
-   MOBILE
-================================ */
-
-@media (max-width: 600px) {
-
-  .complaints-navbar {
-    height: auto;
-
-    min-height: 70px;
-
-    padding: 12px 18px;
-
-    flex-direction: column;
-
-    gap: 10px;
+    padding: 15px 4%;
   }
 
   .complaints-logo {
-    font-size: 23px;
+    font-size: 21px;
+  }
+
+  .complaints-nav-links {
+    gap: 5px;
+  }
+
+  .complaints-nav-links button {
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+
+  .complaints-container {
+    padding: 35px 18px 45px;
+  }
+
+  .complaints-card {
+    padding: 32px 26px;
+  }
+
+  .complaints-header h1 {
+    font-size: 28px;
+  }
+
+  .complaints-info {
+    gap: 12px;
+  }
+
+  .info-item {
+    padding: 14px;
+  }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE
+========================================== */
+
+@media (max-width: 520px) {
+  .complaints-navbar {
+    flex-direction: column;
+    align-items: center;
+    gap: 13px;
+    padding: 15px 12px;
+  }
+
+  .complaints-logo {
+    font-size: 22px;
   }
 
   .complaints-nav-links {
     width: 100%;
-
     justify-content: center;
-
-    flex-wrap: wrap;
+    gap: 4px;
   }
 
   .complaints-nav-links button {
-    padding: 8px 9px;
-
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
   .complaints-container {
-    padding: 30px 15px 45px;
+    padding: 22px 12px 35px;
   }
 
   .complaints-card {
     padding: 25px 18px;
-
-    border-radius: 16px;
+    border-radius: 15px;
   }
 
   .complaints-icon {
-    width: 65px;
-    height: 65px;
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+  }
 
-    font-size: 32px;
+  .complaints-header {
+    margin-bottom: 28px;
   }
 
   .complaints-header h1 {
-    font-size: 29px;
+    font-size: 25px;
   }
 
   .complaints-header > p:last-child {
-    font-size: 15px;
+    font-size: 13px;
   }
 
-  .complaint-group label {
-    font-size: 15px;
+  .complaints-form {
+    gap: 20px;
   }
 
   .complaint-group input,
   .complaint-group textarea {
-    font-size: 16px;
-  }
-
-  .complaint-submit-btn {
-    font-size: 16px;
+    padding: 12px 13px;
+    font-size: 13px;
   }
 
   .complaints-info {
     grid-template-columns: 1fr;
-  }
-}
-
-
-/* ================================
-   SMALL MOBILE
-================================ */
-
-@media (max-width: 400px) {
-
-  .complaints-nav-links button {
-    padding: 7px 7px;
-
-    font-size: 12px;
+    margin-top: 28px;
   }
 
-  .complaints-header h1 {
-    font-size: 26px;
-  }
-
-  .complaints-card {
-    padding: 22px 15px;
+  .complaint-submit-btn {
+    min-height: 50px;
+    font-size: 14px;
   }
 }

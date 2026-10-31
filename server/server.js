@@ -3,16 +3,26 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config();
+const dotenv = require("dotenv");
+
+// ========================================
+// ENVIRONMENT CONFIGURATION
+// ========================================
+
+dotenv.config({
+  path: path.join(__dirname, ".env"),
+});
 
 // ========================================
 // DATABASE
 // ========================================
+
 const connectDB = require("./config/db");
 
 // ========================================
 // IMPORT ROUTES
 // ========================================
+
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -22,10 +32,15 @@ const orderRoutes = require("./routes/orderRoutes");
 const swapRoutes = require("./routes/swapRoutes");
 const bargainingRoutes = require("./routes/bargainingRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
+const rentRoutes = require("./routes/rentRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // ========================================
 // OPTIONAL REPORT ROUTES
 // ========================================
+
 const reportRoutesPath = path.join(
   __dirname,
   "routes",
@@ -39,18 +54,24 @@ if (fs.existsSync(reportRoutesPath)) {
 }
 
 // ========================================
-// CREATE EXPRESS APP
+// CREATE EXPRESS APPLICATION
 // ========================================
+
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
 // ========================================
 // MIDDLEWARE
 // ========================================
+
 app.use(cors());
 
-app.use(express.json({ limit: "10mb" }));
+app.use(
+  express.json({
+    limit: "10mb",
+  })
+);
 
 app.use(
   express.urlencoded({
@@ -62,41 +83,54 @@ app.use(
 // ========================================
 // REQUEST LOGGER
 // ========================================
+
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.originalUrl}`);
+  console.log(
+    `${req.method} ${req.originalUrl}`
+  );
+
   next();
 });
 
 // ========================================
 // ENVIRONMENT STATUS
 // ========================================
+
 console.log("==================================");
 console.log("          C-MART BACKEND");
 console.log("==================================");
 
-console.log("JWT Secret:", !!process.env.JWT_SECRET);
-console.log("MongoDB URI:", !!process.env.MONGO_URI);
+console.log(
+  "JWT Secret:",
+  Boolean(process.env.JWT_SECRET)
+);
+
+console.log(
+  "MongoDB URI:",
+  Boolean(process.env.MONGO_URI)
+);
 
 console.log(
   "Cloudinary Cloud Name:",
-  !!process.env.CLOUDINARY_CLOUD_NAME
+  Boolean(process.env.CLOUDINARY_CLOUD_NAME)
 );
 
 console.log(
   "Cloudinary API Key:",
-  !!process.env.CLOUDINARY_API_KEY
+  Boolean(process.env.CLOUDINARY_API_KEY)
 );
 
 console.log(
   "Cloudinary API Secret:",
-  !!process.env.CLOUDINARY_API_SECRET
+  Boolean(process.env.CLOUDINARY_API_SECRET)
 );
 
 // ========================================
 // HOME ROUTE
 // ========================================
+
 app.get("/", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Welcome to C-MART API",
   });
@@ -105,8 +139,9 @@ app.get("/", (req, res) => {
 // ========================================
 // HEALTH CHECK
 // ========================================
+
 app.get("/api/health", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "C-MART Backend Running Successfully",
     timestamp: new Date().toISOString(),
@@ -116,77 +151,121 @@ app.get("/api/health", (req, res) => {
 // ========================================
 // AUTHENTICATION
 // ========================================
+
 app.use("/api/auth", authRoutes);
 
 // ========================================
-// ADMIN
+// ADMIN PANEL
 // ========================================
+
 app.use("/api/admin", adminRoutes);
 
 // ========================================
 // PRODUCTS - BUY / SELL
 // ========================================
+
 app.use("/api/products", productRoutes);
 
 // ========================================
-// IMAGE UPLOAD - CLOUDINARY
+// CLOUDINARY IMAGE UPLOAD
 // ========================================
-// Routes are defined inside uploadRoutes.js
-//
-// POST /api/upload
-// POST /api/upload/image
-//
-// Both work if uploadRoutes.js has both
-// router.post("/", ...) and
-// router.post("/image", ...).
-// ========================================
+
 app.use("/api/upload", uploadRoutes);
 
 // ========================================
 // REVIEWS AND RATINGS
 // ========================================
+
 app.use("/api/reviews", reviewRoutes);
 
 // ========================================
 // ORDERS
 // ========================================
+
 app.use("/api/orders", orderRoutes);
 
 // ========================================
 // SWAP MODULE
 // ========================================
-// Existing routes are handled by swapRoutes.js
+
 app.use("/api/swap", swapRoutes);
 
 // Backward compatibility
 app.use("/api/swaps", swapRoutes);
 
 // ========================================
-// BARGAINING
+// RENT MODULE
 // ========================================
+
+// GET    /api/rent/products
+// POST   /api/rent/products
+// GET    /api/rent/requests
+// POST   /api/rent/requests
+// PATCH  /api/rent/requests/:id/status
+
+app.use("/api/rent", rentRoutes);
+
+// ========================================
+// BARGAINING MODULE
+// ========================================
+
 app.use("/api/bargain", bargainingRoutes);
+
+// Backward compatibility
 app.use("/api/bargaining", bargainingRoutes);
 
 // ========================================
-// COMPLAINTS
+// COMPLAINTS MODULE
 // ========================================
+
 app.use("/api/complaints", complaintRoutes);
 
 // ========================================
-// REPORTS
+// NOTIFICATIONS MODULE
 // ========================================
+
+// GET    /api/notifications
+// PATCH  /api/notifications/read-all
+// PATCH  /api/notifications/:id/read
+// DELETE /api/notifications/:id
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
+);
+
+// ========================================
+// REPORTS MODULE
+// ========================================
+
 if (reportRoutes) {
   app.use("/api/reports", reportRoutes);
+
   console.log("Reports API connected");
 } else {
-  console.log("Reports API file not found");
+  console.log(
+    "Reports API file not found - skipped"
+  );
 }
+
+// ========================================
+// WISHLIST MODULE
+// ========================================
+
+app.use("/api/wishlist", wishlistRoutes);
+
+// ========================================
+// CHAT MODULE
+// ========================================
+
+app.use("/api/chat", chatRoutes);
 
 // ========================================
 // UNKNOWN API ENDPOINT
 // ========================================
+
 app.use("/api", (req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     success: false,
     message: "API endpoint not found",
     path: req.originalUrl,
@@ -197,8 +276,12 @@ app.use("/api", (req, res) => {
 // ========================================
 // GLOBAL ERROR HANDLER
 // ========================================
+
 app.use((err, req, res, next) => {
-  console.error("Server Error:", err);
+  console.error(
+    "C-MART Server Error:",
+    err
+  );
 
   if (res.headersSent) {
     return next(err);
@@ -211,21 +294,25 @@ app.use((err, req, res, next) => {
       ? err.status
       : 500;
 
-  res.status(statusCode).json({
+  const message =
+    process.env.NODE_ENV === "production" &&
+    statusCode === 500
+      ? "Internal server error"
+      : err.message || "Internal server error";
+
+  return res.status(statusCode).json({
     success: false,
-    message:
-      process.env.NODE_ENV === "production" &&
-      statusCode === 500
-        ? "Internal server error"
-        : err.message || "Internal server error",
+    message,
   });
 });
 
 // ========================================
 // START SERVER
 // ========================================
+
 const startServer = async () => {
   try {
+    // Validate environment variables
     if (!process.env.MONGO_URI) {
       throw new Error(
         "MONGO_URI missing in server/.env"
@@ -238,12 +325,16 @@ const startServer = async () => {
       );
     }
 
+    // Connect to MongoDB
     console.log("Connecting to MongoDB...");
 
     await connectDB();
 
-    console.log("MongoDB connection step completed");
+    console.log(
+      "MongoDB connection step completed"
+    );
 
+    // Start Express server
     app.listen(PORT, () => {
       console.log("==================================");
       console.log("       C-MART SERVER STARTED");
@@ -257,12 +348,57 @@ const startServer = async () => {
         `Health: http://localhost:${PORT}/api/health`
       );
 
-      console.log("Authentication API connected");
-      console.log("Products API connected");
-      console.log("Upload API mounted");
-      console.log("Swap API mounted");
-      console.log("Orders API connected");
-      console.log("Admin API connected");
+      console.log(
+        "Authentication API connected"
+      );
+
+      console.log(
+        "Admin API connected"
+      );
+
+      console.log(
+        "Products API connected"
+      );
+
+      console.log(
+        "Upload API mounted"
+      );
+
+      console.log(
+        "Reviews API connected"
+      );
+
+      console.log(
+        "Orders API connected"
+      );
+
+      console.log(
+        "Swap API mounted"
+      );
+
+      console.log(
+        "Rent API mounted"
+      );
+
+      console.log(
+        "Bargaining API connected"
+      );
+
+      console.log(
+        "Complaints API connected"
+      );
+
+      console.log(
+        "Wishlist API mounted"
+      );
+
+      console.log(
+        "Chat API mounted"
+      );
+
+      console.log(
+        "Notifications API mounted"
+      );
 
       console.log("==================================");
     });
@@ -272,8 +408,12 @@ const startServer = async () => {
       error.message
     );
 
-    process.exit(1);
+    process.exitCode = 1;
   }
 };
+
+// ========================================
+// RUN APPLICATION
+// ========================================
 
 startServer();

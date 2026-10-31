@@ -13,7 +13,6 @@ const User = require("../models/User");
 const {
   getDashboardStats,
   getAllUsers,
-  updateUserStatus,
   getAllProducts,
   deleteProduct,
 } = require("../controllers/adminController");
@@ -26,7 +25,7 @@ router.use(authMiddleware);
 router.use(adminMiddleware);
 
 // ==========================================
-// SAFE USER RESPONSE
+// HELPERS
 // ==========================================
 
 const safeUser = (user) => ({
@@ -36,11 +35,26 @@ const safeUser = (user) => ({
   collegeId: user.collegeId,
   phoneNumber: user.phoneNumber,
   role: user.role,
-  status: user.status,
-  isBlocked: user.isBlocked === true,
+  status: user.isBlocked === true ||
+    String(user.status || "").toLowerCase() === "blocked"
+      ? "Blocked"
+      : "Active",
+  isBlocked:
+    user.isBlocked === true ||
+    String(user.status || "").toLowerCase() === "blocked",
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });
+
+const isBlocked = (user) =>
+  user.isBlocked === true ||
+  String(user.status || "").toLowerCase() === "blocked";
+
+const getAdminId = (req) =>
+  String(req.user?._id || req.user?.id || "");
+
+const isValidId = (id) =>
+  mongoose.isValidObjectId(id);
 
 // ==========================================
 // ADMIN DASHBOARD
@@ -61,7 +75,7 @@ router.get("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!isValidId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID",
@@ -82,7 +96,7 @@ router.get("/users/:id", async (req, res) => {
       user: safeUser(user),
     });
   } catch (error) {
-    console.error("Get User Error:", error.message);
+    console.error("Get User Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -103,7 +117,6 @@ router.post("/users", async (req, res) => {
       email,
       password,
       phoneNumber,
-      role = "user",
     } = req.body || {};
 
     if (
@@ -132,14 +145,7 @@ router.post("/users", async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Enter valid name, email, 10-digit phone number and password of at least 8 characters",
-      });
-    }
-
-    if (!["user", "admin"].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user role",
+          "Enter valid name, email, phone number and password of at least 8 characters",
       });
     }
 
@@ -165,7 +171,7 @@ router.post("/users", async (req, res) => {
       password: hashedPassword,
       collegeId: "189",
       phoneNumber: cleanPhone,
-      role,
+      role: "user",
       status: "Active",
       isBlocked: false,
     });
@@ -176,7 +182,7 @@ router.post("/users", async (req, res) => {
       user: safeUser(newUser),
     });
   } catch (error) {
-    console.error("Add User Error:", error.message);
+    console.error("Add User Error:", error);
 
     if (error.code === 11000) {
       return res.status(409).json({
@@ -203,21 +209,19 @@ router.post("/users", async (req, res) => {
 // BLOCK / UNBLOCK USER
 // ==========================================
 
-// Existing frontend compatibility:
-// PUT /api/admin/users/:id/status
-router.put("/users/:id/status", async (req, res) => {
+const changeUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!isValidId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID",
       });
     }
 
-    if (String(id) === String(req.user.id)) {
-      return res.status(400).json({
+    if (String(id) === getAdminId(req)) {
+      return res.status(403).json({
         success: false,
         message: "You cannot block your own admin account",
       });
@@ -239,40 +243,50 @@ router.put("/users/:id/status", async (req, res) => {
       });
     }
 
-    const currentlyBlocked =
-      user.isBlocked === true ||
-      String(user.status || "").toLowerCase() === "blocked";
+    let nextBlocked;
 
-    const newStatus = currentlyBlocked
-      ? "Active"
-      : "Blocked";
+    if (typeof req.body?.isBlocked === "boolean") {
+      nextBlocked = req.body.isBlocked;
+    } else if (typeof req.body?.status === "string") {
+      const status = req.body.status.toLowerCase();
 
-    user.status = newStatus;
-    user.isBlocked = newStatus === "Blocked";
+      if (!["active", "blocked"].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Status must be Active or Blocked",
+        });
+      }
+
+      nextBlocked = status === "blocked";
+    } else {
+      nextBlocked = !isBlocked(user);
+    }
+
+    user.isBlocked = nextBlocked;
+    user.status = nextBlocked ? "Blocked" : "Active";
 
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message:
-        newStatus === "Blocked"
-          ? "User blocked successfully"
-          : "User unblocked successfully",
+      message: nextBlocked
+        ? "User blocked successfully"
+        : "User unblocked successfully",
       user: safeUser(user),
     });
   } catch (error) {
-    console.error("Update User Status Error:", error.message);
+    console.error("Update User Status Error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Failed to update user status",
     });
   }
-});
+};
 
-// Explicit status update API
-// PATCH /api/admin/users/:id/status
-router.patch("/users/:id/status", updateUserStatus);
+// Supports existing frontend and explicit updates
+router.put("/users/:id/status", changeUserStatus);
+router.patch("/users/:id/status", changeUserStatus);
 
 // ==========================================
 // DELETE USER
@@ -283,15 +297,15 @@ router.delete("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!isValidId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID",
       });
     }
 
-    if (String(id) === String(req.user.id)) {
-      return res.status(400).json({
+    if (String(id) === getAdminId(req)) {
+      return res.status(403).json({
         success: false,
         message: "You cannot delete your own admin account",
       });
@@ -318,9 +332,10 @@ router.delete("/users/:id", async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "User deleted successfully",
+      deletedUserId: id,
     });
   } catch (error) {
-    console.error("Delete User Error:", error.message);
+    console.error("Delete User Error:", error);
 
     return res.status(500).json({
       success: false,

@@ -1,3 +1,4 @@
+
 const express = require("express");
 
 const {
@@ -5,12 +6,23 @@ const {
   getReviews,
 } = require("../controllers/reviewController");
 
+const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
-// Create a review
-router.post("/", createReview);
-
-// Get all reviews
+// ==============================================
+// GET ALL REVIEWS / PRODUCT REVIEWS
+// Public route
+// GET /api/reviews
+// GET /api/reviews?product=PRODUCT_ID
+// ==============================================
 router.get("/", getReviews);
+
+// ==============================================
+// CREATE A REVIEW
+// Protected route - Login required
+// POST /api/reviews
+// ==============================================
+router.post("/", authMiddleware, createReview);
 
 module.exports = router;

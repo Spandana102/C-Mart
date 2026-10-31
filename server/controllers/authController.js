@@ -4,15 +4,26 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Resend } = require("resend");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
+
+// ==========================================
+// CONFIGURATION
+// ==========================================
 
 const CAMPUS_COLLEGE_ID = "189";
-
 const OTP_EXPIRY_MS = 10 * 60 * 1000;
 const OTP_COOLDOWN_MS = 60 * 1000;
 const MAX_OTP_ATTEMPTS = 5;
 
+const googleClient = new OAuth2Client();
+
 const normalizeEmail = (email) =>
   String(email || "").trim().toLowerCase();
+
+const getGoogleClientId = () =>
+  String(process.env.GOOGLE_CLIENT_ID || "")
+    .trim()
+    .replace(/^["']|["']$/g, "");
 
 const hashOTP = (otp) =>
   crypto
@@ -21,12 +32,15 @@ const hashOTP = (otp) =>
     .digest("hex");
 
 const isValidOTP = (otp) =>
-  (typeof otp === "string" || typeof otp === "number") &&
-  /^\d{6}$/.test(String(otp).trim());
+  /^\d{6}$/.test(String(otp ?? "").trim());
 
 const isBlocked = (user) =>
   user?.isBlocked === true ||
   String(user?.status || "").toLowerCase() === "blocked";
+
+// ==========================================
+// PUBLIC USER DETAILS
+// ==========================================
 
 const publicUser = (user) => ({
   _id: user._id,
@@ -34,56 +48,58 @@ const publicUser = (user) => ({
   fullName: user.fullName,
   email: user.email,
   collegeId: user.collegeId,
-  phoneNumber: user.phoneNumber,
+  phoneNumber: user.phoneNumber || "",
   role: user.role || "user",
+  authProvider: user.authProvider || "local",
+  profilePicture: user.profilePicture || "",
 });
 
-const getEmailConfig = () => {
-  const apiKey = String(process.env.RESEND_API_KEY || "").trim();
-  const from = String(process.env.EMAIL_FROM || "").trim();
+// ==========================================
+// CREATE JWT
+// ==========================================
 
-  return { apiKey, from };
-};
+const createToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not configured");
+  }
 
-const clearResetOTP = async (userId, otpHash) => {
-  await User.updateOne(
+  return jwt.sign(
     {
-      _id: userId,
-      resetPasswordToken: otpHash,
+      id: user._id.toString(),
+      role: user.role || "user",
     },
-    {
-      $unset: {
-        resetPasswordToken: "",
-        resetPasswordExpires: "",
-        resetPasswordAttempts: "",
-      },
-    }
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
   );
 };
 
-// ========================================
+// ==========================================
 // REGISTER USER
-// ========================================
+// ==========================================
 
 const registerUser = async (req, res) => {
   try {
-    const { fullName, email, password, phoneNumber } =
-      req.body || {};
+    const {
+      fullName,
+      email,
+      password,
+      phoneNumber,
+    } = req.body || {};
 
     if (
       typeof fullName !== "string" ||
-      !fullName.trim() ||
+      fullName.trim().length < 2 ||
       typeof email !== "string" ||
       !email.trim() ||
       typeof password !== "string" ||
       password.length < 6 ||
       typeof phoneNumber !== "string" ||
-      !phoneNumber.trim()
+      !/^\d{10}$/.test(phoneNumber.trim())
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Provide valid name, email, phone number and password (minimum 6 characters)",
+          "Enter a valid name, email, 10-digit phone number and password of at least 6 characters.",
       });
     }
 
@@ -100,14 +116,18 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      12
+    );
 
     const user = await User.create({
       fullName: fullName.trim(),
       email: normalizedEmail,
       password: hashedPassword,
-      collegeId: CAMPUS_COLLEGE_ID,
       phoneNumber: phoneNumber.trim(),
+      collegeId: CAMPUS_COLLEGE_ID,
+      authProvider: "local",
       role: "user",
     });
 
@@ -126,27 +146,29 @@ const registerUser = async (req, res) => {
       });
     }
 
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
+    return res.status(
+      error.name === "ValidationError" ? 400 : 500
+    ).json({
       success: false,
-      message: "Registration failed",
+      message:
+        error.name === "ValidationError"
+          ? error.message
+          : "Registration failed",
     });
   }
 };
 
-// ========================================
-// LOGIN USER
-// ========================================
+// ==========================================
+// EMAIL / PASSWORD LOGIN
+// ==========================================
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body || {};
+    const {
+      email,
+      password,
+      loginType,
+    } = req.body || {};
 
     if (
       typeof email !== "string" ||
@@ -164,7 +186,7 @@ const loginUser = async (req, res) => {
       email: normalizeEmail(email),
     }).select("+password");
 
-    if (!user || typeof user.password !== "string") {
+    if (!user || !user.password) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
@@ -186,26 +208,34 @@ const loginUser = async (req, res) => {
     if (isBlocked(user)) {
       return res.status(403).json({
         success: false,
-        message:
-          "Your account has been blocked. Please contact the administrator.",
+        message: "Your account has been blocked.",
       });
     }
 
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({
+    const actualRole = user.role || "user";
+
+    if (
+      loginType === "admin" &&
+      actualRole !== "admin"
+    ) {
+      return res.status(403).json({
         success: false,
-        message: "Authentication configuration error",
+        message:
+          "This account does not have admin access.",
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id.toString(),
-        role: user.role || "user",
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    if (
+      loginType === "user" &&
+      actualRole === "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Please use Admin Login.",
+      });
+    }
+
+    const token = createToken(user);
 
     return res.status(200).json({
       success: true,
@@ -223,9 +253,270 @@ const loginUser = async (req, res) => {
   }
 };
 
-// ========================================
+// ==========================================
+// GOOGLE LOGIN
+// ==========================================
+
+const googleLogin = async (req, res) => {
+  try {
+    const { credential, loginType } = req.body || {};
+
+    if (
+      typeof credential !== "string" ||
+      !credential.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential is required",
+      });
+    }
+
+    const googleClientId = getGoogleClientId();
+
+    if (!googleClientId || !process.env.JWT_SECRET) {
+      console.error("Google configuration missing:", {
+        clientIdLoaded: Boolean(googleClientId),
+        jwtSecretLoaded: Boolean(process.env.JWT_SECRET),
+      });
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Google authentication is not configured.",
+      });
+    }
+
+    if (
+      !googleClientId.endsWith(
+        ".apps.googleusercontent.com"
+      )
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "Google Client ID format is invalid.",
+      });
+    }
+
+    const credentialText = credential.trim();
+
+    // Only used for diagnostics.
+    // Decoded token is never trusted for login.
+    let tokenAudience = "";
+
+    try {
+      const parts = credentialText.split(".");
+
+      if (parts.length === 3) {
+        const decoded = JSON.parse(
+          Buffer.from(
+            parts[1],
+            "base64url"
+          ).toString("utf8")
+        );
+
+        tokenAudience =
+          typeof decoded.aud === "string"
+            ? decoded.aud
+            : "";
+      }
+    } catch (_) {
+      console.error(
+        "Could not inspect Google token audience."
+      );
+    }
+
+    const fingerprint = (value) =>
+      value
+        ? crypto
+            .createHash("sha256")
+            .update(value)
+            .digest("hex")
+            .slice(0, 12)
+        : "missing";
+
+    console.log("Google OAuth Debug:", {
+      backendClientIdFingerprint:
+        fingerprint(googleClientId),
+      tokenAudienceFingerprint:
+        fingerprint(tokenAudience),
+      clientIdsMatch:
+        Boolean(tokenAudience) &&
+        tokenAudience === googleClientId,
+    });
+
+    let payload;
+
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credentialText,
+        audience: googleClientId,
+      });
+
+      payload = ticket.getPayload();
+    } catch (verificationError) {
+      const detail = String(
+        verificationError?.message ||
+        "Unknown Google verification error"
+      );
+
+      // Avoid logging the raw credential.
+      console.error(
+        "Google ID Token Verification Failed:",
+        detail
+      );
+
+      const audienceMismatch =
+        /wrong recipient|audience|aud/i.test(detail);
+
+      const expired =
+        /expired|too late|expir/i.test(detail);
+
+      return res.status(401).json({
+        success: false,
+        message: audienceMismatch
+          ? "Google Client ID mismatch. Check client/.env and server/.env."
+          : expired
+          ? "Google login expired. Please sign in again."
+          : "Google verification failed. Check backend terminal.",
+      });
+    }
+
+    if (
+      !payload?.sub ||
+      !payload?.email ||
+      payload.email_verified !== true
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Google account email is not verified.",
+      });
+    }
+
+    const email = normalizeEmail(payload.email);
+    const googleId = String(payload.sub);
+
+    let user = await User.findOne({
+      googleId,
+    }).select("+googleId");
+
+    if (!user) {
+      const existingEmailUser = await User.findOne({
+        email,
+      });
+
+      // Never auto-link password accounts by email.
+      if (existingEmailUser) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An account with this email already exists. Please use your existing login method.",
+        });
+      }
+
+      // Prevent self-registration as admin.
+      if (loginType === "admin") {
+        return res.status(403).json({
+          success: false,
+          message:
+            "This Google account is not registered as an administrator.",
+        });
+      }
+
+      const googleName = String(
+        payload.name || email.split("@")[0]
+      )
+        .trim()
+        .slice(0, 100);
+
+      user = await User.create({
+        fullName:
+          googleName.length >= 2
+            ? googleName
+            : "Google User",
+        email,
+        googleId,
+        authProvider: "google",
+        profilePicture: payload.picture || "",
+        collegeId: CAMPUS_COLLEGE_ID,
+        role: "user",
+      });
+    }
+
+    if (normalizeEmail(user.email) !== email) {
+      return res.status(403).json({
+        success: false,
+        message: "Google account identity mismatch.",
+      });
+    }
+
+    if (isBlocked(user)) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked.",
+      });
+    }
+
+    const actualRole = user.role || "user";
+
+    if (
+      loginType === "admin" &&
+      actualRole !== "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access denied.",
+      });
+    }
+
+    if (
+      loginType === "user" &&
+      actualRole === "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Please select Admin Login.",
+      });
+    }
+
+    const token = createToken(user);
+
+    return res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      token,
+      user: publicUser(user),
+    });
+  } catch (error) {
+    console.error(
+      "Google Login Error:",
+      error.message
+    );
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Account already exists. Please use your existing login method.",
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Google login failed",
+    });
+  }
+};
+
+// ==========================================
 // GET PROFILE
-// ========================================
+// ==========================================
 
 const getProfile = async (req, res) => {
   try {
@@ -260,7 +551,10 @@ const getProfile = async (req, res) => {
       user: publicUser(user),
     });
   } catch (error) {
-    console.error("Get Profile Error:", error.message);
+    console.error(
+      "Get Profile Error:",
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
@@ -269,9 +563,9 @@ const getProfile = async (req, res) => {
   }
 };
 
-// ========================================
+// ==========================================
 // UPDATE PROFILE
-// ========================================
+// ==========================================
 
 const updateProfile = async (req, res) => {
   try {
@@ -284,7 +578,10 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    const { fullName, phoneNumber } = req.body || {};
+    const {
+      fullName,
+      phoneNumber,
+    } = req.body || {};
 
     const updates = {
       collegeId: CAMPUS_COLLEGE_ID,
@@ -293,11 +590,12 @@ const updateProfile = async (req, res) => {
     if (fullName !== undefined) {
       if (
         typeof fullName !== "string" ||
-        !fullName.trim()
+        fullName.trim().length < 2
       ) {
         return res.status(400).json({
           success: false,
-          message: "Full name cannot be empty",
+          message:
+            "Full name must contain at least 2 characters.",
         });
       }
 
@@ -307,11 +605,12 @@ const updateProfile = async (req, res) => {
     if (phoneNumber !== undefined) {
       if (
         typeof phoneNumber !== "string" ||
-        !phoneNumber.trim()
+        !/^\d{10}$/.test(phoneNumber.trim())
       ) {
         return res.status(400).json({
           success: false,
-          message: "Phone number cannot be empty",
+          message:
+            "Enter a valid 10-digit phone number.",
         });
       }
 
@@ -349,31 +648,35 @@ const updateProfile = async (req, res) => {
       user: publicUser(user),
     });
   } catch (error) {
-    console.error("Update Profile Error:", error.message);
+    console.error(
+      "Update Profile Error:",
+      error.message
+    );
 
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
+    return res.status(
+      error.name === "ValidationError" ? 400 : 500
+    ).json({
       success: false,
-      message: "Failed to update profile",
+      message:
+        error.name === "ValidationError"
+          ? error.message
+          : "Failed to update profile",
     });
   }
 };
 
-// ========================================
+// ==========================================
 // FORGOT PASSWORD - SEND OTP
-// ========================================
+// ==========================================
 
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body || {};
 
-    if (typeof email !== "string" || !email.trim()) {
+    if (
+      typeof email !== "string" ||
+      !email.trim()
+    ) {
       return res.status(400).json({
         success: false,
         message: "Email is required",
@@ -386,10 +689,9 @@ const forgotPassword = async (req, res) => {
     const user = await User.findOne({
       email: normalizeEmail(email),
     }).select(
-      "+resetPasswordToken +resetPasswordExpires"
+      "+password +resetPasswordToken +resetPasswordExpires"
     );
 
-    // Do not reveal whether an email is registered.
     if (!user || isBlocked(user)) {
       return res.status(200).json({
         success: true,
@@ -397,7 +699,18 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    // Limit repeated OTP requests to one per minute.
+    // Google-only users do not have local passwords.
+    if (
+      user.authProvider === "google" &&
+      !user.password
+    ) {
+      return res.status(200).json({
+        success: true,
+        message,
+      });
+    }
+
+    // OTP cooldown
     if (
       user.resetPasswordToken &&
       user.resetPasswordExpires
@@ -406,7 +719,9 @@ const forgotPassword = async (req, res) => {
         user.resetPasswordExpires
       ).getTime();
 
-      const createdTime = expiryTime - OTP_EXPIRY_MS;
+      const createdTime =
+        expiryTime - OTP_EXPIRY_MS;
+
       const elapsed = Date.now() - createdTime;
 
       if (
@@ -421,20 +736,26 @@ const forgotPassword = async (req, res) => {
       }
     }
 
-    const { apiKey, from } = getEmailConfig();
+    const apiKey = String(
+      process.env.RESEND_API_KEY || ""
+    ).trim();
+
+    const from = String(
+      process.env.EMAIL_FROM || ""
+    ).trim();
 
     if (!apiKey || !from) {
-      console.error("C-Mart Email Configuration:", {
-        RESEND_API_KEY_loaded: Boolean(apiKey),
-        EMAIL_FROM_loaded: Boolean(from),
-      });
+      console.error(
+        "Resend email configuration is missing."
+      );
 
       return res.status(500).json({
         success: false,
-        message: "Email service is not configured",
+        message: "Email service is not configured.",
       });
     }
 
+    // Secure 6-digit OTP
     const otp = crypto
       .randomInt(100000, 1000000)
       .toString();
@@ -457,42 +778,49 @@ const forgotPassword = async (req, res) => {
     try {
       const resend = new Resend(apiKey);
 
-      const { error } = await resend.emails.send({
+      const result = await resend.emails.send({
         from,
         to: user.email,
-        subject: "C-Mart Password Reset OTP",
+        subject: "C-MART Password Reset OTP",
         html: `
           <div style="font-family:Arial,sans-serif;padding:24px">
-            <h2 style="color:#2563eb">C-Mart Password Reset</h2>
+            <h2 style="color:#2563eb">C-MART Password Reset</h2>
             <p>You requested a password reset.</p>
             <p>Your verification code is:</p>
             <h1 style="letter-spacing:8px">${otp}</h1>
-            <p>This OTP is valid for 10 minutes.</p>
+            <p>This code is valid for 10 minutes.</p>
             <p>Do not share this code with anyone.</p>
             <p>If you did not request this, ignore this email.</p>
-            <p>C-Mart Team</p>
+            <p>C-MART Team</p>
           </div>
         `,
       });
 
-      if (error) {
-        console.error("Resend Error:", error.message);
-
-        await clearResetOTP(user._id, otpHash);
-
-        return res.status(502).json({
-          success: false,
-          message:
-            "Unable to send OTP email. Check email sender configuration.",
-        });
+      if (result.error) {
+        throw new Error(
+          result.error.message ||
+          "Resend email delivery failed"
+        );
       }
     } catch (emailError) {
       console.error(
-        "OTP Email Send Error:",
+        "OTP Email Error:",
         emailError.message
       );
 
-      await clearResetOTP(user._id, otpHash);
+      await User.updateOne(
+        {
+          _id: user._id,
+          resetPasswordToken: otpHash,
+        },
+        {
+          $unset: {
+            resetPasswordToken: "",
+            resetPasswordExpires: "",
+            resetPasswordAttempts: "",
+          },
+        }
+      );
 
       return res.status(502).json({
         success: false,
@@ -518,9 +846,9 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ========================================
-// CHECK OTP
-// ========================================
+// ==========================================
+// CHECK OTP HELPER
+// ==========================================
 
 const checkOTP = async (email, otp) => {
   const otpHash = hashOTP(String(otp).trim());
@@ -549,21 +877,28 @@ const checkOTP = async (email, otp) => {
     return null;
   }
 
-  const storedHash = String(user.resetPasswordToken);
+  const storedHash = String(
+    user.resetPasswordToken
+  );
 
   if (!/^[a-f0-9]{64}$/i.test(storedHash)) {
     return null;
   }
 
-  const storedBuffer = Buffer.from(storedHash, "hex");
-  const providedBuffer = Buffer.from(otpHash, "hex");
+  const storedBuffer = Buffer.from(
+    storedHash,
+    "hex"
+  );
 
-  const matches =
-    storedBuffer.length === providedBuffer.length &&
-    crypto.timingSafeEqual(
-      storedBuffer,
-      providedBuffer
-    );
+  const providedBuffer = Buffer.from(
+    otpHash,
+    "hex"
+  );
+
+  const matches = crypto.timingSafeEqual(
+    storedBuffer,
+    providedBuffer
+  );
 
   if (!matches) {
     await User.updateOne(
@@ -598,9 +933,9 @@ const checkOTP = async (email, otp) => {
   return user;
 };
 
-// ========================================
+// ==========================================
 // VERIFY OTP
-// ========================================
+// ==========================================
 
 const verifyOTP = async (req, res) => {
   try {
@@ -614,7 +949,7 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Valid email and 6-digit OTP are required",
+          "Valid email and 6-digit OTP are required.",
       });
     }
 
@@ -623,7 +958,7 @@ const verifyOTP = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid, expired or locked OTP",
+        message: "Invalid, expired or locked OTP.",
       });
     }
 
@@ -632,7 +967,10 @@ const verifyOTP = async (req, res) => {
       message: "OTP verified successfully",
     });
   } catch (error) {
-    console.error("Verify OTP Error:", error.message);
+    console.error(
+      "Verify OTP Error:",
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
@@ -641,13 +979,17 @@ const verifyOTP = async (req, res) => {
   }
 };
 
-// ========================================
+// ==========================================
 // RESET PASSWORD
-// ========================================
+// ==========================================
 
 const resetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body || {};
+    const {
+      email,
+      otp,
+      newPassword,
+    } = req.body || {};
 
     if (
       typeof email !== "string" ||
@@ -659,7 +1001,7 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Valid email, OTP and password (minimum 6 characters) are required",
+          "Valid email, OTP and password of at least 6 characters are required.",
       });
     }
 
@@ -668,7 +1010,7 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid, expired or locked OTP",
+        message: "Invalid, expired or locked OTP.",
       });
     }
 
@@ -714,7 +1056,7 @@ const resetPassword = async (req, res) => {
     if (result.modifiedCount !== 1) {
       return res.status(400).json({
         success: false,
-        message: "OTP expired or already used",
+        message: "OTP expired or already used.",
       });
     }
 
@@ -724,7 +1066,10 @@ const resetPassword = async (req, res) => {
         "Password reset successful. Please login.",
     });
   } catch (error) {
-    console.error("Reset Password Error:", error.message);
+    console.error(
+      "Reset Password Error:",
+      error.message
+    );
 
     return res.status(500).json({
       success: false,
@@ -733,13 +1078,14 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// ========================================
-// EXPORTS
-// ========================================
+// ==========================================
+// EXPORT ALL CONTROLLERS
+// ==========================================
 
 module.exports = {
   registerUser,
   loginUser,
+  googleLogin,
   getProfile,
   updateProfile,
   forgotPassword,

@@ -1,0 +1,98 @@
+
+.login-selection-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe, #f5f3ff);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.login-selection-container {
+  width: 100%;
+  max-width: 850px;
+  text-align: center;
+}
+
+.selection-logo {
+  font-size: 55px;
+  margin-bottom: 12px;
+}
+
+.login-selection-container h1 {
+  font-size: 38px;
+  color: #1e3a8a;
+  margin-bottom: 10px;
+}
+
+.selection-subtitle {
+  color: #64748b;
+  margin-bottom: 35px;
+}
+
+.login-selection-container h2 {
+  font-size: 22px;
+  margin-bottom: 25px;
+  color: #1e293b;
+}
+
+.login-selection-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+.selection-card {
+  background: white;
+  padding: 40px 25px;
+  border-radius: 18px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transition: 0.3s;
+  text-align: center;
+  font: inherit;
+}
+
+.selection-card:hover {
+  transform: translateY(-8px);
+  border-color: #2563eb;
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.15);
+}
+
+.selection-icon {
+  font-size: 55px;
+  margin-bottom: 15px;
+}
+
+.selection-card h3 {
+  font-size: 23px;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.selection-card p {
+  color: #64748b;
+  margin-bottom: 25px;
+}
+
+.selection-card span {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.selection-footer {
+  margin-top: 40px;
+  color: #64748b;
+}
+
+@media (max-width: 600px) {
+  .login-selection-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .login-selection-container h1 {
+    font-size: 30px;
+  }
+}

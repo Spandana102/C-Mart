@@ -1,466 +1,992 @@
-/* =========================================
-   C-MART — RENT PAGE
-   Modern Student Rental Marketplace
-   ========================================= */
+
+/* ==========================================
+   C-MART RENT PAGE - COMPLETE RENT.CSS
+   Buy Products Style
+========================================== */
 
 .rent-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 45px 24px 70px;
+  --rent-primary: #5844dc;
+  --rent-text: #1d2538;
+  --rent-muted: #64748b;
+  --rent-border: #e6e9f1;
+
+  min-height: 100vh;
+  padding: 32px 5% 70px;
+  background: #f6f7fb;
+  color: var(--rent-text);
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.rent-container *,
+.rent-container *::before,
+.rent-container *::after {
   box-sizing: border-box;
 }
 
+.rent-container button,
+.rent-container input,
+.rent-container select,
+.rent-container textarea {
+  font: inherit;
+}
 
-/* =========================================
-   PAGE HEADER
-   ========================================= */
+.rent-container button {
+  cursor: pointer;
+  transition: 0.2s ease;
+}
 
-.rent-container h1 {
-  text-align: center;
+.rent-container button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
-  margin: 0 0 10px;
+/* HEADER */
 
-  color: #111827;
+.rent-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 36px 42px;
+  margin-bottom: 22px;
+  border-radius: 20px;
+  background: linear-gradient(110deg, #4836c4, #8065ec);
+  color: white;
+  text-align: left;
+}
 
-  font-size: 38px;
+.rent-hero > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.rent-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #e7ddff;
+  font-size: 11px;
   font-weight: 800;
-
-  letter-spacing: -1px;
+  letter-spacing: 1.6px;
 }
 
-.rent-container > p {
-  text-align: center;
-
-  margin: 0 auto 35px;
-
-  max-width: 650px;
-
-  color: #6b7280;
-
-  font-size: 16px;
-
-  line-height: 1.6;
+.rent-hero h1 {
+  margin: 0 0 10px;
+  color: white;
+  font-size: clamp(27px, 3.5vw, 39px);
+  line-height: 1.2;
+  text-align: left;
 }
 
+.rent-hero p {
+  max-width: 620px;
+  margin: 0 0 18px;
+  color: #f0eaff;
+  line-height: 1.75;
+  text-align: left;
+}
 
-/* =========================================
-   RENT PRODUCT LIST
-   ========================================= */
+.rent-hero-icon {
+  font-size: 80px;
+}
 
-.rent-product-list {
+.rent-hero .rent-primary-btn {
+  background: white;
+  color: #4f3ac6;
+}
+
+/* STATISTICS */
+
+.rent-stats {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fill, minmax(250px, 1fr));
-
-  gap: 25px;
-
-  margin-top: 30px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
 }
 
+.rent-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  gap: 5px;
+  padding: 20px 23px;
+  border: 1px solid var(--rent-border);
+  border-radius: 14px;
+  background: white;
+  text-align: left;
+}
 
-/* =========================================
-   RENT PRODUCT CARD
-   ========================================= */
+.rent-stats strong {
+  color: var(--rent-primary);
+  font-size: 30px;
+  line-height: 1.25;
+}
+
+.rent-stats span {
+  color: var(--rent-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* SECTION HEADINGS */
+
+.rent-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0 0 19px;
+  text-align: left;
+}
+
+.rent-section-heading h2,
+.rent-requests-section > h2 {
+  margin: 0 0 4px;
+  color: var(--rent-text);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.rent-section-heading p {
+  margin: 0;
+  color: var(--rent-muted);
+  font-size: 13px;
+  text-align: left;
+}
+
+/* BUTTONS */
+
+.rent-primary-btn,
+.rent-secondary-btn,
+.rent-success-btn,
+.rent-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 10px 17px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.rent-primary-btn {
+  background: var(--rent-primary);
+  color: white;
+}
+
+.rent-secondary-btn {
+  background: #f1efff;
+  color: #4f3fc3;
+  border-color: #dfdbff;
+}
+
+.rent-success-btn {
+  background: #15803d;
+  color: white;
+}
+
+.rent-danger-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.rent-primary-btn:hover:not(:disabled),
+.rent-secondary-btn:hover:not(:disabled),
+.rent-success-btn:hover:not(:disabled),
+.rent-danger-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+}
+
+/* SEARCH AND FILTERS */
+
+.rent-products-section {
+  margin: 30px 0 40px;
+}
+
+.rent-search-filter,
+.rent-filters,
+.rent-filter-bar,
+.rent-search-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(200px, 2fr)
+    repeat(2, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--rent-border);
+  border-radius: 14px;
+  background: white;
+}
+
+.rent-search-filter input,
+.rent-search-filter select,
+.rent-filters input,
+.rent-filters select,
+.rent-filter-bar input,
+.rent-filter-bar select,
+.rent-search-filters input,
+.rent-search-filters select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 13px;
+  border: 1px solid #d8ddea;
+  border-radius: 9px;
+  background: white;
+  color: var(--rent-text);
+  outline: none;
+}
+
+.rent-search-filter input:focus,
+.rent-search-filter select:focus {
+  border-color: #8065ec;
+  box-shadow: 0 0 0 3px rgba(128, 101, 236, 0.12);
+}
+
+/* ==========================================
+   BUY PRODUCTS STYLE - PRODUCT GRID
+========================================== */
+
+.rent-product-list,
+.rent-products-grid,
+.rent-product-grid,
+.rent-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* PRODUCT CARD */
 
 .rent-product-card {
-  width: 100%;
-
-  padding: 15px;
-
-  box-sizing: border-box;
-
-  background: #ffffff;
-
-  border: 1px solid #e5e7eb;
-
-  border-radius: 18px;
-
-  text-align: left;
-
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
   overflow: hidden;
-
-  box-shadow:
-    0 5px 18px rgba(0, 0, 0, 0.07);
-
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
+  border: 1px solid #e5e9f1;
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+  text-align: left;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .rent-product-card:hover {
-  transform: translateY(-7px);
-
-  border-color: #c7d2fe;
-
-  box-shadow:
-    0 18px 38px rgba(79, 70, 229, 0.16);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 27px rgba(64, 52, 122, 0.12);
 }
 
+/* PRODUCT IMAGE GALLERY */
 
-/* =========================================
-   RENT PRODUCT IMAGE
-   ========================================= */
-
-.rent-product-card img {
+.rent-product-gallery,
+.rent-image-gallery {
   width: 100%;
+  min-width: 0;
+  background: white;
+}
 
-  height: 190px;
+.rent-product-image,
+.rent-gallery-main {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 225px;
+  overflow: hidden;
+  background: white;
+  border-bottom: 1px solid #f0f2f6;
+}
 
-  object-fit: cover;
-
+.rent-product-image > img,
+.rent-gallery-main > img {
   display: block;
-
-  margin: 0 0 16px;
-
-  border-radius: 13px;
-
-  background: #f3f4f6;
-
-  transition:
-    transform 0.35s ease;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  object-fit: contain;
+  object-position: center;
 }
-
-.rent-product-card:hover img {
-  transform: scale(1.025);
-}
-
-
-/* =========================================
-   RENT NO IMAGE
-   ========================================= */
 
 .rent-no-image {
-  width: 100%;
-
-  height: 190px;
-
   display: flex;
-
   flex-direction: column;
-
-  align-items: center;
-
   justify-content: center;
-
-  margin-bottom: 16px;
-
-  border-radius: 13px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #f3f4f6,
-      #e5e7eb
-    );
-
-  color: #6b7280;
-
-  font-size: 14px;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  height: 100%;
+  background: #f8f9fc;
+  color: #9ca3af;
+  text-align: center;
 }
 
+.rent-no-image span {
+  font-size: 43px;
+}
 
-/* =========================================
-   RENT PRODUCT TEXT
-   ========================================= */
+.rent-no-image p {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+}
 
-.rent-product-card h2,
-.rent-product-card h3 {
-  margin: 8px 0;
+/* IMAGE ARROWS */
 
-  color: #111827;
+.rent-gallery-arrow,
+.rent-image-arrow {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid #e3e4ed;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: #4939c0;
+  font-size: 24px;
+  line-height: 1;
+}
 
+.rent-gallery-prev,
+.rent-image-prev {
+  left: 9px;
+}
+
+.rent-gallery-next,
+.rent-image-next {
+  right: 9px;
+}
+
+.rent-gallery-count {
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  padding: 3px 8px;
+  border-radius: 30px;
+  background: rgba(17, 24, 39, 0.7);
+  color: white;
+  font-size: 11px;
   font-weight: 700;
+}
+
+/* THUMBNAILS */
+
+.rent-gallery-thumbnails,
+.rent-image-thumbnails {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 9px 11px;
+  background: white;
+  border-bottom: 1px solid #f0f2f6;
+}
+
+.rent-gallery-thumb {
+  flex: 0 0 43px;
+  width: 43px;
+  height: 43px;
+  padding: 3px;
+  border: 2px solid #e5e7eb;
+  border-radius: 7px;
+  background: white;
+  overflow: hidden;
+}
+
+.rent-gallery-thumb.active,
+.rent-gallery-thumb:hover {
+  border-color: var(--rent-primary);
+}
+
+.rent-gallery-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ==========================================
+   PRODUCT TEXT ALIGNMENT
+========================================== */
+
+.rent-product-content,
+.rent-product-info,
+.rent-card-content,
+.rent-product-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: 17px 17px 18px;
+  text-align: left;
+}
+
+.rent-category {
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #f0edff;
+  color: #5947c6;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.rent-product-card h3 {
+  margin: 0 0 9px;
+  color: #20263a;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .rent-product-card p {
-  margin: 6px 0;
-
-  color: #6b7280;
-
-  font-size: 14px;
-
-  line-height: 1.5;
+  margin: 4px 0;
+  color: #64748b;
+  font-size: 12.5px;
+  line-height: 1.6;
+  text-align: left;
+  overflow-wrap: anywhere;
 }
 
+.rent-card-condition {
+  margin: 5px 0 7px;
+  color: #53627b;
+  font-size: 12px;
+}
 
-/* =========================================
-   RENT PRICE
-   ========================================= */
+.rent-card-condition strong {
+  color: #25324b;
+  font-weight: 700;
+}
 
-.rent-product-card .price {
-  margin-top: 10px;
+.rent-card-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.9em;
+  color: #718096;
+}
 
-  color: #4f46e5;
+/* PRICE */
 
-  font-size: 20px;
-
+.rent-price,
+.rent-product-price {
+  margin: 13px 0 12px;
+  color: #4f3bc8;
+  font-size: 23px;
   font-weight: 800;
+  line-height: 1.3;
+  text-align: left;
 }
 
+.rent-price span,
+.rent-product-price span {
+  color: #758097;
+  font-size: 12px;
+  font-weight: 500;
+}
 
-/* =========================================
-   RENT BUTTONS
-   ========================================= */
+.rent-product-content > .rent-price {
+  margin-top: auto;
+  padding-top: 12px;
+}
 
-.rent-product-card button {
-  margin: 9px 5px 0 0;
+/* CARD BUTTONS */
 
-  padding: 10px 16px;
+.rent-actions,
+.rent-product-actions,
+.rent-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 14px;
+}
 
-  border: none;
+.rent-product-card .rent-actions {
+  margin-top: 6px;
+}
 
-  border-radius: 9px;
+.rent-product-card .rent-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 43px;
+}
 
-  background:
-    linear-gradient(
-      135deg,
-      #4f46e5,
-      #6366f1
-    );
+.rent-product-card .rent-actions .rent-primary-btn {
+  width: 100%;
+}
 
-  color: white;
+.rent-product-card .rent-actions > .rent-status {
+  width: 100%;
+  justify-content: center;
+}
 
+/* ==========================================
+   ADD / EDIT PRODUCT FORM
+========================================== */
+
+.rent-form {
+  padding: 26px;
+  margin: 20px 0 30px;
+  border: 1px solid var(--rent-border);
+  border-radius: 16px;
+  background: white;
+  text-align: left;
+}
+
+.rent-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.rent-form label,
+.rent-meeting-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  color: #334155;
   font-size: 13px;
-
   font-weight: 700;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 6px 14px rgba(79, 70, 229, 0.2);
-
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+  text-align: left;
 }
 
-.rent-product-card button:hover {
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 9px 20px rgba(79, 70, 229, 0.3);
+.rent-full-width {
+  grid-column: 1 / -1;
 }
 
-
-/* =========================================
-   ADD RENT FORM
-   ========================================= */
-
-.add-rent-form {
-  margin: 0 auto 40px;
-
-  max-width: 800px;
-
-  padding: 30px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #111827,
-      #312e81
-    );
-
-  border-radius: 20px;
-
-  color: white;
-
-  box-shadow:
-    0 18px 40px rgba(17, 24, 39, 0.18);
-}
-
-.add-rent-form h2 {
-  margin: 0 0 22px;
-
-  font-size: 25px;
-
-  font-weight: 800;
-}
-
-.add-rent-form input,
-.add-rent-form textarea,
-.add-rent-form select {
+.rent-form input,
+.rent-form textarea,
+.rent-form select,
+.rent-meeting-form input,
+.rent-meeting-form textarea,
+.rent-meeting-form select {
   width: 100%;
-
-  padding: 13px 14px;
-
-  margin-bottom: 13px;
-
-  border: 1px solid rgba(255, 255, 255, 0.2);
-
-  border-radius: 10px;
-
-  outline: none;
-
-  background: rgba(255, 255, 255, 0.1);
-
-  color: white;
-
-  font-size: 14px;
-}
-
-.add-rent-form input::placeholder,
-.add-rent-form textarea::placeholder {
-  color: #c7c9d4;
-}
-
-.add-rent-form input:focus,
-.add-rent-form textarea:focus,
-.add-rent-form select:focus {
-  border-color: #a5b4fc;
-
-  box-shadow:
-    0 0 0 3px rgba(165, 180, 252, 0.15);
-}
-
-.add-rent-form button {
-  margin-top: 5px;
-
-  padding: 12px 22px;
-
-  border: none;
-
-  border-radius: 10px;
-
+  min-width: 0;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid #d6dce8;
+  border-radius: 9px;
   background: white;
+  color: #1e293b;
+  outline: none;
+  text-align: left;
+}
 
-  color: #4f46e5;
+.rent-form textarea,
+.rent-meeting-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
 
+.rent-form input:focus,
+.rent-form textarea:focus,
+.rent-form select:focus {
+  border-color: #8065ec;
+  box-shadow: 0 0 0 3px rgba(128, 101, 236, 0.12);
+}
+
+.rent-form input[type="file"],
+.rent-meeting-form input[type="file"] {
+  padding: 9px;
+}
+
+.rent-preview-image {
+  display: block;
+  width: min(100%, 290px);
+  height: 210px;
+  margin: 10px 0;
+  padding: 8px;
+  object-fit: contain;
+  border: 1px solid var(--rent-border);
+  border-radius: 10px;
+  background: #f9fafc;
+}
+
+/* ==========================================
+   RENT REQUEST CARDS
+========================================== */
+
+.rent-requests-section {
+  margin: 32px 0;
+}
+
+.rent-requests-section > h2 {
+  margin-bottom: 18px;
+}
+
+.rent-request-card {
+  padding: 24px;
+  margin-bottom: 18px;
+  border: 1px solid var(--rent-border);
+  border-radius: 15px;
+  background: white;
+  text-align: left;
+}
+
+.rent-request-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rent-request-top h3 {
+  margin: 0;
+  font-size: 19px;
+  text-align: left;
+}
+
+.rent-request-card p {
+  margin: 7px 0;
+  color: #526078;
+  line-height: 1.7;
+  text-align: left;
+}
+
+.rent-request-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 15px 0;
+  padding: 16px;
+  border-radius: 10px;
+  background: #f8f9fc;
+}
+
+.rent-request-info p {
+  margin: 0;
+}
+
+/* STATUS BADGES */
+
+.rent-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  border-radius: 30px;
+  background: #e9edf3;
+  color: #475569;
+  font-size: 11px;
   font-weight: 800;
-
-  cursor: pointer;
-
-  transition: 0.25s ease;
+  white-space: nowrap;
 }
 
-.add-rent-form button:hover {
-  transform: translateY(-2px);
-
-  background: #eef2ff;
+.rent-status-pending,
+.rent-status-not-confirmed,
+.rent-status-not-scheduled {
+  background: #fff2d5;
+  color: #8a590c;
 }
 
+.rent-status-accepted,
+.rent-status-confirmed,
+.rent-status-verified,
+.rent-status-completed {
+  background: #dff7e9;
+  color: #176a42;
+}
 
-/* =========================================
-   EDIT RENT FORM
-   ========================================= */
+.rent-status-rejected {
+  background: #ffe4e6;
+  color: #b91c1c;
+}
 
-.edit-rent-form {
-  max-width: 800px;
+.rent-status-active,
+.rent-status-in-progress,
+.rent-status-submitted {
+  background: #e3edff;
+  color: #1d4ed8;
+}
 
-  margin: 25px auto;
+.rent-status-return-pending,
+.rent-status-scheduled {
+  background: #f1eaff;
+  color: #7442bd;
+}
 
-  padding: 28px;
+/* ==========================================
+   PAYMENT / MEET POINT / RETURN
+========================================== */
 
+.rent-exchange-box {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.rent-confirmation,
+.rent-meeting-info,
+.rent-completed-box {
+  padding: 18px;
+  border: 1px solid #e5e7f4;
+  border-radius: 12px;
+  background: #fafaff;
+  text-align: left;
+}
+
+.rent-confirmation h4,
+.rent-meeting-info h4 {
+  margin: 0 0 12px;
+  color: #4035b6;
+  font-size: 16px;
+  text-align: left;
+}
+
+.rent-meeting-info {
+  margin: 12px 0;
   background: white;
-
-  border: 1px solid #e5e7eb;
-
-  border-radius: 18px;
-
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
-.edit-rent-form h2 {
-  margin-top: 0;
-
-  color: #111827;
+.rent-meeting-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid var(--rent-border);
+  border-radius: 11px;
+  background: white;
 }
 
-.edit-rent-form input,
-.edit-rent-form textarea,
-.edit-rent-form select {
-  width: 100%;
-
-  padding: 12px 14px;
-
-  margin-bottom: 13px;
-
-  border: 1px solid #d1d5db;
-
-  border-radius: 9px;
-
-  outline: none;
-
-  font-size: 14px;
+.rent-meeting-form > p,
+.rent-meeting-form > h4 {
+  grid-column: 1 / -1;
+  margin: 0;
 }
 
-.edit-rent-form input:focus,
-.edit-rent-form textarea:focus,
-.edit-rent-form select:focus {
-  border-color: #4f46e5;
-
-  box-shadow:
-    0 0 0 3px rgba(79, 70, 229, 0.1);
+.rent-meeting-form button {
+  justify-self: start;
 }
 
-.edit-rent-form button {
-  margin-right: 8px;
-
-  padding: 11px 20px;
-
-  border: none;
-
-  border-radius: 9px;
-
-  background: #4f46e5;
-
-  color: white;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition: 0.25s ease;
+.rent-completed-box {
+  background: #e8f8ef;
+  color: #166534;
+  border-color: #bbebcd;
 }
 
-.edit-rent-form button:hover {
-  background: #4338ca;
-
-  transform: translateY(-2px);
+.rent-completed-box h4 {
+  margin: 0 0 8px;
+  color: #166534;
 }
 
+/* EMPTY STATE */
 
-/* =========================================
-   RESPONSIVE
-   ========================================= */
+.rent-empty,
+.rent-empty-state {
+  padding: 48px 20px;
+  margin: 15px 0;
+  border: 1px solid var(--rent-border);
+  border-radius: 14px;
+  background: white;
+  color: #64748b;
+  text-align: center;
+}
 
-@media (max-width: 900px) {
-  .rent-product-list {
-    grid-template-columns:
-      repeat(2, 1fr);
+/* ALERTS */
+
+.rent-alert {
+  padding: 14px 17px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.rent-alert-error {
+  background: #fff0f1;
+  border: 1px solid #fecdd3;
+  color: #b42336;
+}
+
+.rent-alert-success {
+  background: #e8f8ef;
+  border: 1px solid #b7e4c7;
+  color: #166534;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+========================================== */
+
+@media (max-width: 1150px) {
+  .rent-product-list,
+  .rent-products-grid,
+  .rent-product-grid,
+  .rent-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
+@media (max-width: 860px) {
+  .rent-product-list,
+  .rent-products-grid,
+  .rent-product-grid,
+  .rent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rent-search-filter,
+  .rent-filters,
+  .rent-filter-bar,
+  .rent-search-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rent-request-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rent-hero-icon {
+    font-size: 60px;
+  }
+}
 
 @media (max-width: 600px) {
   .rent-container {
-    padding: 35px 18px 55px;
+    padding: 17px 13px 45px;
   }
 
-  .rent-container h1 {
-    font-size: 30px;
+  .rent-hero {
+    padding: 26px 22px;
   }
 
-  .rent-container > p {
+  .rent-hero-icon {
+    display: none;
+  }
+
+  .rent-stats {
+    gap: 9px;
+  }
+
+  .rent-stats > div {
+    padding: 14px;
+  }
+
+  .rent-stats strong {
+    font-size: 24px;
+  }
+
+  .rent-stats span {
+    font-size: 11px;
+  }
+
+  .rent-product-list,
+  .rent-products-grid,
+  .rent-product-grid,
+  .rent-grid {
+    gap: 11px;
+  }
+
+  .rent-product-image,
+  .rent-gallery-main {
+    height: 175px;
+  }
+
+  .rent-product-content,
+  .rent-product-info,
+  .rent-card-content,
+  .rent-product-details {
+    padding: 12px;
+  }
+
+  .rent-product-card h3 {
     font-size: 14px;
   }
 
-  .rent-product-list {
+  .rent-product-card p {
+    font-size: 11.5px;
+  }
+
+  .rent-price,
+  .rent-product-price {
+    font-size: 18px;
+  }
+
+  .rent-product-card .rent-actions {
+    gap: 6px;
+  }
+
+  .rent-product-card .rent-actions button {
+    padding: 9px 7px;
+    font-size: 11px;
+  }
+
+  .rent-form {
+    padding: 17px;
+  }
+
+  .rent-form-grid,
+  .rent-meeting-form,
+  .rent-request-info {
     grid-template-columns: 1fr;
-
-    gap: 20px;
   }
 
-  .rent-product-card img,
-  .rent-no-image {
-    height: 210px;
+  .rent-request-card {
+    padding: 17px;
   }
 
-  .add-rent-form,
-  .edit-rent-form {
-    padding: 22px;
+  .rent-search-filter,
+  .rent-filters,
+  .rent-filter-bar,
+  .rent-search-filters {
+    padding: 12px;
+  }
+
+  .rent-section-heading h2 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .rent-product-list,
+  .rent-products-grid,
+  .rent-product-grid,
+  .rent-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rent-product-image,
+  .rent-gallery-main {
+    height: 245px;
+  }
+
+  .rent-stats {
+    grid-template-columns: 1fr;
   }
 }

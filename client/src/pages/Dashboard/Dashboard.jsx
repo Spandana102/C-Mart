@@ -7,30 +7,34 @@ import "./Dashboard.css";
 const API_URL = "http://localhost:5000/api";
 const SERVER_URL = "http://localhost:5000";
 
-// Get product image URL
-function getImageUrl(product) {
-  const image =
-    product?.images?.[0] ||
-    product?.image ||
-    product?.imageUrl ||
-    product?.productImage;
+const DASHBOARD_PATH = "/dashboard";
 
-  let imageUrl = "";
+// ==========================================
+// IMAGE HELPER
+// ==========================================
 
-  if (typeof image === "string") {
-    imageUrl = image;
-  } else if (image && typeof image === "object") {
-    imageUrl =
-      image.secure_url ||
-      image.url ||
-      image.imageUrl ||
-      image.path ||
-      "";
+function normalizeImage(image) {
+  if (!image) return "";
+
+  if (Array.isArray(image)) {
+    return image.map(normalizeImage).find(Boolean) || "";
   }
 
-  if (!imageUrl) return "";
+  if (typeof image === "object") {
+    return normalizeImage(
+      image.secure_url ||
+        image.url ||
+        image.imageUrl ||
+        image.path ||
+        image.src
+    );
+  }
 
-  const value = imageUrl.trim().replace(/\\/g, "/");
+  if (typeof image !== "string") return "";
+
+  const value = image.trim().replace(/\\/g, "/");
+
+  if (!value) return "";
 
   if (
     /^https?:\/\//i.test(value) ||
@@ -47,6 +51,19 @@ function getImageUrl(product) {
   return `${SERVER_URL}/${value.replace(/^\/+/, "")}`;
 }
 
+function getImageUrl(product) {
+  return normalizeImage(
+    product?.images ||
+      product?.image ||
+      product?.imageUrl ||
+      product?.productImage
+  );
+}
+
+// ==========================================
+// DASHBOARD COMPONENT
+// ==========================================
+
 function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,24 +72,129 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Sidebar menu only
+  const [wishlistCount, setWishlistCount] = useState(null);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  // ========================================
+  // AUTHENTICATED NAVIGATION
+  // ========================================
+
+  const navigateTo = (path) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    navigate(path);
+  };
+
+  const goToDashboard = () => {
+    navigateTo(DASHBOARD_PATH);
+  };
+
+  const openNotifications = () => {
+    navigateTo("/notifications");
+  };
+
+  const openWishlist = () => {
+    navigateTo("/wishlist");
+  };
+
+  const openMyProducts = () => {
+    navigateTo("/my-products");
+  };
+
+  // ========================================
+  // SIDEBAR MENU
+  // ========================================
+
   const menuItems = [
-    { icon: "🏠", title: "Dashboard", path: "/" },
-    { icon: "🛍️", title: "Buy Products", path: "/products" },
-    { icon: "💰", title: "Sell Products", path: "/sell" },
-    { icon: "📦", title: "My Products", path: "/my-products" },
-    { icon: "🤝", title: "Seller Offers", path: "/seller-offers" },
-    { icon: "🔄", title: "Swap Products", path: "/swap" },
-    { icon: "🏷️", title: "Rent Products", path: "/rent" },
-    { icon: "💬", title: "Bargaining", path: "/bargain" },
-    { icon: "📍", title: "Meet Point", path: "/meetpoint" },
-    { icon: "🧾", title: "My Orders", path: "/orders" },
-    { icon: "⭐", title: "Reviews & Ratings", path: "/reviews" },
-    { icon: "⚠️", title: "Complaints", path: "/complaints" },
-    { icon: "👤", title: "My Profile", path: "/profile" },
+    {
+      icon: "🏠",
+      title: "Dashboard",
+      path: DASHBOARD_PATH,
+    },
+    {
+      icon: "🛍️",
+      title: "Buy Products",
+      path: "/products",
+    },
+    {
+      icon: "💰",
+      title: "Sell Products",
+      path: "/sell",
+    },
+    {
+      icon: "📦",
+      title: "My Products",
+      path: "/my-products",
+    },
+    {
+      icon: "❤️",
+      title: "My Wishlist",
+      path: "/wishlist",
+    },
+    {
+      icon: "🤝",
+      title: "Seller Offers",
+      path: "/seller-offers",
+    },
+    {
+      icon: "🔄",
+      title: "Swap Products",
+      path: "/swap",
+    },
+    {
+      icon: "🏷️",
+      title: "Rent Products",
+      path: "/rent",
+    },
+    {
+      icon: "🧾",
+      title: "My Orders",
+      path: "/orders",
+    },
+    {
+      icon: "⚠️",
+      title: "Complaints",
+      path: "/complaints",
+    },
+    {
+      icon: "💬",
+      title: "My Chats",
+      path: "/chat",
+    },
+    {
+      icon: "🔔",
+      title: "Notifications",
+      path: "/notifications",
+    },
+    {
+      icon: "👤",
+      title: "My Profile",
+      path: "/profile",
+    },
   ];
 
-  // Fetch products uploaded by students
+  const handleMenuClick = (path) => {
+    if (path === "/wishlist") {
+      openWishlist();
+    } else if (path === "/notifications") {
+      openNotifications();
+    } else if (path === "/my-products") {
+      openMyProducts();
+    } else {
+      navigateTo(path);
+    }
+  };
+
+  // ========================================
+  // FETCH PRODUCTS
+  // ========================================
+
   useEffect(() => {
     let active = true;
 
@@ -95,7 +217,6 @@ function Dashboard() {
           ? data.data
           : [];
 
-        // Latest uploaded products first
         const sortedProducts = [...productList].sort(
           (a, b) =>
             new Date(b.createdAt || 0).getTime() -
@@ -107,7 +228,7 @@ function Dashboard() {
         }
       } catch (err) {
         console.error(
-          "Dashboard products error:",
+          "Dashboard Products Error:",
           err.response?.data || err.message
         );
 
@@ -117,9 +238,7 @@ function Dashboard() {
           );
         }
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
@@ -130,32 +249,195 @@ function Dashboard() {
     };
   }, [location.key]);
 
-  // Logout
+  // ========================================
+  // FETCH WISHLIST COUNT
+  // ========================================
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchWishlistCount() {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        if (active) setWishlistCount(null);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${API_URL}/wishlist`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const savedProducts = Array.isArray(
+          response.data?.wishlist
+        )
+          ? response.data.wishlist
+          : [];
+
+        if (active) {
+          setWishlistCount(savedProducts.length);
+        }
+      } catch (err) {
+        console.error(
+          "Dashboard Wishlist Error:",
+          err.response?.data || err.message
+        );
+
+        if (active) setWishlistCount(null);
+      }
+    }
+
+    fetchWishlistCount();
+
+    return () => {
+      active = false;
+    };
+  }, [location.key]);
+
+  // ========================================
+  // FETCH UNREAD CHAT COUNT
+  // ========================================
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchUnread = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        if (active) setUnreadChatCount(0);
+        return;
+      }
+
+      try {
+        const { data } = await axios.get(
+          `${API_URL}/chat/unread-count`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (active) {
+          setUnreadChatCount(
+            Number(data?.unreadCount) || 0
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Dashboard unread chat count:",
+          err.response?.data || err.message
+        );
+      }
+    };
+
+    fetchUnread();
+
+    const timer = setInterval(fetchUnread, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [location.key]);
+
+  // ========================================
+  // FETCH NOTIFICATION COUNT
+  // ========================================
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchNotificationCount = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        if (active) setNotificationCount(0);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `${API_URL}/notifications`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (active) {
+          setNotificationCount(
+            Number(response.data?.unreadCount) || 0
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Dashboard Notifications Error:",
+          err.response?.data || err.message
+        );
+      }
+    };
+
+    fetchNotificationCount();
+
+    const timer = setInterval(
+      fetchNotificationCount,
+      5000
+    );
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [location.key]);
+
+  // ========================================
+  // LOGOUT
+  // ========================================
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    navigate("/login", { replace: true });
+    navigate("/login", {
+      replace: true,
+    });
   };
 
-  // Open selected product details
+  // ========================================
+  // OPEN PRODUCT DETAILS
+  // ========================================
+
   const openProduct = (product) => {
-    const id = product._id || product.id;
+    const id = product?._id || product?.id;
 
     if (id) {
-      navigate(`/product/${id}`);
+      navigateTo(`/product/${id}`);
     } else {
-      navigate("/products");
+      navigateTo("/products");
     }
   };
+
+  // ========================================
+  // DASHBOARD UI
+  // ========================================
 
   return (
     <div className="dashboard-layout">
       {/* LEFT SIDEBAR */}
+
       <aside className="dashboard-sidebar">
         <div
           className="sidebar-brand"
-          onClick={() => navigate("/")}
+          onClick={goToDashboard}
           role="button"
           tabIndex={0}
           onKeyDown={(event) => {
@@ -164,11 +446,14 @@ function Dashboard() {
               event.key === " "
             ) {
               event.preventDefault();
-              navigate("/");
+              goToDashboard();
             }
           }}
         >
-          <span className="brand-icon">🛍️</span>
+          <span className="brand-icon">
+            🛍️
+          </span>
+
           <span>C-Mart</span>
         </div>
 
@@ -180,10 +465,9 @@ function Dashboard() {
           {menuItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
-              (item.path !== "/" &&
-                location.pathname.startsWith(
-                  item.path + "/"
-                ));
+              location.pathname.startsWith(
+                item.path + "/"
+              );
 
             return (
               <button
@@ -193,13 +477,43 @@ function Dashboard() {
                   "sidebar-link " +
                   (isActive ? "active" : "")
                 }
-                onClick={() => navigate(item.path)}
+                onClick={() =>
+                  handleMenuClick(item.path)
+                }
               >
                 <span className="sidebar-link-icon">
                   {item.icon}
                 </span>
 
                 <span>{item.title}</span>
+
+                {/* CHAT UNREAD BADGE */}
+
+                {item.path === "/chat" &&
+                  unreadChatCount > 0 && (
+                    <span
+                      className="cm-unread-badge"
+                      aria-label={`${unreadChatCount} unread messages`}
+                    >
+                      {unreadChatCount > 99
+                        ? "99+"
+                        : unreadChatCount}
+                    </span>
+                  )}
+
+                {/* NOTIFICATION BADGE */}
+
+                {item.path === "/notifications" &&
+                  notificationCount > 0 && (
+                    <span
+                      className="cm-unread-badge"
+                      aria-label={`${notificationCount} unread notifications`}
+                    >
+                      {notificationCount > 99
+                        ? "99+"
+                        : notificationCount}
+                    </span>
+                  )}
               </button>
             );
           })}
@@ -211,14 +525,16 @@ function Dashboard() {
 
             <div>
               <strong>Need Help?</strong>
-              <p>Contact our support team.</p>
+              <p>
+                Contact our support team.
+              </p>
             </div>
 
             <button
               type="button"
               aria-label="Open complaints"
               onClick={() =>
-                navigate("/complaints")
+                navigateTo("/complaints")
               }
             >
               →
@@ -236,9 +552,11 @@ function Dashboard() {
         </div>
       </aside>
 
-      {/* RIGHT SIDE CONTENT */}
+      {/* RIGHT CONTENT */}
+
       <main className="dashboard-main">
-        {/* Topbar */}
+        {/* TOPBAR */}
+
         <header className="dashboard-topbar">
           <div>
             <p className="topbar-subtitle">
@@ -248,20 +566,88 @@ function Dashboard() {
             <h2>Student Dashboard</h2>
           </div>
 
-          <button
-            type="button"
-            className="topbar-profile"
-            onClick={() => navigate("/profile")}
-          >
-            <span className="profile-avatar">
-              👤
-            </span>
+          <div className="dashboard-topbar-actions">
+            {/* NOTIFICATIONS BELL */}
 
-            <span>My Profile</span>
-          </button>
+            <button
+              type="button"
+              className="dashboard-notification-btn"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openNotifications();
+              }}
+              title="Open Notifications"
+              aria-label={`Open Notifications, ${notificationCount} unread`}
+              style={{
+                position: "relative",
+                zIndex: 20,
+                cursor: "pointer",
+                pointerEvents: "auto",
+                flexShrink: 0,
+              }}
+            >
+              <span
+                className="dashboard-notification-icon"
+                style={{
+                  pointerEvents: "none",
+                }}
+              >
+                🔔
+              </span>
+
+              {notificationCount > 0 && (
+                <span
+                  className="dashboard-notification-badge"
+                  style={{
+                    pointerEvents: "none",
+                  }}
+                >
+                  {notificationCount > 99
+                    ? "99+"
+                    : notificationCount}
+                </span>
+              )}
+            </button>
+
+            {/* WISHLIST */}
+
+            <button
+              type="button"
+              className="topbar-wishlist"
+              onClick={openWishlist}
+              title="Open My Wishlist"
+            >
+              <span>❤️</span>
+
+              <span>
+                My Wishlist
+                {wishlistCount !== null
+                  ? ` (${wishlistCount})`
+                  : ""}
+              </span>
+            </button>
+
+            {/* PROFILE */}
+
+            <button
+              type="button"
+              className="topbar-profile"
+              onClick={() =>
+                navigateTo("/profile")
+              }
+            >
+              <span className="profile-avatar">
+                👤
+              </span>
+
+              <span>My Profile</span>
+            </button>
+          </div>
         </header>
 
-        {/* Welcome Banner */}
+        {/* WELCOME BANNER */}
+
         <section className="dashboard-welcome">
           <div className="welcome-content">
             <span className="welcome-badge">
@@ -275,16 +661,17 @@ function Dashboard() {
             </h1>
 
             <p>
-              Discover products uploaded by
-              students in your campus.
-              Explore products, compare prices
-              and find what you need.
+              Discover products uploaded by students
+              in your campus. Explore products,
+              compare prices and find what you need.
             </p>
 
             <button
               type="button"
               className="welcome-button"
-              onClick={() => navigate("/products")}
+              onClick={() =>
+                navigateTo("/products")
+              }
             >
               Explore Products →
             </button>
@@ -312,7 +699,47 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* ONLY UPLOADED PRODUCTS */}
+        {/* WISHLIST QUICK ACCESS */}
+
+        <section className="dashboard-wishlist-section">
+          <div className="dashboard-wishlist-content">
+            <div className="dashboard-wishlist-icon">
+              ❤️
+            </div>
+
+            <div className="dashboard-wishlist-text">
+              <h3>My Wishlist</h3>
+
+              <p>
+                Save your favourite products and
+                view them anytime.
+              </p>
+
+              {wishlistCount !== null && (
+                <p>
+                  {wishlistCount === 0
+                    ? "No saved products yet."
+                    : `${wishlistCount} saved ${
+                        wishlistCount === 1
+                          ? "product"
+                          : "products"
+                      }`}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="dashboard-wishlist-button"
+            onClick={openWishlist}
+          >
+            View Wishlist →
+          </button>
+        </section>
+
+        {/* RECENTLY ADDED PRODUCTS */}
+
         <section className="dashboard-products">
           <div className="dashboard-section-heading">
             <div>
@@ -323,7 +750,9 @@ function Dashboard() {
             <button
               type="button"
               className="view-all-products"
-              onClick={() => navigate("/products")}
+              onClick={() =>
+                navigateTo("/products")
+              }
             >
               View All →
             </button>
@@ -339,7 +768,9 @@ function Dashboard() {
 
               <button
                 type="button"
-                onClick={() => navigate("/products")}
+                onClick={() =>
+                  navigateTo("/products")
+                }
               >
                 Open Buy Products
               </button>
@@ -348,7 +779,9 @@ function Dashboard() {
             <div className="dashboard-product-message">
               <span>🛍️</span>
 
-              <h3>No products available yet</h3>
+              <h3>
+                No products available yet
+              </h3>
 
               <p>
                 Products uploaded by students
@@ -357,7 +790,9 @@ function Dashboard() {
 
               <button
                 type="button"
-                onClick={() => navigate("/sell")}
+                onClick={() =>
+                  navigateTo("/sell")
+                }
               >
                 Sell a Product
               </button>
@@ -387,16 +822,13 @@ function Dashboard() {
                       `${productName}-${index}`
                     }
                   >
-                    {/* Product Image */}
                     <button
                       type="button"
                       className="dashboard-product-image"
                       onClick={() =>
                         openProduct(product)
                       }
-                      aria-label={
-                        `View ${productName}`
-                      }
+                      aria-label={`View ${productName}`}
                     >
                       {imageUrl ? (
                         <img
@@ -414,7 +846,6 @@ function Dashboard() {
                       )}
                     </button>
 
-                    {/* Product Details */}
                     <div className="dashboard-product-info">
                       <h3 title={productName}>
                         {productName}
@@ -452,7 +883,8 @@ function Dashboard() {
           )}
         </section>
 
-        {/* Footer */}
+        {/* FOOTER */}
+
         <footer className="dashboard-footer">
           © 2026 C-Mart · Campus Marketplace
           for Students

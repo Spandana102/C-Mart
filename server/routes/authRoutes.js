@@ -5,6 +5,7 @@ const router = express.Router();
 const {
   registerUser,
   loginUser,
+  googleLogin,
   getProfile,
   updateProfile,
   forgotPassword,
@@ -21,13 +22,16 @@ const authMiddleware = require("../middleware/authMiddleware");
 // Register new student
 router.post("/register", registerUser);
 
-// Login student or admin
+// Login student or admin using email and password
 router.post("/login", loginUser);
+
+// Login or register using Google account
+router.post("/google", googleLogin);
 
 // Send password reset OTP to registered email
 router.post("/forgot-password", forgotPassword);
 
-// Verify the OTP received through email
+// Verify OTP received through email
 router.post("/verify-otp", verifyOTP);
 
 // Set a new password after OTP verification
