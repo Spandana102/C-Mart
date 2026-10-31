@@ -11,35 +11,16 @@ const SERVER_URL = "http://localhost:5000";
 function getImageUrl(image) {
   if (!image) return "";
   if (Array.isArray(image)) {
-    for (const item of image) {
-      const url = getImageUrl(item);
-      if (url) return url;
-    }
-    return "";
+    return image.map(getImageUrl).find(Boolean) || "";
   }
   if (typeof image === "object") {
-    return getImageUrl(
-      image.secure_url ||
-      image.url ||
-      image.imageUrl ||
-      image.path ||
-      image.src ||
-      ""
-    );
+    return getImageUrl(image.secure_url || image.url || image.imageUrl || image.path || image.src);
   }
   if (typeof image !== "string") return "";
   const value = image.trim().replace(/\\/g, "/");
   if (!value) return "";
-  if (
-    /^https?:\/\//i.test(value) ||
-    value.startsWith("data:image/") ||
-    value.startsWith("blob:")
-  ) {
-    return value;
-  }
-  if (value.startsWith("//")) {
-    return `https:${value}`;
-  }
+  if (/^https?:\/\//i.test(value) || value.startsWith("data:image/") || value.startsWith("blob:")) return value;
+  if (value.startsWith("//")) return `https:${value}`;
   return `${SERVER_URL}/${value.replace(/^\/+/, "")}`;
 }
 function getProductImages(product) {
@@ -130,10 +111,12 @@ function ProductDetails() {
   const [reportError, setReportError] = useState("");
   const [reportSuccess, setReportSuccess] = useState("");
 
+
   const handleReportSubmit = async (event) => {
     event.preventDefault();
     setReportError("");
     setReportSuccess("");
+
 
     const currentToken = localStorage.getItem("token");
     if (!currentToken) {
@@ -145,6 +128,7 @@ function ProductDetails() {
       setReportError("Please select a reason.");
       return;
     }
+
 
     try {
       setReportLoading(true);
@@ -170,6 +154,7 @@ function ProductDetails() {
       setReportLoading(false);
     }
   };
+
 
   const token = localStorage.getItem("token");
   // ==========================================
@@ -319,25 +304,24 @@ function ProductDetails() {
   // BARGAIN BUTTON
   // ==========================================
   const handleBargain = () => {
-    if (!product || !currentId) return;
+    if (!product || !currentId) {
+      alert("Product information is unavailable.");
+      return;
+    }
     if (!localStorage.getItem("token")) {
       alert("Please login to bargain.");
       navigate("/login");
       return;
     }
     if (!hasSeller) {
-      alert(
-        "This product does not have a seller assigned. " +
-        "Please contact the administrator."
-      );
+      alert("This product does not have a seller assigned. Please contact the administrator.");
       return;
     }
-    navigate(`/bargaining/${currentId}`, {
+    navigate(`/bargain?productId=${encodeURIComponent(currentId)}`, {
       state: {
-        product: {
-          ...product,
-          _id: product._id || currentId,
-        },
+        product: { ...product, _id: product._id || currentId },
+        productId: currentId,
+        sellerId,
       },
     });
   };
@@ -689,6 +673,7 @@ function ProductDetails() {
                 🚩 Report Product
               </button>
 
+
             <button
               type="button"
               className="pd-home-btn"
@@ -698,11 +683,13 @@ function ProductDetails() {
             </button>
             </div>
 
+
             {reportSuccess && (
               <p role="status" style={{ color: "#15803d", marginTop: 14 }}>
                 {reportSuccess}
               </p>
             )}
+
 
             {showReportForm && (
               <form

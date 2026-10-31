@@ -17,11 +17,11 @@ const connectDB = async () => {
     console.log("Connecting to MongoDB Atlas...");
     console.log("=================================");
 
-    await mongoose.connect(mongoURI, {
-      // Prefer IPv4
-      family: 4,
+    const conn = await mongoose.connect(mongoURI, {
+      // Use IPv6/NAT64 for the current network
+      family: 6,
 
-      // Connection timeout settings
+      // Connection timeouts
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
@@ -30,16 +30,16 @@ const connectDB = async () => {
       maxPoolSize: 10,
       minPoolSize: 0,
 
-      // Retry connection operations
+      // Retry supported write operations
       retryWrites: true,
     });
 
     console.log("=================================");
     console.log("MongoDB Connected Successfully");
-    console.log("DATABASE NAME:", mongoose.connection.name);
+    console.log("DATABASE NAME:", conn.connection.name);
     console.log("=================================");
 
-    return mongoose.connection;
+    return conn.connection;
 
   } catch (error) {
     console.error("=================================");

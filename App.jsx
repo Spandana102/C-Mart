@@ -30,7 +30,7 @@ import Rent from "./pages/Rent/Rent";
 import MeetPoint from "./pages/MeetPoint/MeetPoint";
 
 // Bargaining
-import BargainPage from "./pages/BargainPage";
+import BargainPage from "./pages/Bargain/BargainPage";
 import SellerOffers from "./pages/SellerOffers";
 
 // Reviews and Complaints
