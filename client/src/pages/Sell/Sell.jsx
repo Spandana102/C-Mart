@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL } from "../../services/apiConfig";
 import "./Sell.css";
 
-const API_URL = "http://localhost:5000/api";
 const DASHBOARD_PATH = "/dashboard";
 
 const MAX_IMAGES = 5;

@@ -7,9 +7,8 @@ import React, {
 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL } from "../../services/apiConfig";
 import "./Orders.css";
-
-const API_URL = "http://localhost:5000/api";
 
 // IMPORTANT:
 // Dashboard route in App.jsx must match this path.

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_URL } from "../../services/apiConfig";
 import "./Reviews.css";
 
-const API_URL = "http://localhost:5000/api";
 const RATING_TEXT = ["Select your rating", "Not satisfied", "Needs improvement", "Good experience", "Very good experience", "Excellent experience! ⭐"];
 
 const normalizeReviews = (data) => {

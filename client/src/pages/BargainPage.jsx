@@ -6,8 +6,7 @@ import {
   useParams,
 } from "react-router-dom";
 import axios from "axios";
-
-const API_URL = "http://localhost:5000/api";
+import { API_ORIGIN, API_URL } from "../services/apiConfig";
 
 const formatPrice = (value) =>
   Number(value || 0).toLocaleString("en-IN", {
@@ -20,7 +19,7 @@ const getImageUrl = (image) => {
   if (typeof image === "string") {
     if (image.startsWith("http")) return image;
 
-    return `http://localhost:5000/${image.replace(/^\/+/, "")}`;
+    return `${API_ORIGIN}/${image.replace(/^\/+/, "")}`;
   }
 
   if (typeof image === "object") {

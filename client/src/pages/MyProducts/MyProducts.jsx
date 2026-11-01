@@ -2,10 +2,11 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API_ORIGIN, API_URL } from "../../services/apiConfig";
 import "./MyProducts.css";
 
-const API = "http://localhost:5000/api";
-const SERVER_URL = "http://localhost:5000";
+const API = API_URL;
+const SERVER_URL = API_ORIGIN;
 const DASHBOARD_PATH = "/dashboard";
 
 // ==========================================

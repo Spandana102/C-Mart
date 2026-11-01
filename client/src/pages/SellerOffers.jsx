@@ -1,8 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_URL = "http://localhost:5000/api";
+import { API_ORIGIN, API_URL } from "../services/apiConfig";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("en-IN", {
@@ -44,7 +43,7 @@ function getImageUrl(image) {
     return `https:${url}`;
   }
 
-  return `http://localhost:5000/${url.replace(/^\/+/, "")}`;
+  return `${API_ORIGIN}/${url.replace(/^\/+/, "")}`;
 }
 
 const FILTERS = [

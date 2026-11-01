@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL } from "../../services/apiConfig";
 import "./MeetPoint.css";
-
-const API_URL = "http://localhost:5000/api";
 
 function MeetPoint() {
   const location = useLocation();

@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_ORIGIN, API_URL } from "../../services/apiConfig";
 import "./Dashboard.css";
 
-const API_URL = "http://localhost:5000/api";
-const SERVER_URL = "http://localhost:5000";
+const SERVER_URL = API_ORIGIN;
 
 const DASHBOARD_PATH = "/dashboard";
 

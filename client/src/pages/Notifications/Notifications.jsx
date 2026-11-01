@@ -2,9 +2,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL } from "../../services/apiConfig";
 import "./Notifications.css";
 
-const API_URL = "http://localhost:5000/api";
 const DASHBOARD_PATH = "/dashboard";
 
 // ==========================================

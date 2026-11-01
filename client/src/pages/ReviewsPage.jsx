@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_URL } from "../services/apiConfig";
 
 function ReviewsPage() {
   const [rating, setRating] = useState(0);
@@ -8,7 +9,7 @@ function ReviewsPage() {
 
   // Get reviews from backend
   useEffect(() => {
-    fetch("http://localhost:5000/api/reviews")
+    fetch(`${API_URL}/reviews`)
       .then((response) => response.json())
       .then((data) => {
         setReviews(data);
@@ -42,7 +43,7 @@ function ReviewsPage() {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/reviews", {
+      const response = await fetch(`${API_URL}/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

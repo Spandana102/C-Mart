@@ -13,6 +13,8 @@ dotenv.config({
   path: path.join(__dirname, ".env"),
 });
 
+const isProduction = process.env.NODE_ENV === "production";
+
 // ========================================
 // DATABASE
 // ========================================
@@ -62,10 +64,97 @@ const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
 // ========================================
+// CORS CONFIGURATION
+// ========================================
+
+const configuredOrigins = [
+  process.env.CLIENT_URLS || "",
+  process.env.CLIENT_URL || "",
+]
+  .flatMap((value) => value.split(","))
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => {
+    let url;
+
+    try {
+      url = new URL(value);
+    } catch {
+      throw new Error(
+        `Invalid frontend origin configured: ${value}`
+      );
+    }
+
+    if (
+      url.protocol !== "http:" &&
+      url.protocol !== "https:"
+    ) {
+      throw new Error(
+        `Invalid frontend origin configured: ${value}`
+      );
+    }
+
+    if (
+      isProduction &&
+      url.protocol !== "https:"
+    ) {
+      throw new Error(
+        `Production frontend origins must use HTTPS: ${value}`
+      );
+    }
+
+    return url.origin;
+  });
+
+const allowedOrigins = new Set(configuredOrigins);
+
+// ========================================
 // MIDDLEWARE
 // ========================================
 
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      const isLocalDevelopmentOrigin =
+        !isProduction &&
+        /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(
+          origin || ""
+        );
+
+      if (
+        !origin ||
+        allowedOrigins.has(origin) ||
+        isLocalDevelopmentOrigin
+      ) {
+        return callback(null, true);
+      }
+
+      const error = new Error(
+        "Origin is not allowed by CORS"
+      );
+
+      error.status = 403;
+
+      return callback(error);
+    },
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+
+    credentials: true,
+  })
+);
 
 app.use(
   express.json({
@@ -99,6 +188,11 @@ app.use((req, res, next) => {
 console.log("==================================");
 console.log("          C-MART BACKEND");
 console.log("==================================");
+
+console.log(
+  "Environment:",
+  process.env.NODE_ENV || "development"
+);
 
 console.log(
   "JWT Secret:",
@@ -144,6 +238,11 @@ app.get("/api/health", (req, res) => {
   return res.status(200).json({
     success: true,
     message: "C-MART Backend Running Successfully",
+    environment: process.env.NODE_ENV || "development",
+    database:
+      require("mongoose").connection.readyState === 1
+        ? "Connected"
+        : "Disconnected",
     timestamp: new Date().toISOString(),
   });
 });
@@ -161,7 +260,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
 // ========================================
-// PRODUCTS - BUY / SELL
+// PRODUCTS
 // ========================================
 
 app.use("/api/products", productRoutes);
@@ -189,19 +288,11 @@ app.use("/api/orders", orderRoutes);
 // ========================================
 
 app.use("/api/swap", swapRoutes);
-
-// Backward compatibility
 app.use("/api/swaps", swapRoutes);
 
 // ========================================
 // RENT MODULE
 // ========================================
-
-// GET    /api/rent/products
-// POST   /api/rent/products
-// GET    /api/rent/requests
-// POST   /api/rent/requests
-// PATCH  /api/rent/requests/:id/status
 
 app.use("/api/rent", rentRoutes);
 
@@ -210,8 +301,6 @@ app.use("/api/rent", rentRoutes);
 // ========================================
 
 app.use("/api/bargain", bargainingRoutes);
-
-// Backward compatibility
 app.use("/api/bargaining", bargainingRoutes);
 
 // ========================================
@@ -223,11 +312,6 @@ app.use("/api/complaints", complaintRoutes);
 // ========================================
 // NOTIFICATIONS MODULE
 // ========================================
-
-// GET    /api/notifications
-// PATCH  /api/notifications/read-all
-// PATCH  /api/notifications/:id/read
-// DELETE /api/notifications/:id
 
 app.use(
   "/api/notifications",
@@ -295,8 +379,7 @@ app.use((err, req, res, next) => {
       : 500;
 
   const message =
-    process.env.NODE_ENV === "production" &&
-    statusCode === 500
+    isProduction && statusCode === 500
       ? "Internal server error"
       : err.message || "Internal server error";
 
@@ -312,20 +395,72 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
   try {
-    // Validate environment variables
+
+    // ====================================
+    // VALIDATE FRONTEND URL
+    // ====================================
+
+    if (
+      isProduction &&
+      allowedOrigins.size === 0
+    ) {
+      throw new Error(
+        "CLIENT_URLS or CLIENT_URL must contain the deployed frontend URL"
+      );
+    }
+
+    // ====================================
+    // VALIDATE ENVIRONMENT VARIABLES
+    // ====================================
+
     if (!process.env.MONGO_URI) {
       throw new Error(
-        "MONGO_URI missing in server/.env"
+        "MONGO_URI missing"
       );
     }
 
     if (!process.env.JWT_SECRET) {
       throw new Error(
-        "JWT_SECRET missing in server/.env"
+        "JWT_SECRET missing"
       );
     }
 
-    // Connect to MongoDB
+    if (
+      isProduction &&
+      process.env.JWT_SECRET.length < 32
+    ) {
+      throw new Error(
+        "JWT_SECRET must be at least 32 characters in production"
+      );
+    }
+
+    if (isProduction) {
+
+      const requiredProductionVariables = [
+        "GOOGLE_CLIENT_ID",
+        "CLOUDINARY_CLOUD_NAME",
+        "CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET",
+        "RESEND_API_KEY",
+        "EMAIL_FROM",
+      ];
+
+      const missingVariables =
+        requiredProductionVariables.filter(
+          (name) => !process.env[name]
+        );
+
+      if (missingVariables.length > 0) {
+        throw new Error(
+          `Missing production configuration: ${missingVariables.join(", ")}`
+        );
+      }
+    }
+
+    // ====================================
+    // CONNECT TO MONGODB
+    // ====================================
+
     console.log("Connecting to MongoDB...");
 
     await connectDB();
@@ -334,81 +469,62 @@ const startServer = async () => {
       "MongoDB connection step completed"
     );
 
-    // Start Express server
-    app.listen(PORT, () => {
-      console.log("==================================");
-      console.log("       C-MART SERVER STARTED");
-      console.log("==================================");
+    // ====================================
+    // START EXPRESS SERVER
+    // ====================================
 
-      console.log(
-        `Server: http://localhost:${PORT}`
+    const server = app.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+
+        console.log("==================================");
+        console.log("       C-MART SERVER STARTED");
+        console.log("==================================");
+
+        console.log(
+          `Server listening on port ${PORT}`
+        );
+
+        console.log(
+          `Health endpoint: /api/health`
+        );
+
+        console.log("Authentication API connected");
+        console.log("Admin API connected");
+        console.log("Products API connected");
+        console.log("Upload API mounted");
+        console.log("Reviews API connected");
+        console.log("Orders API connected");
+        console.log("Swap API mounted");
+        console.log("Rent API mounted");
+        console.log("Bargaining API connected");
+        console.log("Complaints API connected");
+        console.log("Wishlist API mounted");
+        console.log("Chat API mounted");
+        console.log("Notifications API mounted");
+
+        console.log("==================================");
+      }
+    );
+
+    server.on("error", (error) => {
+      console.error(
+        "HTTP Server Error:",
+        error
       );
 
-      console.log(
-        `Health: http://localhost:${PORT}/api/health`
-      );
-
-      console.log(
-        "Authentication API connected"
-      );
-
-      console.log(
-        "Admin API connected"
-      );
-
-      console.log(
-        "Products API connected"
-      );
-
-      console.log(
-        "Upload API mounted"
-      );
-
-      console.log(
-        "Reviews API connected"
-      );
-
-      console.log(
-        "Orders API connected"
-      );
-
-      console.log(
-        "Swap API mounted"
-      );
-
-      console.log(
-        "Rent API mounted"
-      );
-
-      console.log(
-        "Bargaining API connected"
-      );
-
-      console.log(
-        "Complaints API connected"
-      );
-
-      console.log(
-        "Wishlist API mounted"
-      );
-
-      console.log(
-        "Chat API mounted"
-      );
-
-      console.log(
-        "Notifications API mounted"
-      );
-
-      console.log("==================================");
+      process.exit(1);
     });
+
   } catch (error) {
+
     console.error(
       "C-MART startup failed:",
       error.message
     );
 
-    process.exitCode = 1;
+    process.exit(1);
   }
 };
 
@@ -417,3 +533,4 @@ const startServer = async () => {
 // ========================================
 
 startServer();
+

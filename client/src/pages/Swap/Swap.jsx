@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import axios from "axios";
 
+import { API_ORIGIN, API_URL } from "../../services/apiConfig";
 import "./Swap.css";
 
-const API = "http://localhost:5000/api";
+const API = API_URL;
 
 const SWAP_API = `${API}/swap`;
 
@@ -105,7 +106,7 @@ function getImageUrl(value) {
   if (!url) return "";
   if (/^(https?:\/\/|data:image\/|blob:)/i.test(url)) return url;
   if (url.startsWith("//")) return `https:${url}`;
-  return `http://localhost:5000/${url.replace(/^\/+/, "")}`;
+  return `${API_ORIGIN}/${url.replace(/^\/+/, "")}`;
 }
 
 function getProductImages(product) {

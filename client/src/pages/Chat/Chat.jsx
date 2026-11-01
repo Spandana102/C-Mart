@@ -12,9 +12,8 @@ import {
 } from "react-router-dom";
 
 import axios from "axios";
+import { API_URL } from "../../services/apiConfig";
 import "./Chat.css";
-
-const API_URL = "http://localhost:5000/api";
 
 // Dashboard route in App.jsx
 const DASHBOARD_PATH = "/dashboard";

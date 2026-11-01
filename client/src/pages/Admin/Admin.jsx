@@ -2,9 +2,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../services/api";
+import { API_ORIGIN } from "../../services/apiConfig";
 import "./Admin.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = API_ORIGIN;
 
 const MENU_ITEMS = [
   { name: "Dashboard", icon: "🏠" },

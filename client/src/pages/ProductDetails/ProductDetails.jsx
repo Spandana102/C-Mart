@@ -13,16 +13,11 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
 
-
 import "./ProductDetails.css";
 
+import { API_ORIGIN, API_URL } from "../../services/apiConfig";
 
-
-const API_URL = "http://localhost:5000/api";
-
-
-
-const SERVER_URL = "http://localhost:5000";
+const SERVER_URL = API_ORIGIN;
 
 
 

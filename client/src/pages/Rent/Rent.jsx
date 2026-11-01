@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { API_ORIGIN, API_URL } from "../../services/apiConfig";
 import "./Rent.css";
 
-const API_BASE = "http://localhost:5000/api/rent";
+const API_BASE = `${API_URL}/rent`;
 
-const UPLOAD_URL = "http://localhost:5000/api/upload";
+const UPLOAD_URL = `${API_URL}/upload`;
 
 const CATEGORIES = [
 
@@ -234,7 +235,7 @@ const getImageUrl = (value) => {
 
   }
 
-  return `http://localhost:5000/${url.replace(/^\/+/, "")}`;
+  return `${API_ORIGIN}/${url.replace(/^\/+/, "")}`;
 
 };
 

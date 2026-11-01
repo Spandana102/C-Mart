@@ -1,12 +1,13 @@
 import axios from "axios";
+import { API_URL } from "./apiConfig";
 
 // Backend API URL
-const API_URL = "http://localhost:5000/api/offers";
+const OFFERS_URL = `${API_URL}/offers`;
 
 // Send Offer
 export const sendOffer = async (offerData) => {
   try {
-    const response = await axios.post(API_URL, offerData);
+    const response = await axios.post(OFFERS_URL, offerData);
     return response.data;
   } catch (error) {
     console.error("Error sending offer:", error);
@@ -17,7 +18,7 @@ export const sendOffer = async (offerData) => {
 // Get All Offers
 export const getOffers = async () => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await axios.get(OFFERS_URL);
     return response.data;
   } catch (error) {
     console.error("Error fetching offers:", error);
@@ -28,7 +29,7 @@ export const getOffers = async () => {
 // Accept Offer
 export const acceptOffer = async (id) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}/accept`);
+    const response = await axios.put(`${OFFERS_URL}/${id}/accept`);
     return response.data;
   } catch (error) {
     console.error("Error accepting offer:", error);
@@ -39,7 +40,7 @@ export const acceptOffer = async (id) => {
 // Reject Offer
 export const rejectOffer = async (id) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}/reject`);
+    const response = await axios.put(`${OFFERS_URL}/${id}/reject`);
     return response.data;
   } catch (error) {
     console.error("Error rejecting offer:", error);
@@ -50,7 +51,7 @@ export const rejectOffer = async (id) => {
 // Counter Offer
 export const counterOffer = async (id, counterPrice) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}/counter`, {
+    const response = await axios.put(`${OFFERS_URL}/${id}/counter`, {
       counterPrice,
     });
     return response.data;

@@ -2,6 +2,7 @@
 const express = require("express");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -129,9 +130,9 @@ const uploadImage = (req, res) => {
 // ======================================
 
 // Existing Buy/Sell upload endpoint
-router.post("/image", uploadImage);
+router.post("/image", authMiddleware, uploadImage);
 
 // Support Swap.jsx upload endpoint
-router.post("/", uploadImage);
+router.post("/", authMiddleware, uploadImage);
 
 module.exports = router;
