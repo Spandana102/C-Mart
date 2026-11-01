@@ -7,18 +7,22 @@ const router = express.Router();
 // =====================================
 // IMPORT MODELS
 // =====================================
-const Complaint = require("../models/complaints");
+
+// IMPORTANT: Filename is Complaints.js
+const Complaint = require("../models/Complaints");
 const User = require("../models/User");
 
 // =====================================
 // IMPORT MIDDLEWARE
 // =====================================
+
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
 // =====================================
 // HELPER - GET LOGGED-IN USER
 // =====================================
+
 const getLoggedInUser = async (req) => {
   const userId = req.user?.id || req.user?._id;
 
@@ -34,6 +38,7 @@ const getLoggedInUser = async (req) => {
 // =====================================
 // HELPER - CHECK BLOCKED ACCOUNT
 // =====================================
+
 const isBlocked = (user) => {
   return (
     user?.isBlocked === true ||
@@ -44,6 +49,7 @@ const isBlocked = (user) => {
 // =====================================
 // HELPER - VALIDATE COMPLAINT ID
 // =====================================
+
 const validateComplaintId = (req, res, next) => {
   if (!mongoose.isValidObjectId(req.params.id)) {
     return res.status(400).json({
@@ -59,6 +65,7 @@ const validateComplaintId = (req, res, next) => {
 // CREATE COMPLAINT
 // POST /api/complaints
 // =====================================
+
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const { subject, description } = req.body || {};
@@ -134,7 +141,7 @@ router.post("/", authMiddleware, async (req, res) => {
       complaint,
     });
   } catch (error) {
-    console.error("Create Complaint Error:", error.message);
+    console.error("Create Complaint Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -147,6 +154,7 @@ router.post("/", authMiddleware, async (req, res) => {
 // GET MY COMPLAINTS
 // GET /api/complaints/my
 // =====================================
+
 router.get("/my", authMiddleware, async (req, res) => {
   try {
     const user = await getLoggedInUser(req);
@@ -175,7 +183,7 @@ router.get("/my", authMiddleware, async (req, res) => {
       complaints,
     });
   } catch (error) {
-    console.error("Get My Complaints Error:", error.message);
+    console.error("Get My Complaints Error:", error);
 
     return res.status(500).json({
       success: false,
@@ -188,6 +196,7 @@ router.get("/my", authMiddleware, async (req, res) => {
 // GET ALL COMPLAINTS - ADMIN
 // GET /api/complaints
 // =====================================
+
 router.get(
   "/",
   authMiddleware,
@@ -203,10 +212,7 @@ router.get(
         complaints,
       });
     } catch (error) {
-      console.error(
-        "Get All Complaints Error:",
-        error.message
-      );
+      console.error("Get All Complaints Error:", error);
 
       return res.status(500).json({
         success: false,
@@ -220,6 +226,7 @@ router.get(
 // GET SINGLE COMPLAINT
 // GET /api/complaints/:id
 // =====================================
+
 router.get(
   "/:id",
   authMiddleware,
@@ -271,10 +278,7 @@ router.get(
         complaint,
       });
     } catch (error) {
-      console.error(
-        "Get Complaint Error:",
-        error.message
-      );
+      console.error("Get Complaint Error:", error);
 
       return res.status(500).json({
         success: false,
@@ -288,6 +292,7 @@ router.get(
 // UPDATE COMPLAINT STATUS - ADMIN
 // PUT /api/complaints/:id/status
 // =====================================
+
 router.put(
   "/:id/status",
   authMiddleware,
@@ -332,15 +337,11 @@ router.put(
 
       return res.status(200).json({
         success: true,
-        message:
-          "Complaint status updated successfully",
+        message: "Complaint status updated successfully",
         complaint,
       });
     } catch (error) {
-      console.error(
-        "Update Complaint Error:",
-        error.message
-      );
+      console.error("Update Complaint Error:", error);
 
       return res.status(500).json({
         success: false,
@@ -354,6 +355,7 @@ router.put(
 // DELETE COMPLAINT - ADMIN
 // DELETE /api/complaints/:id
 // =====================================
+
 router.delete(
   "/:id",
   authMiddleware,
@@ -379,10 +381,7 @@ router.delete(
         deletedComplaintId: req.params.id,
       });
     } catch (error) {
-      console.error(
-        "Delete Complaint Error:",
-        error.message
-      );
+      console.error("Delete Complaint Error:", error);
 
       return res.status(500).json({
         success: false,
@@ -395,4 +394,5 @@ router.delete(
 // =====================================
 // EXPORT ROUTER
 // =====================================
+
 module.exports = router;
