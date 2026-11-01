@@ -1,5 +1,4 @@
-﻿
-import {
+﻿import {
   BrowserRouter,
   Routes,
   Route,
@@ -94,10 +93,11 @@ function AdminRoute({ children }) {
     user = JSON.parse(
       localStorage.getItem("user") || "null"
     );
-  } catch {
+  } catch (error) {
     user = null;
   }
 
+  // Not logged in
   if (!token) {
     return (
       <Navigate
@@ -107,7 +107,8 @@ function AdminRoute({ children }) {
     );
   }
 
-  if (user?.role !== "admin") {
+  // Logged-in user is not an admin
+  if (user?.role?.toLowerCase() !== "admin") {
     return (
       <Navigate
         to="/dashboard"
@@ -128,14 +129,18 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* LOGIN SELECTION - FIRST PAGE */}
+        {/* ==================================
+            LOGIN SELECTION
+        ================================== */}
 
         <Route
           path="/"
           element={<LoginSelection />}
         />
 
-        {/* AUTHENTICATION */}
+        {/* ==================================
+            AUTHENTICATION
+        ================================== */}
 
         <Route
           path="/register"
@@ -162,7 +167,9 @@ function App() {
           element={<ResetPassword />}
         />
 
-        {/* USER DASHBOARD */}
+        {/* ==================================
+            USER DASHBOARD
+        ================================== */}
 
         <Route
           path="/dashboard"
@@ -173,7 +180,9 @@ function App() {
           }
         />
 
-        {/* BUY PRODUCTS */}
+        {/* ==================================
+            PRODUCTS
+        ================================== */}
 
         <Route
           path="/products"
@@ -184,8 +193,6 @@ function App() {
           }
         />
 
-        {/* PRODUCT DETAILS */}
-
         <Route
           path="/product/:id"
           element={
@@ -195,7 +202,9 @@ function App() {
           }
         />
 
-        {/* SELL PRODUCTS */}
+        {/* ==================================
+            SELL PRODUCTS
+        ================================== */}
 
         <Route
           path="/sell"
@@ -206,8 +215,6 @@ function App() {
           }
         />
 
-        {/* MY PRODUCTS - NEW ROUTE */}
-
         <Route
           path="/my-products"
           element={
@@ -217,7 +224,9 @@ function App() {
           }
         />
 
-        {/* WISHLIST */}
+        {/* ==================================
+            WISHLIST
+        ================================== */}
 
         <Route
           path="/wishlist"
@@ -228,7 +237,9 @@ function App() {
           }
         />
 
-        {/* ORDERS */}
+        {/* ==================================
+            ORDERS
+        ================================== */}
 
         <Route
           path="/orders"
@@ -239,7 +250,9 @@ function App() {
           }
         />
 
-        {/* SWAP */}
+        {/* ==================================
+            SWAP
+        ================================== */}
 
         <Route
           path="/swap"
@@ -250,7 +263,9 @@ function App() {
           }
         />
 
-        {/* RENT */}
+        {/* ==================================
+            RENT
+        ================================== */}
 
         <Route
           path="/rent"
@@ -261,7 +276,9 @@ function App() {
           }
         />
 
-        {/* MEET POINT */}
+        {/* ==================================
+            MEET POINT
+        ================================== */}
 
         <Route
           path="/meetpoint"
@@ -272,7 +289,9 @@ function App() {
           }
         />
 
-        {/* BARGAINING */}
+        {/* ==================================
+            BARGAINING
+        ================================== */}
 
         <Route
           path="/bargain"
@@ -283,8 +302,6 @@ function App() {
           }
         />
 
-        {/* SELLER OFFERS */}
-
         <Route
           path="/seller-offers"
           element={
@@ -294,7 +311,9 @@ function App() {
           }
         />
 
-        {/* REVIEWS */}
+        {/* ==================================
+            REVIEWS
+        ================================== */}
 
         <Route
           path="/reviews"
@@ -305,7 +324,9 @@ function App() {
           }
         />
 
-        {/* COMPLAINTS */}
+        {/* ==================================
+            COMPLAINTS
+        ================================== */}
 
         <Route
           path="/complaints"
@@ -316,7 +337,9 @@ function App() {
           }
         />
 
-        {/* CHAT */}
+        {/* ==================================
+            CHAT
+        ================================== */}
 
         <Route
           path="/chat"
@@ -327,7 +350,9 @@ function App() {
           }
         />
 
-        {/* NOTIFICATIONS */}
+        {/* ==================================
+            NOTIFICATIONS
+        ================================== */}
 
         <Route
           path="/notifications"
@@ -338,7 +363,9 @@ function App() {
           }
         />
 
-        {/* PROFILE */}
+        {/* ==================================
+            PROFILE
+        ================================== */}
 
         <Route
           path="/profile"
@@ -349,7 +376,9 @@ function App() {
           }
         />
 
-        {/* ADMIN DASHBOARD */}
+        {/* ==================================
+            ADMIN DASHBOARD
+        ================================== */}
 
         <Route
           path="/admin"
@@ -360,12 +389,17 @@ function App() {
           }
         />
 
-        {/* UNKNOWN ROUTES */}
+        {/* ==================================
+            UNKNOWN ROUTES
+        ================================== */}
 
         <Route
           path="*"
           element={
-            <Navigate to="/" replace />
+            <Navigate
+              to="/"
+              replace
+            />
           }
         />
 
