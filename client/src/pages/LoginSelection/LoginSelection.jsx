@@ -1,9 +1,12 @@
-
 import { useNavigate } from "react-router-dom";
 import "./LoginSelection.css";
 
 function LoginSelection() {
   const navigate = useNavigate();
+
+  const handleLoginSelection = (role) => {
+    navigate(`/login?role=${role}`);
+  };
 
   return (
     <div className="login-selection-page">
@@ -22,12 +25,9 @@ function LoginSelection() {
           <button
             type="button"
             className="selection-card"
-            onClick={() =>
-              navigate("/login?role=user")
-            }
+            onClick={() => handleLoginSelection("user")}
           >
             <div className="selection-icon">👨‍🎓</div>
-
             <h3>User Login</h3>
             <p>Students & Teachers</p>
             <span>Continue as User →</span>
@@ -36,12 +36,9 @@ function LoginSelection() {
           <button
             type="button"
             className="selection-card"
-            onClick={() =>
-              navigate("/login?role=admin")
-            }
+            onClick={() => handleLoginSelection("admin")}
           >
             <div className="selection-icon">🛡️</div>
-
             <h3>Admin Login</h3>
             <p>Authorized Administrators</p>
             <span>Continue as Admin →</span>

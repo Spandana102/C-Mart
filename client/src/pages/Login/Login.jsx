@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Link,
@@ -14,10 +13,13 @@ function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Get selected login role from URL
+  const requestedRole = (
+    searchParams.get("role") || "user"
+  ).toLowerCase();
+
   const loginType =
-    searchParams.get("role") === "admin"
-      ? "admin"
-      : "user";
+    requestedRole === "admin" ? "admin" : "user";
 
   const isAdmin = loginType === "admin";
 
@@ -41,26 +43,24 @@ function Login() {
     }
 
     const actualRole = String(
-      user.role || "user"
+      user.role || ""
     ).toLowerCase();
 
-    if (isAdmin && actualRole !== "admin") {
-      throw new Error(
-        "Access denied. This account is not an administrator."
-      );
+    if (!["user", "admin"].includes(actualRole)) {
+      throw new Error("Invalid account role.");
     }
 
-    if (!isAdmin && actualRole !== "user") {
+    // Verify selected role with actual account role
+    if (actualRole !== loginType) {
       throw new Error(
-        "Please use Admin Login for this account."
+        isAdmin
+          ? "Access denied. This account is not an administrator."
+          : "Please use Admin Login for this account."
       );
     }
 
     localStorage.setItem("token", token);
-    localStorage.setItem(
-      "user",
-      JSON.stringify(user)
-    );
+    localStorage.setItem("user", JSON.stringify(user));
 
     navigate(
       actualRole === "admin"
@@ -76,6 +76,9 @@ function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (loading) return;
+
     setError("");
 
     if (!email.trim() || !password) {
@@ -108,10 +111,12 @@ function Login() {
   // GOOGLE LOGIN
   // ====================================
 
-  const handleGoogleLogin = async (response) => {
+  const handleGoogleLogin = async (googleResponse) => {
+    if (loading) return;
+
     setError("");
 
-    if (!response?.credential) {
+    if (!googleResponse?.credential) {
       setError("Google authentication failed.");
       return;
     }
@@ -120,7 +125,7 @@ function Login() {
       setLoading(true);
 
       const result = await API.post("/auth/google", {
-        credential: response.credential,
+        credential: googleResponse.credential,
         loginType,
       });
 
@@ -231,6 +236,8 @@ function Login() {
               </div>
             )}
 
+            {/* EMAIL LOGIN FORM */}
+
             <form
               onSubmit={handleSubmit}
               className="login-form"
@@ -255,6 +262,7 @@ function Login() {
                     setEmail(e.target.value)
                   }
                   autoComplete="email"
+                  disabled={loading}
                   required
                 />
               </div>
@@ -274,9 +282,7 @@ function Login() {
                   <input
                     id="login-password"
                     type={
-                      showPassword
-                        ? "text"
-                        : "password"
+                      showPassword ? "text" : "password"
                     }
                     placeholder="Enter your password"
                     value={password}
@@ -284,6 +290,7 @@ function Login() {
                       setPassword(e.target.value)
                     }
                     autoComplete="current-password"
+                    disabled={loading}
                     required
                   />
 
@@ -298,6 +305,7 @@ function Login() {
                         ? "Hide password"
                         : "Show password"
                     }
+                    disabled={loading}
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
@@ -316,6 +324,8 @@ function Login() {
                   : "Login as User"}
               </button>
             </form>
+
+            {/* GOOGLE LOGIN */}
 
             <div className="login-divider">
               <span>or continue with</span>
@@ -339,6 +349,8 @@ function Login() {
               </div>
             </div>
 
+            {/* REGISTER OPTION */}
+
             {!isAdmin && (
               <p className="login-register-text">
                 Don't have an account?{" "}
@@ -347,6 +359,8 @@ function Login() {
                 </Link>
               </p>
             )}
+
+            {/* BOTTOM LINKS */}
 
             <div className="login-bottom-links">
               <Link to="/">
@@ -363,6 +377,7 @@ function Login() {
                   setError("");
                   setEmail("");
                   setPassword("");
+                  setShowPassword(false);
                 }}
               >
                 {isAdmin
