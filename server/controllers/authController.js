@@ -1,4 +1,3 @@
-
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -19,6 +18,14 @@ const googleClient = new OAuth2Client();
 
 const normalizeEmail = (email) =>
   String(email || "").trim().toLowerCase();
+
+const normalizeRole = (role) =>
+  String(role || "user").trim().toLowerCase();
+
+const isValidLoginType = (loginType) =>
+  ["user", "admin"].includes(
+    String(loginType || "").trim().toLowerCase()
+  );
 
 const getGoogleClientId = () =>
   String(process.env.GOOGLE_CLIENT_ID || "")
@@ -49,7 +56,7 @@ const publicUser = (user) => ({
   email: user.email,
   collegeId: user.collegeId,
   phoneNumber: user.phoneNumber || "",
-  role: user.role || "user",
+  role: normalizeRole(user.role),
   authProvider: user.authProvider || "local",
   profilePicture: user.profilePicture || "",
 });
@@ -66,7 +73,7 @@ const createToken = (user) => {
   return jwt.sign(
     {
       id: user._id.toString(),
-      role: user.role || "user",
+      role: normalizeRole(user.role),
     },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
@@ -76,6 +83,7 @@ const createToken = (user) => {
 // ==========================================
 // REGISTER USER
 // ==========================================
+
 
 const registerUser = async (req, res) => {
   try {
@@ -90,7 +98,7 @@ const registerUser = async (req, res) => {
       typeof fullName !== "string" ||
       fullName.trim().length < 2 ||
       typeof email !== "string" ||
-      !email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
       typeof password !== "string" ||
       password.length < 6 ||
       typeof phoneNumber !== "string" ||
@@ -98,13 +106,13 @@ const registerUser = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Enter a valid name, email, 10-digit phone number and password of at least 6 characters.",
+        message: "Please enter valid registration details.",
       });
     }
 
     const normalizedEmail = normalizeEmail(email);
 
+    // Check email only
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -112,14 +120,11 @@ const registerUser = async (req, res) => {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Email already registered. Please login.",
+        message: "This email is already registered. Please login.",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      12
-    );
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
       fullName: fullName.trim(),
@@ -136,27 +141,40 @@ const registerUser = async (req, res) => {
       message: "Registration successful",
       user: publicUser(user),
     });
+
   } catch (error) {
-    console.error("Register Error:", error.message);
+    console.error("REGISTER ERROR:", error);
 
     if (error.code === 11000) {
+      const duplicateField = Object.keys(
+        error.keyPattern || {}
+      )[0] || "unknown";
+
+      console.error("Duplicate database field:", duplicateField);
+
       return res.status(409).json({
         success: false,
-        message: "Email already registered",
+        message:
+          duplicateField === "email"
+            ? "This email is already registered."
+            : `Duplicate value detected in ${duplicateField}. Please contact the administrator.`,
       });
     }
 
-    return res.status(
-      error.name === "ValidationError" ? 400 : 500
-    ).json({
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message:
-        error.name === "ValidationError"
-          ? error.message
-          : "Registration failed",
+      message: "Registration failed. Please try again.",
     });
   }
 };
+
 
 // ==========================================
 // EMAIL / PASSWORD LOGIN
@@ -169,6 +187,15 @@ const loginUser = async (req, res) => {
       password,
       loginType,
     } = req.body || {};
+
+    if (!isValidLoginType(loginType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Select a valid login type: user or admin.",
+      });
+    }
+
+    const selectedLoginType = String(loginType).trim().toLowerCase();
 
     if (
       typeof email !== "string" ||
@@ -212,26 +239,15 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const actualRole = user.role || "user";
+    const actualRole = normalizeRole(user.role);
 
-    if (
-      loginType === "admin" &&
-      actualRole !== "admin"
-    ) {
+    if (actualRole !== selectedLoginType) {
       return res.status(403).json({
         success: false,
         message:
-          "This account does not have admin access.",
-      });
-    }
-
-    if (
-      loginType === "user" &&
-      actualRole === "admin"
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Please use Admin Login.",
+          selectedLoginType === "admin"
+            ? "This account does not have admin access."
+            : "Please use Admin Login for this account.",
       });
     }
 
@@ -260,6 +276,15 @@ const loginUser = async (req, res) => {
 const googleLogin = async (req, res) => {
   try {
     const { credential, loginType } = req.body || {};
+
+    if (!isValidLoginType(loginType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Select a valid login type: user or admin.",
+      });
+    }
+
+    const selectedLoginType = String(loginType).trim().toLowerCase();
 
     if (
       typeof credential !== "string" ||
@@ -414,7 +439,7 @@ const googleLogin = async (req, res) => {
       }
 
       // Prevent self-registration as admin.
-      if (loginType === "admin") {
+      if (selectedLoginType === "admin") {
         return res.status(403).json({
           success: false,
           message:
@@ -456,25 +481,15 @@ const googleLogin = async (req, res) => {
       });
     }
 
-    const actualRole = user.role || "user";
+    const actualRole = normalizeRole(user.role);
 
-    if (
-      loginType === "admin" &&
-      actualRole !== "admin"
-    ) {
+    if (actualRole !== selectedLoginType) {
       return res.status(403).json({
         success: false,
-        message: "Admin access denied.",
-      });
-    }
-
-    if (
-      loginType === "user" &&
-      actualRole === "admin"
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Please select Admin Login.",
+        message:
+          selectedLoginType === "admin"
+            ? "Admin access denied."
+            : "Please select Admin Login.",
       });
     }
 

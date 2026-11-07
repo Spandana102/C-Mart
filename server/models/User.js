@@ -1,11 +1,13 @@
 
 const mongoose = require("mongoose");
 
+// ==========================================
+// USER SCHEMA
+// ==========================================
+
 const userSchema = new mongoose.Schema(
   {
-    // ==========================================
     // USER DETAILS
-    // ==========================================
 
     fullName: {
       type: String,
@@ -27,9 +29,7 @@ const userSchema = new mongoose.Schema(
       ],
     },
 
-    // ==========================================
     // AUTHENTICATION PROVIDER
-    // ==========================================
 
     authProvider: {
       type: String,
@@ -37,9 +37,7 @@ const userSchema = new mongoose.Schema(
       default: "local",
     },
 
-    // ==========================================
     // GOOGLE ACCOUNT
-    // ==========================================
 
     googleId: {
       type: String,
@@ -49,9 +47,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // ==========================================
     // PASSWORD
-    // ==========================================
 
     password: {
       type: String,
@@ -61,9 +57,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // ==========================================
-    // GOOGLE PROFILE IMAGE
-    // ==========================================
+    // PROFILE IMAGE
 
     profilePicture: {
       type: String,
@@ -71,9 +65,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // ==========================================
     // COLLEGE ID
-    // ==========================================
+    // IMPORTANT: This field is NOT unique.
 
     collegeId: {
       type: String,
@@ -83,9 +76,7 @@ const userSchema = new mongoose.Schema(
       enum: ["189"],
     },
 
-    // ==========================================
     // PHONE NUMBER
-    // ==========================================
 
     phoneNumber: {
       type: String,
@@ -99,9 +90,7 @@ const userSchema = new mongoose.Schema(
       ],
     },
 
-    // ==========================================
     // USER ROLE
-    // ==========================================
 
     role: {
       type: String,
@@ -109,9 +98,7 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    // ==========================================
     // ACCOUNT STATUS
-    // ==========================================
 
     status: {
       type: String,
@@ -124,9 +111,7 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    // ==========================================
     // PASSWORD RESET / OTP
-    // ==========================================
 
     resetPasswordToken: {
       type: String,
@@ -180,7 +165,7 @@ userSchema.pre("validate", function () {
 });
 
 // ==========================================
-// INSTANCE METHOD: CHECK BLOCKED USER
+// CHECK BLOCKED ACCOUNT
 // ==========================================
 
 userSchema.methods.isAccountBlocked = function () {
@@ -191,7 +176,7 @@ userSchema.methods.isAccountBlocked = function () {
 };
 
 // ==========================================
-// INSTANCE METHOD: SAFE USER RESPONSE
+// SAFE USER RESPONSE
 // ==========================================
 
 userSchema.methods.toSafeObject = function () {
@@ -214,6 +199,9 @@ userSchema.methods.toSafeObject = function () {
 // ==========================================
 // DATABASE INDEXES
 // ==========================================
+
+// Email uniqueness is defined in the email field.
+// Google ID uniqueness is defined in the googleId field.
 
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });

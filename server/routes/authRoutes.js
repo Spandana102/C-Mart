@@ -2,6 +2,10 @@
 const express = require("express");
 const router = express.Router();
 
+// ==========================================
+// CONTROLLERS
+// ==========================================
+
 const {
   registerUser,
   loginUser,
@@ -13,28 +17,32 @@ const {
   resetPassword,
 } = require("../controllers/authController");
 
+// ==========================================
+// MIDDLEWARE
+// ==========================================
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 // ==========================================
 // PUBLIC AUTHENTICATION ROUTES
 // ==========================================
 
-// Register new student
+// Student registration
 router.post("/register", registerUser);
 
-// Login student or admin using email and password
+// Email and password login
 router.post("/login", loginUser);
 
-// Login or register using Google account
+// Google authentication
 router.post("/google", googleLogin);
 
-// Send password reset OTP to registered email
+// Forgot password - send OTP
 router.post("/forgot-password", forgotPassword);
 
-// Verify OTP received through email
+// Verify password reset OTP
 router.post("/verify-otp", verifyOTP);
 
-// Set a new password after OTP verification
+// Reset password
 router.post("/reset-password", resetPassword);
 
 // ==========================================

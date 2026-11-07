@@ -174,10 +174,7 @@ app.use(
 // ========================================
 
 app.use((req, res, next) => {
-  console.log(
-    `${req.method} ${req.originalUrl}`
-  );
-
+  console.log(`${req.method} ${req.originalUrl}`);
   next();
 });
 
@@ -194,15 +191,8 @@ console.log(
   process.env.NODE_ENV || "development"
 );
 
-console.log(
-  "JWT Secret:",
-  Boolean(process.env.JWT_SECRET)
-);
-
-console.log(
-  "MongoDB URI:",
-  Boolean(process.env.MONGO_URI)
-);
+console.log("JWT Secret:", Boolean(process.env.JWT_SECRET));
+console.log("MongoDB URI:", Boolean(process.env.MONGO_URI));
 
 console.log(
   "Cloudinary Cloud Name:",
@@ -251,7 +241,11 @@ app.get("/api/health", (req, res) => {
 // AUTHENTICATION
 // ========================================
 
+// Standard API route
 app.use("/api/auth", authRoutes);
+
+// Compatibility route for existing frontend requests
+app.use("/auth", authRoutes);
 
 // ========================================
 // ADMIN PANEL
@@ -313,10 +307,7 @@ app.use("/api/complaints", complaintRoutes);
 // NOTIFICATIONS MODULE
 // ========================================
 
-app.use(
-  "/api/notifications",
-  notificationRoutes
-);
+app.use("/api/notifications", notificationRoutes);
 
 // ========================================
 // REPORTS MODULE
@@ -324,12 +315,9 @@ app.use(
 
 if (reportRoutes) {
   app.use("/api/reports", reportRoutes);
-
   console.log("Reports API connected");
 } else {
-  console.log(
-    "Reports API file not found - skipped"
-  );
+  console.log("Reports API file not found - skipped");
 }
 
 // ========================================
@@ -358,14 +346,24 @@ app.use("/api", (req, res) => {
 });
 
 // ========================================
+// UNKNOWN ROUTE
+// ========================================
+
+app.use((req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: "Route not found",
+    path: req.originalUrl,
+    method: req.method,
+  });
+});
+
+// ========================================
 // GLOBAL ERROR HANDLER
 // ========================================
 
 app.use((err, req, res, next) => {
-  console.error(
-    "C-MART Server Error:",
-    err
-  );
+  console.error("C-MART Server Error:", err);
 
   if (res.headersSent) {
     return next(err);
@@ -395,10 +393,7 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
   try {
-
-    // ====================================
-    // VALIDATE FRONTEND URL
-    // ====================================
+    // Validate frontend URL
 
     if (
       isProduction &&
@@ -409,20 +404,14 @@ const startServer = async () => {
       );
     }
 
-    // ====================================
-    // VALIDATE ENVIRONMENT VARIABLES
-    // ====================================
+    // Validate environment variables
 
     if (!process.env.MONGO_URI) {
-      throw new Error(
-        "MONGO_URI missing"
-      );
+      throw new Error("MONGO_URI missing");
     }
 
     if (!process.env.JWT_SECRET) {
-      throw new Error(
-        "JWT_SECRET missing"
-      );
+      throw new Error("JWT_SECRET missing");
     }
 
     if (
@@ -435,7 +424,6 @@ const startServer = async () => {
     }
 
     if (isProduction) {
-
       const requiredProductionVariables = [
         "GOOGLE_CLIENT_ID",
         "CLOUDINARY_CLOUD_NAME",
@@ -457,38 +445,26 @@ const startServer = async () => {
       }
     }
 
-    // ====================================
-    // CONNECT TO MONGODB
-    // ====================================
+    // Connect MongoDB
 
     console.log("Connecting to MongoDB...");
 
     await connectDB();
 
-    console.log(
-      "MongoDB connection step completed"
-    );
+    console.log("MongoDB connection step completed");
 
-    // ====================================
-    // START EXPRESS SERVER
-    // ====================================
+    // Start server
 
     const server = app.listen(
       PORT,
       "0.0.0.0",
       () => {
-
         console.log("==================================");
         console.log("       C-MART SERVER STARTED");
         console.log("==================================");
 
-        console.log(
-          `Server listening on port ${PORT}`
-        );
-
-        console.log(
-          `Health endpoint: /api/health`
-        );
+        console.log(`Server listening on port ${PORT}`);
+        console.log("Health endpoint: /api/health");
 
         console.log("Authentication API connected");
         console.log("Admin API connected");
@@ -509,16 +485,10 @@ const startServer = async () => {
     );
 
     server.on("error", (error) => {
-      console.error(
-        "HTTP Server Error:",
-        error
-      );
-
+      console.error("HTTP Server Error:", error);
       process.exit(1);
     });
-
   } catch (error) {
-
     console.error(
       "C-MART startup failed:",
       error.message
@@ -533,4 +503,3 @@ const startServer = async () => {
 // ========================================
 
 startServer();
-
