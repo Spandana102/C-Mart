@@ -22,6 +22,195 @@ const EMPTY_USER = {
   password: "",
 };
 
+// ==========================================
+// ADMIN PRODUCT STYLES
+// ==========================================
+
+const ADMIN_PRODUCT_STYLES = `
+.admin-products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin-top: 25px;
+  align-items: stretch;
+}
+
+.admin-product-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+.admin-product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+}
+
+.admin-product-image {
+  width: 100%;
+  height: 230px;
+  min-height: 230px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: hidden;
+  border-bottom: 1px solid #f1f5f9;
+  box-sizing: border-box;
+}
+
+.admin-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  position: static;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.admin-product-placeholder {
+  font-size: 65px;
+  color: #94a3b8;
+}
+
+.admin-product-info {
+  padding: 18px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-product-category {
+  display: inline-block;
+  color: #4f46e5;
+  background: #eef2ff;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-bottom: 9px;
+}
+
+.admin-product-name {
+  font-size: 19px;
+  font-weight: 700;
+  color: #172033;
+  line-height: 1.4;
+  margin: 0 0 9px;
+  overflow-wrap: anywhere;
+}
+
+.admin-product-description {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 69px;
+}
+
+.admin-product-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  margin-bottom: 18px;
+}
+
+.admin-product-price {
+  color: #4338ca;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.admin-product-stock {
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.admin-product-delete {
+  width: 100%;
+  min-height: 45px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-product-delete:hover:not(:disabled) {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.admin-product-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-product-count {
+  color: #64748b;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.admin-product-loading {
+  padding: 35px 15px;
+  text-align: center;
+  color: #64748b;
+}
+
+@media (min-width: 1500px) {
+  .admin-products-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .admin-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-products-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .admin-product-image {
+    height: 220px;
+    min-height: 220px;
+  }
+
+  .admin-product-info {
+    padding: 15px;
+  }
+}
+`;
+
 const getAuthConfig = () => ({
   headers: {
     Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -44,6 +233,10 @@ const normalizeList = (data, key) => {
 const isUserBlocked = (user) =>
   user?.isBlocked === true ||
   String(user?.status || "").toLowerCase() === "blocked";
+
+// ==========================================
+// IMAGE URL HELPER
+// ==========================================
 
 const getImageUrl = (image) => {
   if (!image) return "";
@@ -77,6 +270,10 @@ const getImageUrl = (image) => {
 
   return `${API_URL}/${value.replace(/^\/+/, "")}`;
 };
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -350,9 +547,7 @@ function AdminDashboard() {
                 ...item,
                 ...response.data?.user,
                 isBlocked: newBlockedStatus,
-                status: newBlockedStatus
-                  ? "Blocked"
-                  : "Active",
+                status: newBlockedStatus ? "Blocked" : "Active",
               }
             : item
         )
@@ -592,6 +787,9 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
+
+      <style>{ADMIN_PRODUCT_STYLES}</style>
+
       {/* SIDEBAR */}
 
       <aside className="admin-sidebar">
@@ -777,9 +975,7 @@ function AdminDashboard() {
                     <button
                       type="button"
                       key={item.name}
-                      onClick={() =>
-                        setActiveMenu(item.name)
-                      }
+                      onClick={() => setActiveMenu(item.name)}
                     >
                       <span>{item.icon}</span>
 
@@ -808,9 +1004,7 @@ function AdminDashboard() {
 
                 <div className="user-overview">
                   <div className="overview-item">
-                    <span className="overview-icon">
-                      👥
-                    </span>
+                    <span className="overview-icon">👥</span>
                     <div>
                       <small>Total Users</small>
                       <strong>{totalUsers}</strong>
@@ -818,9 +1012,7 @@ function AdminDashboard() {
                   </div>
 
                   <div className="overview-item">
-                    <span className="overview-icon">
-                      ✅
-                    </span>
+                    <span className="overview-icon">✅</span>
                     <div>
                       <small>Active Users</small>
                       <strong>{activeUsers}</strong>
@@ -828,9 +1020,7 @@ function AdminDashboard() {
                   </div>
 
                   <div className="overview-item">
-                    <span className="overview-icon">
-                      🚫
-                    </span>
+                    <span className="overview-icon">🚫</span>
                     <div>
                       <small>Blocked Users</small>
                       <strong>{blockedUsers}</strong>
@@ -870,18 +1060,13 @@ function AdminDashboard() {
                     setShowAddUserForm((value) => !value)
                   }
                 >
-                  {showAddUserForm
-                    ? "Close Form"
-                    : "+ Add User"}
+                  {showAddUserForm ? "Close Form" : "+ Add User"}
                 </button>
               </div>
             </div>
 
             {showAddUserForm && (
-              <form
-                className="product-form"
-                onSubmit={addUser}
-              >
+              <form className="product-form" onSubmit={addUser}>
                 <div className="form-heading">
                   <h3>Add New User</h3>
                   <p>Create a new student account.</p>
@@ -910,10 +1095,7 @@ function AdminDashboard() {
                       type: "password",
                     },
                   ].map((field) => (
-                    <div
-                      className="form-group"
-                      key={field.name}
-                    >
+                    <div className="form-group" key={field.name}>
                       <label>{field.label}</label>
 
                       <input
@@ -922,20 +1104,15 @@ function AdminDashboard() {
                         onChange={(event) =>
                           setNewUser((previous) => ({
                             ...previous,
-                            [field.name]:
-                              event.target.value,
+                            [field.name]: event.target.value,
                           }))
                         }
                         required
                         minLength={
-                          field.name === "password"
-                            ? 8
-                            : undefined
+                          field.name === "password" ? 8 : undefined
                         }
                         maxLength={
-                          field.name === "phoneNumber"
-                            ? 10
-                            : undefined
+                          field.name === "phoneNumber" ? 10 : undefined
                         }
                       />
                     </div>
@@ -946,9 +1123,7 @@ function AdminDashboard() {
                   <button
                     type="button"
                     className="cancel-btn"
-                    onClick={() =>
-                      setShowAddUserForm(false)
-                    }
+                    onClick={() => setShowAddUserForm(false)}
                   >
                     Cancel
                   </button>
@@ -958,9 +1133,7 @@ function AdminDashboard() {
                     className="primary-btn"
                     disabled={addingUser}
                   >
-                    {addingUser
-                      ? "Adding..."
-                      : "Add User"}
+                    {addingUser ? "Adding..." : "Add User"}
                   </button>
                 </div>
               </form>
@@ -973,9 +1146,7 @@ function AdminDashboard() {
                 type="search"
                 placeholder="Search by name, email, phone or college ID..."
                 value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
+                onChange={(event) => setSearch(event.target.value)}
               />
             </div>
 
@@ -984,9 +1155,7 @@ function AdminDashboard() {
             )}
 
             {loadingUsers ? (
-              <p className="no-data">
-                Loading users...
-              </p>
+              <p className="no-data">Loading users...</p>
             ) : (
               <div className="table-container">
                 <table>
@@ -1003,8 +1172,7 @@ function AdminDashboard() {
 
                   <tbody>
                     {filteredUsers.map((user) => {
-                      const blocked =
-                        isUserBlocked(user);
+                      const blocked = isUserBlocked(user);
 
                       return (
                         <tr key={user._id}>
@@ -1018,24 +1186,15 @@ function AdminDashboard() {
 
                               <div>
                                 <strong>
-                                  {user.fullName ||
-                                    "Unknown User"}
+                                  {user.fullName || "Unknown User"}
                                 </strong>
-
-                                <span>
-                                  {user.email}
-                                </span>
+                                <span>{user.email}</span>
                               </div>
                             </div>
                           </td>
 
-                          <td>
-                            {user.collegeId || "189"}
-                          </td>
-
-                          <td>
-                            {user.phoneNumber || "N/A"}
-                          </td>
+                          <td>{user.collegeId || "189"}</td>
+                          <td>{user.phoneNumber || "N/A"}</td>
 
                           <td>
                             <span className="role-badge">
@@ -1051,9 +1210,7 @@ function AdminDashboard() {
                                   : "active-status"
                               }`}
                             >
-                              {blocked
-                                ? "Blocked"
-                                : "Active"}
+                              {blocked ? "Blocked" : "Active"}
                             </span>
                           </td>
 
@@ -1062,9 +1219,7 @@ function AdminDashboard() {
                               <button
                                 type="button"
                                 className="view-btn"
-                                onClick={() =>
-                                  setSelectedUser(user)
-                                }
+                                onClick={() => setSelectedUser(user)}
                               >
                                 View
                               </button>
@@ -1076,9 +1231,7 @@ function AdminDashboard() {
                                   user.role === "admin" ||
                                   updatingUserId !== null
                                 }
-                                onClick={() =>
-                                  toggleUserStatus(user)
-                                }
+                                onClick={() => toggleUserStatus(user)}
                               >
                                 {updatingUserId === user._id
                                   ? "Updating..."
@@ -1091,12 +1244,9 @@ function AdminDashboard() {
                                 type="button"
                                 className="delete-btn"
                                 disabled={
-                                  user.role === "admin" ||
-                                  deletingUser
+                                  user.role === "admin" || deletingUser
                                 }
-                                onClick={() =>
-                                  setUserToDelete(user)
-                                }
+                                onClick={() => setUserToDelete(user)}
                               >
                                 Delete
                               </button>
@@ -1108,10 +1258,7 @@ function AdminDashboard() {
 
                     {filteredUsers.length === 0 && (
                       <tr>
-                        <td
-                          colSpan={6}
-                          className="no-data"
-                        >
+                        <td colSpan={6} className="no-data">
                           No users found.
                         </td>
                       </tr>
@@ -1123,7 +1270,9 @@ function AdminDashboard() {
           </section>
         )}
 
-        {/* MANAGE PRODUCTS */}
+        {/* ======================================
+            MANAGE PRODUCTS - UPDATED DESIGN
+        ====================================== */}
 
         {activeMenu === "Products" && (
           <section className="management-panel">
@@ -1135,80 +1284,109 @@ function AdminDashboard() {
                 </p>
               </div>
 
-              <span className="record-count">
+              <span className="admin-product-count">
                 {products.length} Products
               </span>
             </div>
 
             {loadingProducts ? (
-              <p className="no-data">
-                Loading products...
-              </p>
+              <div className="admin-product-loading">
+                <h3>Loading Products...</h3>
+                <p>Please wait while products are loading.</p>
+              </div>
             ) : products.length === 0 ? (
-              <p className="no-data">
-                No products found.
-              </p>
+              <div className="admin-product-loading">
+                <h3>No Products Found</h3>
+                <p>Products added by users will appear here.</p>
+              </div>
             ) : (
-              <div className="product-grid">
-                {products.map((product) => (
-                  <div
-                    className="product-card"
-                    key={product._id}
-                  >
-                    <div className="product-image">
-                      {getImageUrl(product.images) ? (
-                        <img
-                          src={getImageUrl(
-                            product.images
-                          )}
-                          alt={product.name}
-                        />
-                      ) : (
-                        <span>📦</span>
-                      )}
-                    </div>
+              <div className="admin-products-grid">
+                {products.map((product) => {
+                  const imageUrl = getImageUrl(product.images);
 
-                    <div className="product-info">
-                      <span className="product-category">
-                        {product.category ||
-                          "General"}
-                      </span>
+                  return (
+                    <article
+                      className="admin-product-card"
+                      key={product._id}
+                    >
+                      {/* PRODUCT IMAGE */}
 
-                      <h3>{product.name}</h3>
+                      <div className="admin-product-image">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={product.name || "Product"}
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                              event.currentTarget.parentElement
+                                .querySelector(
+                                  ".admin-product-placeholder"
+                                )
+                                .style.display = "block";
+                            }}
+                          />
+                        ) : null}
 
-                      <p>
-                        {product.description ||
-                          "No description available."}
-                      </p>
-
-                      <div className="product-bottom">
-                        <strong>
-                          ₹{product.price ?? 0}
-                        </strong>
-
-                        <span>
-                          Stock: {product.stock ?? 1}
+                        <span
+                          className="admin-product-placeholder"
+                          style={{
+                            display: imageUrl ? "none" : "block",
+                          }}
+                        >
+                          📦
                         </span>
                       </div>
 
-                      <button
-                        type="button"
-                        className="delete-btn product-delete"
-                        disabled={
-                          deletingProductId ===
-                          product._id
-                        }
-                        onClick={() =>
-                          deleteProduct(product)
-                        }
-                      >
-                        {deletingProductId === product._id
-                          ? "Deleting..."
-                          : "Delete Product"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                      {/* PRODUCT DETAILS */}
+
+                      <div className="admin-product-info">
+                        <span className="admin-product-category">
+                          {product.category || "General"}
+                        </span>
+
+                        <h3 className="admin-product-name">
+                          {product.name || "Unnamed Product"}
+                        </h3>
+
+                        <p className="admin-product-description">
+                          {product.description ||
+                            "No description available."}
+                        </p>
+
+                        {/* PRICE AND STOCK */}
+
+                        <div className="admin-product-bottom">
+                          <strong className="admin-product-price">
+                            ₹
+                            {Number(product.price ?? 0).toLocaleString(
+                              "en-IN"
+                            )}
+                          </strong>
+
+                          <span className="admin-product-stock">
+                            Stock: {product.stock ?? 1}
+                          </span>
+                        </div>
+
+                        {/* DELETE BUTTON */}
+
+                        <button
+                          type="button"
+                          className="admin-product-delete"
+                          disabled={
+                            deletingProductId === product._id
+                          }
+                          onClick={() => deleteProduct(product)}
+                        >
+                          {deletingProductId === product._id
+                            ? "Deleting..."
+                            : "Delete Product"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -1232,13 +1410,9 @@ function AdminDashboard() {
             </div>
 
             {loadingReports ? (
-              <p className="no-data">
-                Loading reports...
-              </p>
+              <p className="no-data">Loading reports...</p>
             ) : reports.length === 0 ? (
-              <p className="no-data">
-                No reports found.
-              </p>
+              <p className="no-data">No reports found.</p>
             ) : (
               <div className="table-container">
                 <table>
@@ -1269,8 +1443,7 @@ function AdminDashboard() {
 
                         <td>
                           <span className="role-badge">
-                            {report.status ||
-                              "Pending"}
+                            {report.status || "Pending"}
                           </span>
                         </td>
 
@@ -1308,13 +1481,9 @@ function AdminDashboard() {
             </div>
 
             {loadingComplaints ? (
-              <p className="no-data">
-                Loading complaints...
-              </p>
+              <p className="no-data">Loading complaints...</p>
             ) : complaints.length === 0 ? (
-              <p className="no-data">
-                No complaints found.
-              </p>
+              <p className="no-data">No complaints found.</p>
             ) : (
               <div className="table-container">
                 <table>
@@ -1344,8 +1513,7 @@ function AdminDashboard() {
 
                         <td>
                           <span className="role-badge">
-                            {complaint.status ||
-                              "Pending"}
+                            {complaint.status || "Pending"}
                           </span>
                         </td>
 
@@ -1375,20 +1543,16 @@ function AdminDashboard() {
         >
           <div
             className="modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
             <h2>User Details</h2>
 
             <p>
-              <strong>Name:</strong>{" "}
-              {selectedUser.fullName}
+              <strong>Name:</strong> {selectedUser.fullName}
             </p>
 
             <p>
-              <strong>Email:</strong>{" "}
-              {selectedUser.email}
+              <strong>Email:</strong> {selectedUser.email}
             </p>
 
             <p>
@@ -1402,24 +1566,19 @@ function AdminDashboard() {
             </p>
 
             <p>
-              <strong>Role:</strong>{" "}
-              {selectedUser.role}
+              <strong>Role:</strong> {selectedUser.role}
             </p>
 
             <p>
               <strong>Status:</strong>{" "}
-              {isUserBlocked(selectedUser)
-                ? "Blocked"
-                : "Active"}
+              {isUserBlocked(selectedUser) ? "Blocked" : "Active"}
             </p>
 
             <div className="modal-actions">
               <button
                 type="button"
                 className="cancel-btn"
-                onClick={() =>
-                  setSelectedUser(null)
-                }
+                onClick={() => setSelectedUser(null)}
               >
                 Close
               </button>
@@ -1441,32 +1600,23 @@ function AdminDashboard() {
         >
           <div
             className="modal confirm-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
             <h2>Delete User?</h2>
 
             <p>
               Are you sure you want to delete{" "}
-              <strong>
-                {userToDelete.fullName}
-              </strong>
-              ?
+              <strong>{userToDelete.fullName}</strong>?
             </p>
 
-            <p>
-              This action cannot be undone.
-            </p>
+            <p>This action cannot be undone.</p>
 
             <div className="modal-actions">
               <button
                 type="button"
                 className="cancel-btn"
                 disabled={deletingUser}
-                onClick={() =>
-                  setUserToDelete(null)
-                }
+                onClick={() => setUserToDelete(null)}
               >
                 Cancel
               </button>
@@ -1477,9 +1627,7 @@ function AdminDashboard() {
                 disabled={deletingUser}
                 onClick={deleteUser}
               >
-                {deletingUser
-                  ? "Deleting..."
-                  : "Delete User"}
+                {deletingUser ? "Deleting..." : "Delete User"}
               </button>
             </div>
           </div>
