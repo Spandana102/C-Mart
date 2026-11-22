@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import "./LoginSelection.css";
 
@@ -11,6 +12,7 @@ function LoginSelection() {
   return (
     <div className="login-selection-page">
       <div className="login-selection-container">
+
         <div className="selection-logo">🛍️</div>
 
         <h1>Welcome to C-MART</h1>
@@ -22,6 +24,8 @@ function LoginSelection() {
         <h2>Select Your Login Type</h2>
 
         <div className="login-selection-cards">
+
+          {/* USER LOGIN */}
           <button
             type="button"
             className="selection-card"
@@ -33,6 +37,7 @@ function LoginSelection() {
             <span>Continue as User →</span>
           </button>
 
+          {/* ADMIN LOGIN */}
           <button
             type="button"
             className="selection-card"
@@ -41,13 +46,15 @@ function LoginSelection() {
             <div className="selection-icon">🛡️</div>
             <h3>Admin Login</h3>
             <p>Authorized Administrators</p>
-            <span>Continue as Admin →</span>
+            <span>Continue as Administrator →</span>
           </button>
+
         </div>
 
         <p className="selection-footer">
           Buy • Sell • Swap • Rent • Bargain
         </p>
+
       </div>
     </div>
   );

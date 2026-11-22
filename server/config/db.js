@@ -10,7 +10,9 @@ const connectDB = async () => {
 
   // Check MongoDB URI
   if (!mongoURI) {
-    throw new Error("MONGO_URI is missing in environment variables");
+    throw new Error(
+      "MONGO_URI is missing in environment variables"
+    );
   }
 
   // Validate connection string format
@@ -18,7 +20,9 @@ const connectDB = async () => {
     !mongoURI.startsWith("mongodb+srv://") &&
     !mongoURI.startsWith("mongodb://")
   ) {
-    throw new Error("Invalid MongoDB connection string format");
+    throw new Error(
+      "Invalid MongoDB connection string format"
+    );
   }
 
   try {
@@ -28,8 +32,13 @@ const connectDB = async () => {
     console.log("Connecting to MongoDB Atlas...");
     console.log("MongoDB URI Present:", Boolean(mongoURI));
     console.log("Mongoose Version:", mongoose.version);
+    console.log("Target Database: CampusBazaar");
 
+    // Connect explicitly to CampusBazaar
     const conn = await mongoose.connect(mongoURI, {
+      dbName: "CampusBazaar",
+
+      // Connection timeout settings
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
@@ -39,7 +48,10 @@ const connectDB = async () => {
       minPoolSize: 0,
 
       // Heartbeat settings
-      heartbeatFrequencyMS: 10000
+      heartbeatFrequencyMS: 10000,
+
+      // Retry settings
+      retryWrites: true,
     });
 
     console.log("=================================");
@@ -47,8 +59,18 @@ const connectDB = async () => {
     console.log("=================================");
     console.log("DATABASE NAME:", conn.connection.name);
     console.log("DATABASE HOST:", conn.connection.host);
-    console.log("CONNECTION STATE:", conn.connection.readyState);
+    console.log(
+      "CONNECTION STATE:",
+      conn.connection.readyState
+    );
     console.log("=================================");
+
+    // Verify the selected database
+    if (conn.connection.name !== "CampusBazaar") {
+      throw new Error(
+        `Wrong database selected: ${conn.connection.name}`
+      );
+    }
 
     return conn.connection;
 
@@ -57,10 +79,20 @@ const connectDB = async () => {
     console.error("MONGODB CONNECTION FAILED");
     console.error("=================================");
 
-    // Main error details
-    console.error("Error Name:", error.name || "Unknown");
-    console.error("Error Message:", error.message || "No message");
-    console.error("Error Code:", error.code || "Not available");
+    console.error(
+      "Error Name:",
+      error.name || "Unknown"
+    );
+
+    console.error(
+      "Error Message:",
+      error.message || "No message"
+    );
+
+    console.error(
+      "Error Code:",
+      error.code || "Not available"
+    );
 
     // Error cause
     console.error(
@@ -68,14 +100,17 @@ const connectDB = async () => {
       error.cause?.message || "Not available"
     );
 
-    // Detailed MongoDB server errors
+    // MongoDB server details
     if (error.reason?.servers) {
       console.error("MongoDB Server Details:");
 
       for (const [server, details] of error.reason.servers) {
         console.error("---------------------------------");
         console.error("Server:", server);
-        console.error("Server Type:", details.type || "Unknown");
+        console.error(
+          "Server Type:",
+          details.type || "Unknown"
+        );
 
         if (details.error) {
           console.error(
@@ -91,7 +126,7 @@ const connectDB = async () => {
       }
     }
 
-    // DNS or network error details
+    // DNS / Network errors
     if (error.syscall) {
       console.error("System Call:", error.syscall);
     }
@@ -108,9 +143,11 @@ const connectDB = async () => {
       console.error("Port:", error.port);
     }
 
-    // Full stack trace for debugging
+    // Stack trace
     console.error("Error Stack:");
-    console.error(error.stack || "Stack not available");
+    console.error(
+      error.stack || "Stack not available"
+    );
 
     console.error("=================================");
 
@@ -123,7 +160,14 @@ const connectDB = async () => {
 // ========================================
 
 mongoose.connection.on("connected", () => {
-  console.log("MongoDB connection established");
+  console.log(
+    "MongoDB connection established"
+  );
+
+  console.log(
+    "Connected Database:",
+    mongoose.connection.name
+  );
 });
 
 mongoose.connection.on("disconnected", () => {
@@ -135,8 +179,19 @@ mongoose.connection.on("reconnected", () => {
 });
 
 mongoose.connection.on("error", (error) => {
-  console.error("MongoDB Connection Error:", error.message);
-  console.error("MongoDB Error Code:", error.code || "Not available");
+  console.error(
+    "MongoDB Connection Error:",
+    error.message
+  );
+
+  console.error(
+    "MongoDB Error Code:",
+    error.code || "Not available"
+  );
 });
+
+// ========================================
+// EXPORT DATABASE CONNECTION
+// ========================================
 
 module.exports = connectDB;

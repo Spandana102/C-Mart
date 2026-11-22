@@ -66,7 +66,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // COLLEGE ID
-    // IMPORTANT: This field is NOT unique.
+    // Multiple students can have the same college ID.
 
     collegeId: {
       type: String,
@@ -200,8 +200,8 @@ userSchema.methods.toSafeObject = function () {
 // DATABASE INDEXES
 // ==========================================
 
-// Email uniqueness is defined in the email field.
-// Google ID uniqueness is defined in the googleId field.
+// Only email and Google ID have uniqueness constraints.
+// College ID must NOT have a unique index.
 
 userSchema.index({ role: 1 });
 userSchema.index({ status: 1 });

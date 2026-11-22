@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../../services/api";
@@ -10,46 +11,102 @@ function Register() {
     fullName: "",
     email: "",
     password: "",
-    collegeId: "",
+    collegeId: "189",
     phoneNumber: "",
   });
+
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
+    const fullName = formData.fullName.trim();
+    const email = formData.email.trim().toLowerCase();
+    const password = formData.password;
+    const phoneNumber = formData.phoneNumber.trim();
+
+    if (fullName.length < 2) {
+      alert("Full name must contain at least 2 characters.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Password must contain at least 6 characters.");
+      return;
+    }
+
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      alert("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
     try {
-      const response = await API.post(
-        "/auth/register",
-        {
-          fullName: formData.fullName.trim(),
-          email: formData.email.trim(),
-          password: formData.password,
-          collegeId: formData.collegeId.trim(),
-          phoneNumber: formData.phoneNumber.trim(),
-        }
-      );
+      setLoading(true);
+
+      const response = await API.post("/auth/register", {
+        fullName,
+        email,
+        password,
+        phoneNumber,
+      });
 
       alert(
         response.data.message ||
         "Registration successful!"
       );
 
-      navigate("/login");
+      navigate("/login-selection", {
+        replace: true,
+      });
 
     } catch (error) {
-      alert(
-        error.response?.data?.message ||
-        "Registration failed"
+      console.error(
+        "Registration Error:",
+        error.response?.data || error.message
       );
+
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      if (status === 409) {
+        alert(
+          message ||
+          "This account already exists. Please login."
+        );
+      } else if (status === 400) {
+        alert(
+          message ||
+          "Please check your registration details."
+        );
+      } else if (!error.response) {
+        alert(
+          "Unable to connect to the server. Please check your internet connection."
+        );
+      } else {
+        alert(
+          message ||
+          "Registration failed. Please try again."
+        );
+      }
+
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,6 +114,8 @@ function Register() {
     <div className="register-page">
 
       <div className="register-card">
+
+        {/* HEADER */}
 
         <div className="register-header">
 
@@ -70,7 +129,11 @@ function Register() {
 
         </div>
 
+        {/* REGISTRATION FORM */}
+
         <form onSubmit={handleSubmit}>
+
+          {/* FULL NAME */}
 
           <div className="form-group">
 
@@ -84,12 +147,17 @@ function Register() {
               onChange={handleChange}
               style={{
                 letterSpacing: "normal",
-                wordSpacing: "normal"
+                wordSpacing: "normal",
               }}
+              minLength={2}
+              maxLength={100}
+              autoComplete="name"
               required
             />
 
           </div>
+
+          {/* EMAIL */}
 
           <div className="form-group">
 
@@ -103,12 +171,15 @@ function Register() {
               onChange={handleChange}
               style={{
                 letterSpacing: "normal",
-                wordSpacing: "normal"
+                wordSpacing: "normal",
               }}
+              autoComplete="email"
               required
             />
 
           </div>
+
+          {/* PASSWORD */}
 
           <div className="form-group">
 
@@ -122,12 +193,16 @@ function Register() {
               onChange={handleChange}
               style={{
                 letterSpacing: "normal",
-                wordSpacing: "normal"
+                wordSpacing: "normal",
               }}
+              minLength={6}
+              autoComplete="new-password"
               required
             />
 
           </div>
+
+          {/* COLLEGE ID */}
 
           <div className="form-group">
 
@@ -136,17 +211,18 @@ function Register() {
             <input
               type="text"
               name="collegeId"
-              placeholder="Enter your college ID"
-              value={formData.collegeId}
-              onChange={handleChange}
+              value="189"
+              readOnly
               style={{
                 letterSpacing: "normal",
-                wordSpacing: "normal"
+                wordSpacing: "normal",
+                cursor: "not-allowed",
               }}
-              required
             />
 
           </div>
+
+          {/* PHONE NUMBER */}
 
           <div className="form-group">
 
@@ -160,24 +236,37 @@ function Register() {
               onChange={handleChange}
               style={{
                 letterSpacing: "normal",
-                wordSpacing: "normal"
+                wordSpacing: "normal",
               }}
+              inputMode="numeric"
+              maxLength={10}
+              pattern="[0-9]{10}"
+              autoComplete="tel"
               required
             />
 
           </div>
 
-          <button type="submit">
-            Create Account
+          {/* SUBMIT BUTTON */}
+
+          <button
+            type="submit"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating Account..."
+              : "Create Account"}
           </button>
 
         </form>
+
+        {/* EXISTING USER LOGIN */}
 
         <div className="login-link">
 
           <p>Already have an account?</p>
 
-          <Link to="/login">
+          <Link to="/login-selection">
             Login
           </Link>
 

@@ -14,10 +14,15 @@ const GOOGLE_CLIENT_ID = (
   import.meta.env.VITE_GOOGLE_CLIENT_ID || ""
 ).trim();
 
-// Check Google Client ID
-if (!GOOGLE_CLIENT_ID) {
-  console.error(
-    "Google Client ID is missing. Add VITE_GOOGLE_CLIENT_ID to client/.env"
+// ========================================
+// GOOGLE OAUTH STATUS
+// ========================================
+
+if (GOOGLE_CLIENT_ID) {
+  console.log("Google OAuth configured successfully.");
+} else {
+  console.warn(
+    "Google Client ID is missing. Google Login is disabled. Email and Password Login will still work."
   );
 }
 
@@ -25,11 +30,13 @@ if (!GOOGLE_CLIENT_ID) {
 // MAIN APPLICATION
 // ========================================
 
-const root = createRoot(
-  document.getElementById("root")
-);
+const rootElement = document.getElementById("root");
 
-root.render(
+if (!rootElement) {
+  throw new Error("Root element not found in index.html");
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     {GOOGLE_CLIENT_ID ? (
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -40,14 +47,3 @@ root.render(
     )}
   </StrictMode>
 );
-
-const googleClientId = (
-  import.meta.env.VITE_GOOGLE_CLIENT_ID || ""
-).trim();
-
-console.log("Frontend Google OAuth:", {
-  configured: Boolean(googleClientId),
-  clientIdFingerprint: googleClientId
-    ? "configured"
-    : "missing",
-});

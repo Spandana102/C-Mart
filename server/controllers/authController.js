@@ -1,3 +1,4 @@
+
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -84,7 +85,6 @@ const createToken = (user) => {
 // REGISTER USER
 // ==========================================
 
-
 const registerUser = async (req, res) => {
   try {
     const {
@@ -112,7 +112,9 @@ const registerUser = async (req, res) => {
 
     const normalizedEmail = normalizeEmail(email);
 
-    // Check email only
+    // Check email only.
+    // College ID is shared by all campus students.
+
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -146,18 +148,26 @@ const registerUser = async (req, res) => {
     console.error("REGISTER ERROR:", error);
 
     if (error.code === 11000) {
-      const duplicateField = Object.keys(
-        error.keyPattern || {}
-      )[0] || "unknown";
+      const duplicateField =
+        Object.keys(error.keyPattern || {})[0] ||
+        Object.keys(error.keyValue || {})[0] ||
+        "unknown";
 
-      console.error("Duplicate database field:", duplicateField);
+      console.error("REGISTER DUPLICATE KEY:", {
+        index:
+          error.message?.match(/index: (.*?) dup key/)?.[1] ||
+          "unknown",
+        field: duplicateField,
+        keyPattern: error.keyPattern || {},
+        keyValue: error.keyValue || {},
+      });
 
       return res.status(409).json({
         success: false,
         message:
           duplicateField === "email"
-            ? "This email is already registered."
-            : `Duplicate value detected in ${duplicateField}. Please contact the administrator.`,
+            ? "This email is already registered. Please login."
+            : "Registration could not be completed because a database uniqueness constraint was triggered. Please contact the administrator.",
       });
     }
 
@@ -174,7 +184,6 @@ const registerUser = async (req, res) => {
     });
   }
 };
-
 
 // ==========================================
 // EMAIL / PASSWORD LOGIN
@@ -259,6 +268,7 @@ const loginUser = async (req, res) => {
       token,
       user: publicUser(user),
     });
+
   } catch (error) {
     console.error("Login Error:", error.message);
 
@@ -306,8 +316,7 @@ const googleLogin = async (req, res) => {
 
       return res.status(500).json({
         success: false,
-        message:
-          "Google authentication is not configured.",
+        message: "Google authentication is not configured.",
       });
     }
 
@@ -326,6 +335,7 @@ const googleLogin = async (req, res) => {
 
     // Only used for diagnostics.
     // Decoded token is never trusted for login.
+
     let tokenAudience = "";
 
     try {
@@ -378,6 +388,7 @@ const googleLogin = async (req, res) => {
       });
 
       payload = ticket.getPayload();
+
     } catch (verificationError) {
       const detail = String(
         verificationError?.message ||
@@ -385,6 +396,7 @@ const googleLogin = async (req, res) => {
       );
 
       // Avoid logging the raw credential.
+
       console.error(
         "Google ID Token Verification Failed:",
         detail
@@ -430,6 +442,7 @@ const googleLogin = async (req, res) => {
       });
 
       // Never auto-link password accounts by email.
+
       if (existingEmailUser) {
         return res.status(409).json({
           success: false,
@@ -439,6 +452,7 @@ const googleLogin = async (req, res) => {
       }
 
       // Prevent self-registration as admin.
+
       if (selectedLoginType === "admin") {
         return res.status(403).json({
           success: false,
@@ -501,6 +515,7 @@ const googleLogin = async (req, res) => {
       token,
       user: publicUser(user),
     });
+
   } catch (error) {
     console.error(
       "Google Login Error:",
@@ -508,6 +523,11 @@ const googleLogin = async (req, res) => {
     );
 
     if (error.code === 11000) {
+      console.error("GOOGLE DUPLICATE KEY:", {
+        keyPattern: error.keyPattern || {},
+        keyValue: error.keyValue || {},
+      });
+
       return res.status(409).json({
         success: false,
         message:
@@ -565,6 +585,7 @@ const getProfile = async (req, res) => {
       message: "Profile fetched successfully",
       user: publicUser(user),
     });
+
   } catch (error) {
     console.error(
       "Get Profile Error:",
@@ -662,6 +683,7 @@ const updateProfile = async (req, res) => {
       message: "Profile updated successfully",
       user: publicUser(user),
     });
+
   } catch (error) {
     console.error(
       "Update Profile Error:",
@@ -715,6 +737,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Google-only users do not have local passwords.
+
     if (
       user.authProvider === "google" &&
       !user.password
@@ -726,6 +749,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // OTP cooldown
+
     if (
       user.resetPasswordToken &&
       user.resetPasswordExpires
@@ -771,6 +795,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Secure 6-digit OTP
+
     const otp = crypto
       .randomInt(100000, 1000000)
       .toString();
@@ -817,6 +842,7 @@ const forgotPassword = async (req, res) => {
           "Resend email delivery failed"
         );
       }
+
     } catch (emailError) {
       console.error(
         "OTP Email Error:",
@@ -848,6 +874,7 @@ const forgotPassword = async (req, res) => {
       success: true,
       message,
     });
+
   } catch (error) {
     console.error(
       "Forgot Password Error:",
@@ -981,6 +1008,7 @@ const verifyOTP = async (req, res) => {
       success: true,
       message: "OTP verified successfully",
     });
+
   } catch (error) {
     console.error(
       "Verify OTP Error:",
@@ -1080,6 +1108,7 @@ const resetPassword = async (req, res) => {
       message:
         "Password reset successful. Please login.",
     });
+
   } catch (error) {
     console.error(
       "Reset Password Error:",

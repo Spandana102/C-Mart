@@ -1,4 +1,5 @@
-﻿import {
+﻿
+import {
   BrowserRouter,
   Routes,
   Route,
@@ -32,15 +33,10 @@ import Sell from "./pages/Sell/Sell";
 import MyProducts from "./pages/MyProducts/MyProducts.jsx";
 
 // ========================================
-// WISHLIST
+// WISHLIST AND ORDERS
 // ========================================
 
 import Wishlist from "./pages/Wishlist/Wishlist.jsx";
-
-// ========================================
-// ORDERS
-// ========================================
-
 import Orders from "./pages/Orders/Orders";
 
 // ========================================
@@ -81,7 +77,7 @@ import Chat from "./pages/Chat/Chat";
 import Notifications from "./pages/Notifications/Notifications";
 
 // ========================================
-// ADMIN ROLE PROTECTION
+// ADMIN ROUTE PROTECTION
 // ========================================
 
 function AdminRoute({ children }) {
@@ -90,31 +86,17 @@ function AdminRoute({ children }) {
   let user = null;
 
   try {
-    user = JSON.parse(
-      localStorage.getItem("user") || "null"
-    );
-  } catch (error) {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
     user = null;
   }
 
-  // Not logged in
   if (!token) {
-    return (
-      <Navigate
-        to="/login?role=admin"
-        replace
-      />
-    );
+    return <Navigate to="/login?role=admin" replace />;
   }
 
-  // Logged-in user is not an admin
   if (user?.role?.toLowerCase() !== "admin") {
-    return (
-      <Navigate
-        to="/dashboard"
-        replace
-      />
-    );
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -129,48 +111,49 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* ==================================
-            LOGIN SELECTION
-        ================================== */}
-
+        {/* DEFAULT PAGE */}
         <Route
           path="/"
+          element={<Navigate to="/login-selection" replace />}
+        />
+
+        {/* LOGIN SELECTION */}
+        <Route
+          path="/login-selection"
           element={<LoginSelection />}
         />
 
-        {/* ==================================
-            AUTHENTICATION
-        ================================== */}
-
+        {/* USER REGISTRATION */}
         <Route
           path="/register"
           element={<Register />}
         />
 
+        {/* USER AND ADMIN LOGIN */}
         <Route
           path="/login"
           element={<Login />}
         />
 
+        {/* FORGOT PASSWORD */}
         <Route
           path="/forgot-password"
           element={<ForgotPassword />}
         />
 
+        {/* VERIFY OTP */}
         <Route
           path="/verify-otp"
           element={<VerifyOTP />}
         />
 
+        {/* RESET PASSWORD */}
         <Route
           path="/reset-password"
           element={<ResetPassword />}
         />
 
-        {/* ==================================
-            USER DASHBOARD
-        ================================== */}
-
+        {/* USER DASHBOARD */}
         <Route
           path="/dashboard"
           element={
@@ -180,10 +163,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            PRODUCTS
-        ================================== */}
-
+        {/* PRODUCTS */}
         <Route
           path="/products"
           element={
@@ -202,10 +182,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            SELL PRODUCTS
-        ================================== */}
-
+        {/* SELL PRODUCTS */}
         <Route
           path="/sell"
           element={
@@ -224,10 +201,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            WISHLIST
-        ================================== */}
-
+        {/* WISHLIST */}
         <Route
           path="/wishlist"
           element={
@@ -237,10 +211,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            ORDERS
-        ================================== */}
-
+        {/* ORDERS */}
         <Route
           path="/orders"
           element={
@@ -250,10 +221,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            SWAP
-        ================================== */}
-
+        {/* SWAP */}
         <Route
           path="/swap"
           element={
@@ -263,10 +231,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            RENT
-        ================================== */}
-
+        {/* RENT */}
         <Route
           path="/rent"
           element={
@@ -276,10 +241,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            MEET POINT
-        ================================== */}
-
+        {/* MEET POINT */}
         <Route
           path="/meetpoint"
           element={
@@ -289,10 +251,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            BARGAINING
-        ================================== */}
-
+        {/* BARGAINING */}
         <Route
           path="/bargain"
           element={
@@ -311,10 +270,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            REVIEWS
-        ================================== */}
-
+        {/* REVIEWS */}
         <Route
           path="/reviews"
           element={
@@ -324,10 +280,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            COMPLAINTS
-        ================================== */}
-
+        {/* COMPLAINTS */}
         <Route
           path="/complaints"
           element={
@@ -337,10 +290,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            CHAT
-        ================================== */}
-
+        {/* CHAT */}
         <Route
           path="/chat"
           element={
@@ -350,10 +300,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            NOTIFICATIONS
-        ================================== */}
-
+        {/* NOTIFICATIONS */}
         <Route
           path="/notifications"
           element={
@@ -363,10 +310,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            PROFILE
-        ================================== */}
-
+        {/* PROFILE */}
         <Route
           path="/profile"
           element={
@@ -376,10 +320,7 @@ function App() {
           }
         />
 
-        {/* ==================================
-            ADMIN DASHBOARD
-        ================================== */}
-
+        {/* ADMIN DASHBOARD */}
         <Route
           path="/admin"
           element={
@@ -389,18 +330,10 @@ function App() {
           }
         />
 
-        {/* ==================================
-            UNKNOWN ROUTES
-        ================================== */}
-
+        {/* UNKNOWN ROUTES */}
         <Route
           path="*"
-          element={
-            <Navigate
-              to="/"
-              replace
-            />
-          }
+          element={<Navigate to="/login-selection" replace />}
         />
 
       </Routes>

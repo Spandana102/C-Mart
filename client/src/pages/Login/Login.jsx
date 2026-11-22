@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Link,
@@ -13,7 +14,18 @@ function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Get selected login role from URL
+  // ====================================
+  // GOOGLE CLIENT ID
+  // ====================================
+
+  const googleClientId = (
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || ""
+  ).trim();
+
+  // ====================================
+  // GET SELECTED LOGIN ROLE
+  // ====================================
+
   const requestedRole = (
     searchParams.get("role") || "user"
   ).toLowerCase();
@@ -22,6 +34,10 @@ function Login() {
     requestedRole === "admin" ? "admin" : "user";
 
   const isAdmin = loginType === "admin";
+
+  // ====================================
+  // STATES
+  // ====================================
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,9 +53,7 @@ function Login() {
     const { token, user } = data || {};
 
     if (!token || !user) {
-      throw new Error(
-        "Login failed. User information is missing."
-      );
+      throw new Error("Login response is incomplete.");
     }
 
     const actualRole = String(
@@ -50,28 +64,28 @@ function Login() {
       throw new Error("Invalid account role.");
     }
 
-    // Verify selected role with actual account role
+    // VERIFY SELECTED ROLE
     if (actualRole !== loginType) {
       throw new Error(
         isAdmin
-          ? "Access denied. This account is not an administrator."
-          : "Please use Admin Login for this account."
+          ? "Access denied. Please use an administrator account."
+          : "This is an administrator account. Please use Admin Login."
       );
     }
 
+    // SAVE LOGIN DETAILS
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
 
+    // REDIRECT TO DASHBOARD
     navigate(
-      actualRole === "admin"
-        ? "/admin"
-        : "/dashboard",
+      actualRole === "admin" ? "/admin" : "/dashboard",
       { replace: true }
     );
   };
 
   // ====================================
-  // EMAIL LOGIN
+  // EMAIL AND PASSWORD LOGIN
   // ====================================
 
   const handleSubmit = async (event) => {
@@ -96,11 +110,12 @@ function Login() {
       });
 
       handleLoginSuccess(response.data);
+
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Login failed. Please try again."
+        err.message ||
+        "Login failed. Please try again."
       );
     } finally {
       setLoading(false);
@@ -124,22 +139,27 @@ function Login() {
     try {
       setLoading(true);
 
-      const result = await API.post("/auth/google", {
+      const response = await API.post("/auth/google", {
         credential: googleResponse.credential,
         loginType,
       });
 
-      handleLoginSuccess(result.data);
+      handleLoginSuccess(response.data);
+
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Google login failed."
+        err.message ||
+        "Google login failed. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
+
+  // ====================================
+  // LOGIN PAGE UI
+  // ====================================
 
   return (
     <div
@@ -155,14 +175,14 @@ function Login() {
         {/* LEFT INFORMATION PANEL */}
 
         <section className="login-info-panel">
-          <Link to="/" className="login-brand">
-            <span className="login-brand-symbol">
-              🛍️
-            </span>
+
+          <Link to="/login-selection" className="login-brand">
+            <span className="login-brand-symbol">🛍️</span>
             <span>C-MART</span>
           </Link>
 
           <div className="login-info-content">
+
             <span className="login-eyebrow">
               {isAdmin
                 ? "CAMPUS MARKETPLACE MANAGEMENT"
@@ -182,6 +202,7 @@ function Login() {
             </p>
 
             <div className="login-feature-list">
+
               {isAdmin ? (
                 <>
                   <div>✓ Manage Users and Products</div>
@@ -195,20 +216,26 @@ function Login() {
                   <div>✓ Connect with Campus Students</div>
                 </>
               )}
+
             </div>
           </div>
 
           <p className="login-panel-footer">
             C-MART © 2026
           </p>
+
         </section>
 
         {/* RIGHT LOGIN PANEL */}
 
         <section className="login-form-panel">
+
           <div className="login-card">
 
+            {/* LOGIN HEADER */}
+
             <div className="login-header">
+
               <div className="login-role-icon">
                 {isAdmin ? "🛡️" : "🎓"}
               </div>
@@ -228,7 +255,10 @@ function Login() {
                   ? "Enter your administrator credentials"
                   : "Welcome back! Sign in to continue"}
               </p>
+
             </div>
+
+            {/* ERROR MESSAGE */}
 
             {error && (
               <div className="login-error" role="alert">
@@ -242,33 +272,30 @@ function Login() {
               onSubmit={handleSubmit}
               className="login-form"
             >
+
               <div className="login-field">
+
                 <label htmlFor="login-email">
-                  {isAdmin
-                    ? "Admin Email Address"
-                    : "Email Address"}
+                  {isAdmin ? "Admin Email Address" : "Email Address"}
                 </label>
 
                 <input
                   id="login-email"
                   type="email"
-                  placeholder={
-                    isAdmin
-                      ? "Enter your admin email"
-                      : "Enter your email"
-                  }
+                  placeholder="Enter your email"
                   value={email}
-                  onChange={(e) =>
-                    setEmail(e.target.value)
-                  }
+                  onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   disabled={loading}
                   required
                 />
+
               </div>
 
               <div className="login-field">
+
                 <div className="login-password-heading">
+
                   <label htmlFor="login-password">
                     Password
                   </label>
@@ -276,19 +303,17 @@ function Login() {
                   <Link to="/forgot-password">
                     Forgot Password?
                   </Link>
+
                 </div>
 
                 <div className="login-password-wrapper">
+
                   <input
                     id="login-password"
-                    type={
-                      showPassword ? "text" : "password"
-                    }
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) =>
-                      setPassword(e.target.value)
-                    }
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     disabled={loading}
                     required
@@ -300,15 +325,14 @@ function Login() {
                     onClick={() =>
                       setShowPassword((prev) => !prev)
                     }
-                    aria-label={
-                      showPassword
-                        ? "Hide password"
-                        : "Show password"
-                    }
                     disabled={loading}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
+
                 </div>
               </div>
 
@@ -323,31 +347,40 @@ function Login() {
                   ? "Login as Admin"
                   : "Login as User"}
               </button>
+
             </form>
 
             {/* GOOGLE LOGIN */}
 
-            <div className="login-divider">
-              <span>or continue with</span>
-            </div>
+            {googleClientId && (
+              <>
+                <div className="login-divider">
+                  <span>or continue with</span>
+                </div>
 
-            <div className="google-login-section">
-              <div className="google-button-container">
-                <GoogleLogin
-                  onSuccess={handleGoogleLogin}
-                  onError={() =>
-                    setError(
-                      "Google sign-in failed. Please try again."
-                    )
-                  }
-                  theme="outline"
-                  size="large"
-                  shape="rectangular"
-                  text="continue_with"
-                  width="300"
-                />
-              </div>
-            </div>
+                <div className="google-login-section">
+
+                  <div className="google-button-container">
+
+                    <GoogleLogin
+                      onSuccess={handleGoogleLogin}
+                      onError={() =>
+                        setError(
+                          "Google sign-in failed. Please try again."
+                        )
+                      }
+                      theme="outline"
+                      size="large"
+                      shape="rectangular"
+                      text="continue_with"
+                      width="300"
+                    />
+
+                  </div>
+
+                </div>
+              </>
+            )}
 
             {/* REGISTER OPTION */}
 
@@ -363,7 +396,8 @@ function Login() {
             {/* BOTTOM LINKS */}
 
             <div className="login-bottom-links">
-              <Link to="/">
+
+              <Link to="/login-selection">
                 ← Back to Login Selection
               </Link>
 
@@ -373,21 +407,16 @@ function Login() {
                     ? "/login?role=user"
                     : "/login?role=admin"
                 }
-                onClick={() => {
-                  setError("");
-                  setEmail("");
-                  setPassword("");
-                  setShowPassword(false);
-                }}
               >
-                {isAdmin
-                  ? "Student Login"
-                  : "Admin Login"}
+                {isAdmin ? "User Login" : "Admin Login"}
               </Link>
+
             </div>
 
           </div>
+
         </section>
+
       </main>
     </div>
   );
